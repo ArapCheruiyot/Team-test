@@ -1,1 +1,2 @@
 # Teamhub
+TeamHub is a responsive landing page built with HTML, CSS, and JavaScript that uses Firebase for Google Authentication and can be easily deployed on GitHub Pages; simply clone the repo, add your Firebase config to app.js, enable Google Sign‑In in your Firebase console (and authorize your Pages domain), then push to main and turn on GitHub Pages—next, you’ll extend this into the team‑lead dashboard, integrate Firestore for user data, and add collaboration tools like chat and notepad.
