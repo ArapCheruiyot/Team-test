@@ -1,0 +1,66 @@
+/* team-lead.css */
+
+/* Dashboard‑specific styles */
+body {
+  background: linear-gradient(to right, #f0f4f8, #ffffff);
+}
+
+.container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+}
+
+#signout {
+  background-color: #d32f2f;
+  color: #fff;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  float: right;
+  margin-top: -2.5rem;
+}
+
+#signout:hover {
+  background-color: #b71c1c;
+}
+
+/* Layout for dashboard sections */
+.dashboard-menu {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.dashboard-menu button {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #0d47a1;
+  background: #fff;
+  color: #0d47a1;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.dashboard-menu button:hover {
+  background: #e3f2fd;
+}
+
+/* Content area */
+.dashboard-content {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  min-height: 300px;
+  background: #fafafa;
+}
+
+/* Clear float after header */
+.container::after {
+  content: "";
+  display: table;
+  clear: both;
+}
