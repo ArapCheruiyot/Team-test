@@ -89,7 +89,7 @@ body {
 #file-names {
   flex: 1;
   min-width: 200px;
-  max-width: 250px;
+  max-width: 300px;
   max-height: 400px;
   padding: 1rem;
   border: 1px solid #eee;
