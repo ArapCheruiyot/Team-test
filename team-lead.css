@@ -1,4 +1,3 @@
-
 /*=========================================
   Global Reset & Base
 =========================================*/
@@ -36,7 +35,7 @@ body {
 }
 
 #welcome {
-  font-size: 1.9rem;
+  font-size: 1.8rem;
   font-weight: 600;
   color: #0d47a1;
 }
@@ -45,8 +44,8 @@ body {
   background: #e53935;
   color: #fff;
   border: none;
-  border-radius: 6px;
-  padding: 0.6rem 1.2rem;
+  border-radius: 50px;
+  padding: 0.5rem 1.2rem;
   font-size: 1rem;
   cursor: pointer;
   transition: background 0.25s ease;
@@ -111,61 +110,56 @@ body {
   gap: 2rem;
 }
 
-/* File List Sidebar */
-#file-names {
-  flex: 1;
-  max-width: 300px;
-  padding: 1rem;
-  background: #f9fbfc;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  overflow-y: auto;
-  box-shadow: inset 0 2px 6px rgba(0,0,0,0.02);
-}
-
-#file-names p {
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-}
-
-#file-names ul {
-  list-style: none;
-}
-
-#file-names li {
-  padding: 0.4rem 0.6rem;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: background 0.2s;
-}
-
-#file-names li:hover {
-  background: #e3f2fd;
-}
-
-/* Notepad/Editor Area */
+/* === Left Column: Notepad === */
 #typing-area {
   flex: 2;
-  display: flex;
-  flex-direction: column;
+  background-color: #f9fbfc;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+}
+
+#typing-area::before {
+  content: "Notepad";
+  display: block;
+  font-weight: bold;
+  color: #1976d2;
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
 }
 
 #text-input {
-  flex: 1;
   width: 100%;
+  height: 300px;
   padding: 1rem;
   font-size: 1rem;
   border: 1px solid #ccc;
-  border-radius: 8px;
-  box-shadow: inset 0 2px 6px rgba(0,0,0,0.03);
+  border-radius: 6px;
   resize: vertical;
   background: #ffffff;
   line-height: 1.5;
 }
 
-#text-input::placeholder {
-  color: #999;
+/* === Right Column: Upcoming Features === */
+#file-names {
+  flex: 1;
+  background-color: #fff9f0;
+  border: 2px dashed #ff9800;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  color: #555;
+  font-style: italic;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.03);
+}
+
+#file-names::before {
+  content: "Upcoming Features";
+  display: block;
+  font-weight: bold;
+  color: #ef6c00;
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
 }
 
 /*=========================================
