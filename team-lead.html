@@ -4,22 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>TeamHub Dashboard</title>
-  
-  <!-- only one CSS -->
   <link rel="stylesheet" href="team-lead.css"/>
-
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 </head>
 <body>
-  <!-- Header -->
-  <div class="container">
-    <h1 id="welcome">Loading…</h1>
-    <button id="signout">Sign Out</button>
-  </div>
-
-  <!-- Dashboard content -->
   <div id="app-container">
     <div id="buttons">
       <button id="new-file">New</button>
@@ -29,26 +18,22 @@
     </div>
 
     <div id="main-content">
+      <!-- Left column: Notepad + header -->
       <div id="typing-area">
+        <div class="notepad-header">
+          <h1 id="welcome">Loading…</h1>
+          <button id="signout">Sign Out</button>
+        </div>
         <textarea id="text-input" placeholder="Start typing..."></textarea>
       </div>
+
+      <!-- Right column: Upcoming features -->
       <div id="file-names">Upcoming features</div>
     </div>
   </div>
 
-  <!-- Firebase + app logic -->
   <script>
-    const firebaseConfig = { /* your config */ };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-
-    auth.onAuthStateChanged(u => {
-      if (!u) location.href = 'index.html';
-      else document.getElementById('welcome').textContent = `Welcome, ${u.displayName}!`;
-    });
-    document.getElementById('signout').addEventListener('click', () => {
-      auth.signOut().then(_=>location.href='index.html');
-    });
+    // ... your existing Firebase + auth code ...
   </script>
 </body>
 </html>
