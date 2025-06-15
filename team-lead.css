@@ -6,22 +6,23 @@ body {
   color: #333;
 }
 
-/* Container for the header and welcome message */
+/* Header: welcome + sign out */
 .container {
   max-width: 1000px;
-  margin: 2rem auto 1rem;
-  padding: 2rem;
-  position: relative;
+  margin: 2rem auto 0;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-/* Welcome message */
 #welcome {
   font-size: 1.8rem;
   font-weight: 600;
   color: #0d47a1;
+  margin: 0;
 }
 
-/* Sign out button */
 #signout {
   background-color: #d32f2f;
   color: #fff;
@@ -29,19 +30,16 @@ body {
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  position: absolute;
-  top: 2rem;
-  right: 2rem;
 }
 
 #signout:hover {
   background-color: #b71c1c;
 }
 
-/* Dashboard layout */
+/* Dashboard wrapper */
 #app-container {
   max-width: 1000px;
-  margin: 0 auto;
+  margin: 1rem auto 2rem;
   padding: 1rem 2rem;
   background: #ffffff;
   border-radius: 10px;
@@ -80,116 +78,54 @@ body {
   display: none;
 }
 
-/* Main area */
-#main-content {
-  display: flex;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-}
-
-#file-names {
-  flex: 1;
-  min-width: 200px;
-  max-width: 300px;
-  padding: 1rem;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  background-color: #f9f9f9;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-/* Text editor area */
-#typing-area {
-  flex: 3;
-  min-width: 300px;
-}
-
-#text-input {
-  width: 100%;
-  height: 300px;
-  font-size: 1rem;
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  resize: vertical;
-}
-
-/* Utility */
-textarea::placeholder {
-  color: #aaa;
-}
-
-/* Clear floats */
-.container::after {
-  content: "";
-  display: table;
-  clear: both;
-}
-/* Container for welcome and signout */
-.container {
-  max-width: 1000px;
-  margin: 2rem auto 0;
-  padding: 1rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-/* Make welcome message flexible */
-#welcome {
-  font-size: 1.8rem;
-  font-weight: 600;
-  color: #0d47a1;
-  margin: 0;
-}
-
-/* Adjust sign-out position (no longer absolute) */
-#signout {
-  background-color: #d32f2f;
-  color: #fff;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-#signout:hover {
-  background-color: #b71c1c;
-}
-
-/* Main content structure */
+/* Main content: file list + editor */
 #main-content {
   display: flex;
   gap: 2rem;
   margin-top: 1rem;
 }
 
-/* Adjust layout sizes */
+/* File list panel */
 #file-names {
   flex: 1;
   min-width: 200px;
   max-width: 250px;
-  max-height: 300px;
+  max-height: 400px;
   padding: 1rem;
   border: 1px solid #eee;
   border-radius: 8px;
   background-color: #f9f9f9;
   overflow-y: auto;
+  font-size: 0.95rem;
 }
 
+/* Notepad/editor area */
 #typing-area {
-  flex: 2; /* Notepad area takes about 2/3 width */
+  flex: 2;
 }
 
 #text-input {
   width: 100%;
-  height: 300px;
+  height: 400px;
   font-size: 1rem;
   padding: 12px;
   border: 1px solid #ccc;
   border-radius: 8px;
-  box-shadow: 0 0 5px rgba(0,0,0,0.05);
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
   resize: vertical;
 }
 
+/* Placeholder color */
+textarea::placeholder {
+  color: #aaa;
+}
+
+/* Responsive tweak: stack on small screens */
+@media (max-width: 700px) {
+  #main-content {
+    flex-direction: column;
+  }
+  #file-names, #typing-area {
+    max-width: 100%;
+  }
+}
