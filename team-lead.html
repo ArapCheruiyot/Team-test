@@ -9,7 +9,23 @@
 <body>
   <div class="container">
     <h1 id="welcome">Loading…</h1>
-    <p>Your TeamHub dashboard will appear here.</p>
+    </div>
+    <div id="app-container">  
+        <div id="buttons">
+            <button id="new-file">New</button>
+            <button id="search">Search</button>
+            <button id="delete">Delete</button>
+            <input type="text" id="search-input" placeholder="Type to search..." style="display: none;">
+        </div>
+
+        <div id="main-content">
+            <div id="file-names">
+                <!-- File titles will be added here -->
+            </div>
+            <div id="typing-area">
+                <textarea id="text-input" placeholder="Start typing..."></textarea>
+            </div>
+        </div>
     <button id="signout">Sign Out</button>
   </div>
 
