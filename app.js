@@ -1,5 +1,4 @@
 // 1️⃣ Firebase configuration (from your console)
-const firebaseConfig = {
   const firebaseConfig = {
   apiKey: "AIzaSyBQSl1HtlJBPRBcgt5culdCDj_cBVN40Io",
   authDomain: "offer-upload.firebaseapp.com",
