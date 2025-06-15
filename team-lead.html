@@ -1,40 +1,25 @@
-<!DOCTYPE html>
+<!DOCTYPE html>More actions
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>TeamHub Dashboard</title>
+  
+  <!-- only one CSS -->
   <link rel="stylesheet" href="team-lead.css"/>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
 </head>
 <body>
-  <!-- Initialize Firebase & Auth -->
-  <script>
-    const firebaseConfig = {
-      apiKey:      "AIzaSyBQSl1HtlJBPRBcgt5culdCDj_cBVN40Io",        // ← your real key
-      authDomain:  "offer-upload.firebaseapp.com",
-      projectId:   "offer-upload",
-      storageBucket:"offer-upload.firebasestorage.app",
-      messagingSenderId:"147934510488",
-      appId:       "1:147934510488:web:cdf01aed4342a43475bfed",
-      measurementId:"G-ZPBL7DC3YG"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    auth.onAuthStateChanged(u => {
-      if (!u) {
-        window.location.href = 'index.html';
-      } else {
-        document.getElementById('welcome').textContent = `Welcome, ${u.displayName}!`;
-      }
-    });
-  </script>
+  <!-- Header -->
+  <div class="container">
+    <h1 id="welcome">Loading…</h1>
+    <button id="signout">Sign Out</button>
+  </div>
 
+  <!-- Dashboard content -->
   <div id="app-container">
     <div id="buttons">
       <button id="new-file">New</button>
@@ -58,14 +43,20 @@
     </div>
   </div>
 
-  <!-- Sign‑out handler at end of body -->
+  <!-- Firebase + app logic -->
   <script>
-    document.getElementById('signout').addEventListener('click', () => {
-      auth.signOut().then(() => {
-        window.location.href = 'index.html';
-      });
+    const firebaseConfig = { /* your config */ };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    auth.onAuthStateChanged(u => {
+      if (!u) location.href = 'index.html';
+      else document.getElementById('welcome').textContent = `Welcome, ${u.displayName}!`;
     });
+    document.getElementById('signout').addEventListener('click', () => {
+      auth.signOut().then(_=>location.href='index.html');
+    });
+    // ... your existing Firebase + auth code ...
   </script>
-  <script src="team-lead.js"></script>
 </body>
 </html>
