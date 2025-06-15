@@ -1,89 +1,48 @@
-/* Base reset */
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:sans-serif; background:#f4f7fa; }
+/* 1) Make body full‑height and remove default margins */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
 
-/* App container */
+/* 2) Header container styling */
+.container {
+  position: fixed;      /* stick to top */
+  top: 0;               /* at the very top */
+  left: 0;
+  right: 0;
+  display: flex;        /* horizontal layout */
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;     /* white background */
+  padding: 1rem 2rem;   /* spacing */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 1000;        /* sits above other content */
+}
+
+/* 3) Give your page content room below the header */
 #app-container {
-  max-width:1000px;
-  margin:2rem auto;
-  background:#fff;
-  border-radius:8px;
-  box-shadow:0 2px 8px rgba(0,0,0,0.1);
+  padding-top: 4rem;    /* equal or slightly more than header height */
 }
 
-/* Buttons row */
-#buttons {
-  display:flex;
-  gap:1rem;
-  padding:1rem;
-  border-bottom:1px solid #e0e0e0;
-}
-#buttons button { flex:1; padding:0.6rem; background:#1976d2; color:#fff; border:none; border-radius:4px; cursor:pointer; }
-#buttons button:hover { background:#1565c0; }
-#buttons #search-input { flex:2; padding:0.5rem; border:1px solid #ccc; border-radius:4px; }
-
-/* Main content columns */
-#main-content {
-  display:flex;
-  min-height:400px;
+/* 4) Welcome message style */
+#welcome {
+  font-size: 1.5rem;
+  color: #0d47a1;
+  margin: 0;
 }
 
-/* Left column: Notepad */
-#typing-area {
-  flex:2;
-  border-right:1px solid #e0e0e0;
-  display:flex;
-  flex-direction:column;
+/* 5) Sign Out button style */
+#signout {
+  background: #e53935;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
-/* Notepad header */
-.notepad-header {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:1rem;
-  background:#fafafa;
-  border-bottom:1px solid #e0e0e0;
-}
-.notepad-header h1 {
-  font-size:1.4rem;
-  color:#0d47a1;
-}
-.notepad-header button {
-  background:#e53935;
-  color:#fff;
-  border:none;
-  padding:0.4rem 0.8rem;
-  border-radius:4px;
-  cursor:pointer;
-}
-.notepad-header button:hover { background:#b71c1c; }
-
-/* Text area */
-#text-input {
-  flex:1;
-  padding:1rem;
-  border:none;
-  resize:vertical;
-  font-size:1rem;
-  outline:none;
-}
-
-/* Right column: Upcoming features */
-#file-names {
-  flex:1;
-  padding:1rem;
-  background:#fff8e1;
-  color:#555;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-style:italic;
-  border-left:1px solid #e0e0e0;
-}
-
-/* Responsive: stack columns */
-@media (max-width:768px) {
-  #main-content { flex-direction:column; }
-  #typing-area, #file-names { border:none; }
+#signout:hover {
+  background: #b71c1c;
 }
