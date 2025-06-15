@@ -1,35 +1,117 @@
-// ✅ Dashboard logic (team-lead.html)
+// team-lead.js
 
-document.addEventListener("DOMContentLoaded", () => {
-  const firebaseConfig = {
-    apiKey: "AIzaSyBQSl1HtlJBPRBcgt5culdCDj_cBVN40Io",
-    authDomain: "offer-upload.firebaseapp.com",
-    projectId: "offer-upload",
-    storageBucket: "offer-upload.firebasestorage.app",
-    messagingSenderId: "147934510488",
-    appId: "1:147934510488:web:cdf01aed4342a43475bfed",
-    measurementId: "G-ZPBL7DC3YG"
-  };
+// Get Firestore instance
+const db = firebase.firestore();
+let currentUser = null;
 
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
+// Cache DOM elements
+const newBtn      = document.getElementById('new-file');
+const delBtn      = document.getElementById('delete');
+const searchBtn   = document.getElementById('search');
+const searchInput = document.getElementById('search-input');
+const fileNames   = document.getElementById('file-names');
+const textArea    = document.getElementById('text-input');
 
-  auth.onAuthStateChanged(user => {
-    if (!user) {
-      // Not signed in? Go back to login
-      window.location.href = 'index.html';
-    } else {
-      // Show user's name
-      document.getElementById('welcome').textContent = `Welcome, ${user.displayName || "Team Lead"}!`;
-    }
+// Wait for auth to be ready
+firebase.auth().onAuthStateChanged(user => {
+  if (!user) return;
+  currentUser = user;
+  loadNotes();
+});
+
+// Load notes from Firestore
+async function loadNotes() {
+  fileNames.innerHTML = '';
+  const snapshot = await db
+    .collection('users')
+    .doc(currentUser.uid)
+    .collection('notes')
+    .orderBy('createdAt', 'desc')
+    .get();
+
+  snapshot.forEach(doc => {
+    const note = doc.data();
+    const item = document.createElement('div');
+    item.textContent = note.title;
+    item.className = 'note-item';
+    item.onclick = () => openNote(doc.id, note);
+    fileNames.appendChild(item);
   });
+}
 
-  const signOutBtn = document.getElementById('signout');
-  if (signOutBtn) {
-    signOutBtn.addEventListener('click', () => {
-      auth.signOut().then(() => {
-        window.location.href = 'index.html';
-      });
+// Open a note into the textarea
+function openNote(id, note) {
+  textArea.value = note.content;
+  textArea.dataset.noteId = id;
+}
+
+// Create a new note
+newBtn.addEventListener('click', async () => {
+  const title = prompt('Enter note title:');
+  if (!title) return;
+
+  // Save empty note in Firestore
+  const docRef = await db
+    .collection('users')
+    .doc(currentUser.uid)
+    .collection('notes')
+    .add({
+      title,
+      content: '',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+
+  loadNotes();
+  openNote(docRef.id, { title, content: '' });
+});
+
+// Delete current note
+delBtn.addEventListener('click', async () => {
+  const noteId = textArea.dataset.noteId;
+  if (!noteId) return alert('No note selected.');
+  await db
+    .collection('users')
+    .doc(currentUser.uid)
+    .collection('notes')
+    .doc(noteId)
+    .delete();
+  
+  textArea.value = '';
+  delete textArea.dataset.noteId;
+  loadNotes();
+});
+
+// Search notes by title
+searchBtn.addEventListener('click', () => {
+  searchInput.style.display = 'block';
+  searchInput.focus();
+});
+
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.toLowerCase();
+  document.querySelectorAll('.note-item').forEach(item => {
+    item.style.display = item.textContent.toLowerCase().includes(q) 
+      ? '' 
+      : 'none';
+  });
+});
+
+// Auto‑save on blur or Enter key
+textArea.addEventListener('blur', saveCurrentNote);
+textArea.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    saveCurrentNote();
   }
 });
+
+async function saveCurrentNote() {
+  const noteId = textArea.dataset.noteId;
+  if (!noteId) return; // nothing to save
+  await db
+    .collection('users')
+    .doc(currentUser.uid)
+    .collection('notes')
+    .doc(noteId)
+    .update({ content: textArea.value });
+}
+
