@@ -2,12 +2,12 @@
 document.addEventListener('DOMContentLoaded', () => {
   console.log("✅ team‑lead.js initialized");
 
-  const db = window.db;
+  const db   = window.db;
   const auth = window.auth;
 
-  let currentUser = null;
+  let currentUser   = null;
   let currentNoteId = null;
-  let saveTimeout = null;
+  let saveTimeout   = null;
 
   // Cache DOM elements
   const newBtn      = document.getElementById('new-file');
@@ -17,92 +17,149 @@ document.addEventListener('DOMContentLoaded', () => {
   const fileNames   = document.getElementById('file-names');
   const textArea    = document.getElementById('text-input');
 
-  console.log("newBtn:", newBtn, "delBtn:", delBtn, "textArea:", textArea);
+  console.log({ newBtn, delBtn, searchBtn, searchInput, fileNames, textArea });
 
-  // Auth listener
+  // 1) Auth guard and initial load
   auth.onAuthStateChanged(user => {
     if (!user) {
       console.log("No user, redirecting…");
-      return;
+      return window.location.href = 'index.html';
     }
     currentUser = user;
     console.log("Signed in as", user.uid);
     loadNotes();
   });
 
-  // Load notes
+  // 2) Load notes, ordered by latest update
   async function loadNotes() {
     console.log("Loading notes…");
     fileNames.innerHTML = '';
-    const snapshot = await db
-      .collection('users')
-      .doc(currentUser.uid)
-      .collection('notes')
-      .orderBy('createdAt', 'desc')
-      .get();
+    try {
+      const snapshot = await db
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('notes')
+        .orderBy('updatedAt', 'desc')
+        .get();
 
-    console.log("Notes snapshot size:", snapshot.size);
-
-    snapshot.forEach(doc => {
-      const note = doc.data();
-      const item = document.createElement('div');
-      item.textContent = note.title || '(Untitled)';
-      item.className = 'note-item';
-      item.onclick = () => openNote(doc.id, note);
-      fileNames.appendChild(item);
-    });
-    console.log("Rendered", fileNames.children.length, "notes");
+      console.log("Snapshot size:", snapshot.size);
+      snapshot.forEach(doc => {
+        const note  = doc.data();
+        const title = note.title || '(Untitled)';
+        const item  = document.createElement('div');
+        item.textContent = title;
+        item.className   = 'note-item';
+        item.onclick     = () => openNote(doc.id, note);
+        fileNames.appendChild(item);
+      });
+      console.log("Rendered items:", fileNames.children.length);
+    } catch (e) {
+      console.error("Error loading notes:", e);
+    }
   }
 
-  // Open a note
+  // 3) Open a note into the editor
   function openNote(id, note) {
     console.log("Opening note", id, note);
-    currentNoteId = id;
+    currentNoteId         = id;
     textArea.dataset.noteId = id;
-    textArea.value = note.content;
+    textArea.value        = note.content || '';
+    textArea.focus();
   }
 
-  // Create a new note
+  // 4) Create a new blank note
   newBtn.addEventListener('click', async () => {
     console.log("New button clicked");
-    const docRef = await db
-      .collection('users')
-      .doc(currentUser.uid)
-      .collection('notes')
-      .add({
-        title: '',
-        content: '',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-    console.log("Created doc", docRef.id);
-    currentNoteId = docRef.id;
-    textArea.dataset.noteId = currentNoteId;
-    textArea.value = '';
-    textArea.focus();
-    loadNotes();
+    try {
+      const docRef = await db
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('notes')
+        .add({
+          title: '',
+          content: '',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      console.log("Created doc:", docRef.id);
+      currentNoteId = docRef.id;
+      textArea.dataset.noteId = currentNoteId;
+      textArea.value = '';
+      textArea.focus();
+      loadNotes();
+    } catch (e) {
+      console.error("Error creating note:", e);
+    }
   });
 
-  // Delete current note
+  // 5) Delete the currently open note
   delBtn.addEventListener('click', async () => {
     console.log("Delete button clicked");
     const noteId = textArea.dataset.noteId;
-    if (!noteId) return console.warn('No note selected to delete.');
+    if (!noteId) return console.warn("No note selected to delete.");
 
-    await db
-      .collection('users')
-      .doc(currentUser.uid)
-      .collection('notes')
-      .doc(noteId)
-      .delete();
-
-    console.log("Deleted doc", noteId);
-    textArea.value = '';
-    delete textArea.dataset.noteId;
-    currentNoteId = null;
-    loadNotes();
+    try {
+      await db
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('notes')
+        .doc(noteId)
+        .delete();
+      console.log("Deleted doc:", noteId);
+      textArea.value = '';
+      delete textArea.dataset.noteId;
+      currentNoteId = null;
+      loadNotes();
+    } catch (e) {
+      console.error("Error deleting note:", e);
+    }
   });
 
-  // (You can add similar logging for search, autoSave, etc.)
+  // 6) Search toggle and filter (optional)
+  searchBtn.addEventListener('click', () => {
+    searchInput.style.display = 'block';
+    searchInput.focus();
+  });
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.toLowerCase();
+    document.querySelectorAll('.note-item').forEach(item => {
+      item.style.display = item.textContent.toLowerCase().includes(q)
+        ? '' : 'none';
+    });
+  });
+
+  // 7) Auto‑save on typing (debounced)
+  textArea.addEventListener('input', () => {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(autoSaveNote, 500);
+  });
+
+  // 8) Auto‑save implementation
+  async function autoSaveNote() {
+    const noteId  = textArea.dataset.noteId;
+    const content = textArea.value;
+    const title   = content.split('\n')[0].trim() || '';
+
+    if (!noteId) {
+      console.warn("No noteId to save");
+      return;
+    }
+    console.log("Auto‑saving note", noteId, { title, content });
+    try {
+      await db
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('notes')
+        .doc(noteId)
+        .update({
+          title,
+          content,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      console.log("Auto‑saved successfully");
+      loadNotes();
+    } catch (e) {
+      console.error("Error auto‑saving note:", e);
+    }
+  }
 });
