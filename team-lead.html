@@ -5,60 +5,68 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>TeamHub Dashboard</title>
   <link rel="stylesheet" href="team-lead.css"/>
-  <title>Team Lead Dashboard</title>
 
-
-  <!-- Firebase SDKs -->
+  <!-- ✅ Load Firebase SDKs ONCE -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <!-- ✅ Firebase config and initialization -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQSl1HtlJBPRBcgt5culdCDj_cBVN40Io",
+      authDomain: "offer-upload.firebaseapp.com",
+      projectId: "offer-upload",
+      storageBucket: "offer-upload.firebasestorage.app",
+      messagingSenderId: "147934510488",
+      appId: "1:147934510488:web:cdf01aed4342a43475bfed",
+      measurementId: "G-ZPBL7DC3YG"
+    };
+
+    // ✅ Initialize Firebase once
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+  </script>
 </head>
 <body>
   <div class="container">
     <h1 id="welcome">Loading…</h1>
-    <button id="signout">Sign Out</button></div>
+    <button id="signout">Sign Out</button>
+  </div>
 
   <section id="notepad">
-  <div class="sidebar">
-    <button id="new-file">New Note</button>
-    <button id="delete">Delete</button>
-    <button id="search">Search</button>
-    <input type="text" id="search-input" placeholder="Search notes..." style="display: none;" />
-    <div id="file-names" class="file-list"></div>
-  </div>
+    <div class="sidebar">
+      <button id="new-file">New Note</button>
+      <button id="delete">Delete</button>
+      <button id="search">Search</button>
+      <input type="text" id="search-input" placeholder="Search notes..." style="display: none;" />
+      <div id="file-names" class="file-list"></div>
+    </div>
 
-  <div class="editor">
-    <textarea id="text-input" placeholder="Start typing your note..."></textarea>
-  </div>
-</section>
+    <div class="editor">
+      <textarea id="text-input" placeholder="Start typing your note..."></textarea>
+    </div>
+  </section>
 
-
-  <!-- Firebase compat scripts -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <!-- Reuse your app.js or a new file -->
+  <!-- ✅ Auth Guard + Logout Logic -->
   <script>
-
-    // Guard: redirect back to landing if not signed in
     auth.onAuthStateChanged(user => {
       if (!user) {
         window.location.href = 'index.html';
       } else {
-        document.getElementById('welcome').textContent =
-          `Welcome, ${user.displayName}!`;
+        document.getElementById('welcome').textContent = `Welcome, ${user.displayName}!`;
       }
     });
 
-    // Sign-out handler
     document.getElementById('signout').addEventListener('click', () => {
       auth.signOut().then(() => {
         window.location.href = 'index.html';
       });
     });
   </script>
-  <!-- Your external JavaScript -->
+
+  <!-- ✅ Your logic files (make sure these come after Firebase is ready) -->
   <script src="app.js"></script>
   <script src="team-lead.js"></script>
 </body>
 </html>
-
