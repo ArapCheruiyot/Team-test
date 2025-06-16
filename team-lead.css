@@ -1,1 +1,51 @@
 
+/* Reset default body styling */
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
+/* Header container */
+.container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 999;
+}
+
+/* Welcome text */
+#welcome {
+  font-size: 1.2rem;
+  color: #333;
+  margin: 0;
+}
+
+/* Sign Out button */
+#signout {
+  background-color: #e53935;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+#signout:hover {
+  background-color: #c62828;
+}
+
+/* Push content below the header */
+body > *:not(.container) {
+  padding-top: 70px; /* Adjust based on header height */
+}
