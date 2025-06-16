@@ -1,13 +1,4 @@
 // 1️⃣ Firebase configuration (from your console)
-  const firebaseConfig = {
-  apiKey: "AIzaSyBQSl1HtlJBPRBcgt5culdCDj_cBVN40Io",
-  authDomain: "offer-upload.firebaseapp.com",
-  projectId: "offer-upload",
-  storageBucket: "offer-upload.firebasestorage.app",
-  messagingSenderId: "147934510488",
-  appId: "1:147934510488:web:cdf01aed4342a43475bfed",
-  measurementId: "G-ZPBL7DC3YG"
-};
 
 // 2️⃣ Initialize Firebase
 firebase.initializeApp(firebaseConfig);
