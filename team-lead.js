@@ -1,3 +1,5 @@
+console.log("✅ team‑lead.js loaded");
+
 "use strict";
 
 // Get DOM elements from the HTML
