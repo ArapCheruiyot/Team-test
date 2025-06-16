@@ -12,28 +12,26 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <!-- ✅ Firebase config and init -->
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyBQSl1HtlJBPRBcgt5culdCDj_cBVN40Io",
-    authDomain: "offer-upload.firebaseapp.com",
-    projectId: "offer-upload",
-    storageBucket: "offer-upload.firebasestorage.app",
-    messagingSenderId: "147934510488",
-    appId: "1:147934510488:web:cdf01aed4342a43475bfed",
-    measurementId: "G-ZPBL7DC3YG"
-  };
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQSl1HtlJBPRBcgt5culdCDj_cBVN40Io",
+      authDomain: "offer-upload.firebaseapp.com",
+      projectId: "offer-upload",
+      storageBucket: "offer-upload.firebasestorage.app",
+      messagingSenderId: "147934510488",
+      appId: "1:147934510488:web:cdf01aed4342a43475bfed",
+      measurementId: "G-ZPBL7DC3YG"
+    };
 
-  // ✅ Initialize Firebase
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+    // ✅ Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-
-  // ✅ Make them available globally
-  window.db = db;
-  window.auth = auth;
-</script>
-
+    // ✅ Make them available globally
+    window.db = db;
+    window.auth = auth;
+  </script>
 </head>
 <body>
   <div class="container">
@@ -41,18 +39,27 @@
     <button id="signout">Sign Out</button>
   </div>
 
-  <!-- ✅ Notepad UI -->
+  <!-- ✅ Notepad split into left and right halves -->
   <section id="notepad">
-    <div class="sidebar">
-      <button id="new-file">New Note</button>
-      <button id="delete">Delete</button>
-      <button id="search">Search</button>
-      <input type="text" id="search-input" placeholder="Search notes..." style="display: none;" />
-      <div id="file-names" class="file-list"></div>
+    <!-- Left Half: Notepad Functionality -->
+    <div id="notepad-left">
+      <div class="sidebar">
+        <button id="new-file">New Note</button>
+        <button id="delete">Delete</button>
+        <button id="search">Search</button>
+        <input type="text" id="search-input" placeholder="Search notes..." style="display: none;" />
+        <div id="file-names" class="file-list"></div>
+      </div>
+
+      <div class="editor">
+        <textarea id="text-input" placeholder="Start typing your note..."></textarea>
+      </div>
     </div>
 
-    <div class="editor">
-      <textarea id="text-input" placeholder="Start typing your note..."></textarea>
+    <!-- Right Half: Reserved for future features -->
+    <div id="notepad-right">
+      <h2>Upcoming Features</h2>
+      <p>This area is reserved for charts, reports, tasks, etc.</p>
     </div>
   </section>
 
@@ -73,8 +80,7 @@
     });
   </script>
 
-  <!-- ✅ Your logic -->
-
+  <!-- ✅ Main JS logic -->
   <script src="team-lead.js"></script>
 </body>
 </html>
