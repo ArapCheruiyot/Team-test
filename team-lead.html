@@ -6,12 +6,12 @@
   <title>TeamHub Dashboard</title>
   <link rel="stylesheet" href="team-lead.css"/>
 
-  <!-- ✅ Load Firebase SDKs ONCE -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <!-- ✅ Firebase SDKs (COMPAT) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-  <!-- ✅ Firebase config and initialization -->
+  <!-- ✅ Firebase config and init -->
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBQSl1HtlJBPRBcgt5culdCDj_cBVN40Io",
@@ -23,9 +23,11 @@
       measurementId: "G-ZPBL7DC3YG"
     };
 
-    // ✅ Initialize Firebase once
+    // Initialize Firebase only ONCE
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    const db = firebase.firestore();
+    window.db = db; // Make db available to external JS
   </script>
 </head>
 <body>
@@ -34,6 +36,7 @@
     <button id="signout">Sign Out</button>
   </div>
 
+  <!-- ✅ Notepad UI -->
   <section id="notepad">
     <div class="sidebar">
       <button id="new-file">New Note</button>
@@ -48,13 +51,13 @@
     </div>
   </section>
 
-  <!-- ✅ Auth Guard + Logout Logic -->
+  <!-- ✅ Auth guard -->
   <script>
     auth.onAuthStateChanged(user => {
       if (!user) {
         window.location.href = 'index.html';
       } else {
-        document.getElementById('welcome').textContent = `Welcome, ${user.displayName}!`;
+        document.getElementById('welcome').textContent = `Welcome, ${user.displayName || user.email || "User"}!`;
       }
     });
 
@@ -65,7 +68,7 @@
     });
   </script>
 
-  <!-- ✅ Your logic files (make sure these come after Firebase is ready) -->
+  <!-- ✅ Your logic -->
   <script src="app.js"></script>
   <script src="team-lead.js"></script>
 </body>
