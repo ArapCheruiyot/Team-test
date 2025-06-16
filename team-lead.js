@@ -1,146 +1,108 @@
-console.log("✅ team‑lead.js loaded");
+// team‑lead.js
+document.addEventListener('DOMContentLoaded', () => {
+  console.log("✅ team‑lead.js initialized");
 
-"use strict";
+  const db = window.db;
+  const auth = window.auth;
 
-// Get DOM elements from the HTML
-const newFileBtn      = document.getElementById("new-file");
-const deleteBtn       = document.getElementById("delete");
-const searchBtn       = document.getElementById("search");
-const searchInput     = document.getElementById("search-input");
-const fileNamesHolder = document.getElementById("file-names");
-const textInput       = document.getElementById("text-input");
+  let currentUser = null;
+  let currentNoteId = null;
+  let saveTimeout = null;
 
-let currentNoteId = null; // holds the ID of the note being edited
+  // Cache DOM elements
+  const newBtn      = document.getElementById('new-file');
+  const delBtn      = document.getElementById('delete');
+  const searchBtn   = document.getElementById('search');
+  const searchInput = document.getElementById('search-input');
+  const fileNames   = document.getElementById('file-names');
+  const textArea    = document.getElementById('text-input');
 
-// Reference the Firestore "notes" collection
-const notesRef = db.collection("notes");
+  console.log("newBtn:", newBtn, "delBtn:", delBtn, "textArea:", textArea);
 
-// ----------------------
-// Utility Functions
-// ----------------------
-
-// Render the list of notes in the sidebar
-function renderNotes(notes) {
-  fileNamesHolder.innerHTML = ""; // clear existing list
-  notes.forEach(note => {
-    const noteDiv = document.createElement("div");
-    noteDiv.textContent = note.title || "Untitled Note";
-    noteDiv.dataset.noteId = note.id;
-    noteDiv.classList.add("note-item");
-    // Clicking a note loads its content in the editor
-    noteDiv.addEventListener("click", () => {
-      loadNote(note.id);
-    });
-    fileNamesHolder.appendChild(noteDiv);
-  });
-}
-
-// Load all notes for the current user in real time
-function loadNotes() {
-  const user = auth.currentUser;
-  if (!user) return;
-  // Query notes by the current user's UID
-  notesRef.where("uid", "==", user.uid)
-    .onSnapshot(snapshot => {
-      const notes = [];
-      snapshot.forEach(doc => {
-        notes.push({ id: doc.id, ...doc.data() });
-      });
-      renderNotes(notes);
-    }, err => {
-      console.error("Error fetching notes:", err);
-    });
-}
-
-// Load a specific note from Firestore into the text area
-function loadNote(noteId) {
-  currentNoteId = noteId;
-  notesRef.doc(noteId)
-    .get()
-    .then(doc => {
-      if (doc.exists) {
-        const noteData = doc.data();
-        textInput.value = noteData.content || "";
-      }
-    })
-    .catch(err => console.error("Error loading note:", err));
-}
-
-// ----------------------
-// Event Listeners & Handlers
-// ----------------------
-
-// Create a new note when the New Note button is clicked
-newFileBtn.addEventListener("click", () => {
-  const user = auth.currentUser;
-  if (!user) return;
-
-  // Add a new document for this note with default values
-  notesRef.add({
-    uid: user.uid,
-    title: "New Note",
-    content: ""
-  })
-  .then(docRef => {
-    currentNoteId = docRef.id;
-  })
-  .catch(err => console.error("Error creating note:", err));
-});
-
-// Delete the currently open note when Delete is clicked
-deleteBtn.addEventListener("click", () => {
-  if (currentNoteId) {
-    notesRef.doc(currentNoteId)
-      .delete()
-      .then(() => {
-        // Clear the editor when deletion is complete
-        textInput.value = "";
-        currentNoteId = null;
-      })
-      .catch(err => console.error("Error deleting note:", err));
-  }
-});
-
-// Debounce timer variables for saving changes
-let typingTimer;
-const typingDelay = 500; // update Firestore 500ms after typing stops
-
-// Update note content in Firestore as the user types
-textInput.addEventListener("input", () => {
-  // Reset the timer on every input event
-  clearTimeout(typingTimer);
-  typingTimer = setTimeout(() => {
-    if (currentNoteId) {
-      notesRef.doc(currentNoteId)
-        .update({ content: textInput.value })
-        .catch(err => console.error("Error updating note:", err));
+  // Auth listener
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      console.log("No user, redirecting…");
+      return;
     }
-  }, typingDelay);
-});
-
-// Toggle the search input field on and off
-searchBtn.addEventListener("click", () => {
-  if (searchInput.style.display === "none" || searchInput.style.display === "") {
-    searchInput.style.display = "block";
-    searchInput.focus();
-  } else {
-    searchInput.style.display = "none";
-    searchInput.value = ""; // clear search when hiding
-    // Restore full note list when search is canceled
-    Array.from(fileNamesHolder.children).forEach(item => {
-      item.style.display = "block";
-    });
-  }
-});
-
-// Filter and show matching notes as the user types a query
-searchInput.addEventListener("input", () => {
-  const searchTerm = searchInput.value.toLowerCase();
-  Array.from(fileNamesHolder.children).forEach(item => {
-    const title = item.textContent.toLowerCase();
-    item.style.display = title.includes(searchTerm) ? "block" : "none";
+    currentUser = user;
+    console.log("Signed in as", user.uid);
+    loadNotes();
   });
-});
 
-// Initialize notes loading once the window is fully loaded
-window.addEventListener("load", loadNotes);
+  // Load notes
+  async function loadNotes() {
+    console.log("Loading notes…");
+    fileNames.innerHTML = '';
+    const snapshot = await db
+      .collection('users')
+      .doc(currentUser.uid)
+      .collection('notes')
+      .orderBy('createdAt', 'desc')
+      .get();
+
+    console.log("Notes snapshot size:", snapshot.size);
+
+    snapshot.forEach(doc => {
+      const note = doc.data();
+      const item = document.createElement('div');
+      item.textContent = note.title || '(Untitled)';
+      item.className = 'note-item';
+      item.onclick = () => openNote(doc.id, note);
+      fileNames.appendChild(item);
+    });
+    console.log("Rendered", fileNames.children.length, "notes");
+  }
+
+  // Open a note
+  function openNote(id, note) {
+    console.log("Opening note", id, note);
+    currentNoteId = id;
+    textArea.dataset.noteId = id;
+    textArea.value = note.content;
+  }
+
+  // Create a new note
+  newBtn.addEventListener('click', async () => {
+    console.log("New button clicked");
+    const docRef = await db
+      .collection('users')
+      .doc(currentUser.uid)
+      .collection('notes')
+      .add({
+        title: '',
+        content: '',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+    console.log("Created doc", docRef.id);
+    currentNoteId = docRef.id;
+    textArea.dataset.noteId = currentNoteId;
+    textArea.value = '';
+    textArea.focus();
+    loadNotes();
+  });
+
+  // Delete current note
+  delBtn.addEventListener('click', async () => {
+    console.log("Delete button clicked");
+    const noteId = textArea.dataset.noteId;
+    if (!noteId) return console.warn('No note selected to delete.');
+
+    await db
+      .collection('users')
+      .doc(currentUser.uid)
+      .collection('notes')
+      .doc(noteId)
+      .delete();
+
+    console.log("Deleted doc", noteId);
+    textArea.value = '';
+    delete textArea.dataset.noteId;
+    currentNoteId = null;
+    loadNotes();
+  });
+
+  // (You can add similar logging for search, autoSave, etc.)
+});
