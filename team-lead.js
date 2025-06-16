@@ -1,7 +1,9 @@
 // team-lead.js
 
-const db = window.db;
-const auth = window.auth;  // Reuse auth from app.js
+// 🔧 Avoid redeclaring variables already set in HTML
+db = window.db;
+auth = window.auth;
+
 let currentUser = null;
 let currentNoteId = null;
 let saveTimeout = null;
