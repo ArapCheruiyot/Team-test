@@ -12,6 +12,8 @@ const searchInput = document.getElementById('search-input');
 const fileNames   = document.getElementById('file-names');
 const textArea    = document.getElementById('text-input');
 
+let currentNoteId = null;
+
 // Wait for auth to be ready
 firebase.auth().onAuthStateChanged(user => {
   if (!user) return;
@@ -32,7 +34,7 @@ async function loadNotes() {
   snapshot.forEach(doc => {
     const note = doc.data();
     const item = document.createElement('div');
-    item.textContent = note.title;
+    item.textContent = note.title || '(Untitled)';
     item.className = 'note-item';
     item.onclick = () => openNote(doc.id, note);
     fileNames.appendChild(item);
@@ -43,26 +45,25 @@ async function loadNotes() {
 function openNote(id, note) {
   textArea.value = note.content;
   textArea.dataset.noteId = id;
+  currentNoteId = id;
 }
 
-// Create a new note
+// Create a new note (no prompt, just blank)
 newBtn.addEventListener('click', async () => {
-  const title = prompt('Enter note title:');
-  if (!title) return;
-
-  // Save empty note in Firestore
   const docRef = await db
     .collection('users')
     .doc(currentUser.uid)
     .collection('notes')
     .add({
-      title,
+      title: '',
       content: '',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
-  loadNotes();
-  openNote(docRef.id, { title, content: '' });
+  currentNoteId = docRef.id;
+  textArea.value = '';
+  textArea.dataset.noteId = currentNoteId;
+  loadNotes(); // Refresh list
 });
 
 // Delete current note
@@ -75,9 +76,10 @@ delBtn.addEventListener('click', async () => {
     .collection('notes')
     .doc(noteId)
     .delete();
-  
+
   textArea.value = '';
   delete textArea.dataset.noteId;
+  currentNoteId = null;
   loadNotes();
 });
 
@@ -90,13 +92,13 @@ searchBtn.addEventListener('click', () => {
 searchInput.addEventListener('input', () => {
   const q = searchInput.value.toLowerCase();
   document.querySelectorAll('.note-item').forEach(item => {
-    item.style.display = item.textContent.toLowerCase().includes(q) 
-      ? '' 
+    item.style.display = item.textContent.toLowerCase().includes(q)
+      ? ''
       : 'none';
   });
 });
 
-// Auto‑save on blur or Enter key
+// Auto-save on blur or Enter key
 textArea.addEventListener('blur', saveCurrentNote);
 textArea.addEventListener('keydown', e => {
   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -104,9 +106,27 @@ textArea.addEventListener('keydown', e => {
   }
 });
 
+// Auto‑update content & title on typing
+textArea.addEventListener('input', async () => {
+  const content = textArea.value;
+  const title = content.split('\n')[0].trim(); // first line as title
+
+  if (!currentNoteId) return;
+
+  await db
+    .collection('users')
+    .doc(currentUser.uid)
+    .collection('notes')
+    .doc(currentNoteId)
+    .update({ content, title });
+
+  loadNotes(); // Refresh sidebar titles
+});
+
+// Save note explicitly
 async function saveCurrentNote() {
   const noteId = textArea.dataset.noteId;
-  if (!noteId) return; // nothing to save
+  if (!noteId) return;
   await db
     .collection('users')
     .doc(currentUser.uid)
@@ -114,4 +134,3 @@ async function saveCurrentNote() {
     .doc(noteId)
     .update({ content: textArea.value });
 }
-
