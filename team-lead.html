@@ -12,23 +12,27 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <!-- ✅ Firebase config and init -->
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBQSl1HtlJBPRBcgt5culdCDj_cBVN40Io",
-      authDomain: "offer-upload.firebaseapp.com",
-      projectId: "offer-upload",
-      storageBucket: "offer-upload.firebasestorage.app",
-      messagingSenderId: "147934510488",
-      appId: "1:147934510488:web:cdf01aed4342a43475bfed",
-      measurementId: "G-ZPBL7DC3YG"
-    };
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBQSl1HtlJBPRBcgt5culdCDj_cBVN40Io",
+    authDomain: "offer-upload.firebaseapp.com",
+    projectId: "offer-upload",
+    storageBucket: "offer-upload.firebasestorage.app",
+    messagingSenderId: "147934510488",
+    appId: "1:147934510488:web:cdf01aed4342a43475bfed",
+    measurementId: "G-ZPBL7DC3YG"
+  };
 
-    // Initialize Firebase only ONCE
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    window.db = db; // Make db available to external JS
-  </script>
+  // ✅ Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // ✅ Make them available globally
+  window.db = db;
+  window.auth = auth;
+</script>
+
 </head>
 <body>
   <div class="container">
