@@ -1,37 +1,37 @@
-// 1️⃣ Firebase configuration (from your console)
+// ✅ Initialize Firebase only once
+if (!firebase.apps.length) {
   const firebaseConfig = {
-  apiKey: "AIzaSyBQSl1HtlJBPRBcgt5culdCDj_cBVN40Io",
-  authDomain: "offer-upload.firebaseapp.com",
-  projectId: "offer-upload",
-  storageBucket: "offer-upload.firebasestorage.app",
-  messagingSenderId: "147934510488",
-  appId: "1:147934510488:web:cdf01aed4342a43475bfed",
-  measurementId: "G-ZPBL7DC3YG"
-};
-// 2️⃣ Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const provider = new firebase.auth.GoogleAuthProvider();
+    apiKey: "AIzaSyBQSl1HtlJBPRBcgt5culdCDj_cBVN40Io",
+    authDomain: "offer-upload.firebaseapp.com",
+    projectId: "offer-upload",
+    storageBucket: "offer-upload.firebasestorage.app",
+    messagingSenderId: "147934510488",
+    appId: "1:147934510488:web:cdf01aed4342a43475bfed",
+    measurementId: "G-ZPBL7DC3YG"
+  };
+  firebase.initializeApp(firebaseConfig);
+}
 
-// 3️⃣ Wire up the “Sign in with Google” button safely
+// ✅ Export Firebase services globally
+window.auth = firebase.auth();
+window.provider = new firebase.auth.GoogleAuthProvider();
+window.db = firebase.firestore();
+
+// ✅ Handle sign-in button
 const signInBtn = document.getElementById('google-signin');
 signInBtn.addEventListener('click', () => {
-  // Prevent multiple popups
   signInBtn.disabled = true;
 
-  auth.signInWithPopup(provider)
+  window.auth.signInWithPopup(window.provider)
     .catch(err => console.error("Sign‑in error:", err))
     .finally(() => {
-      // Re-enable button whether success or error
       signInBtn.disabled = false;
     });
 });
 
-// 4️⃣ Listen for auth state changes
-auth.onAuthStateChanged(user => {
+// ✅ Redirect when signed in
+window.auth.onAuthStateChanged(user => {
   if (user) {
-    // ✅ User is signed in — send to dashboard
     window.location.href = 'team-lead.html';
   }
-  // else: stay on landing page
 });
