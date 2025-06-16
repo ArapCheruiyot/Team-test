@@ -1,8 +1,8 @@
 // team-lead.js
 
-// 🔧 Avoid redeclaring variables already set in HTML
-db = window.db;
-auth = window.auth;
+// ✅ Avoid redeclaring already-constant variables
+let db = window.db;
+let auth = window.auth;
 
 let currentUser = null;
 let currentNoteId = null;
