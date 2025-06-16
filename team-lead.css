@@ -49,3 +49,79 @@ html, body {
 body > *:not(.container) {
   padding-top: 70px; /* Adjust based on header height */
 }
+/* Notepad layout */
+#notepad {
+  display: flex;
+  height: calc(100vh - 60px); /* Subtract header height */
+  overflow: hidden;
+}
+
+/* Sidebar styles */
+.sidebar {
+  width: 250px;
+  background-color: #f9f9f9;
+  border-right: 1px solid #ddd;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.sidebar button {
+  padding: 0.5rem;
+  border: none;
+  background: #2196f3;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.sidebar button:hover {
+  background: #1976d2;
+}
+
+#search-input {
+  padding: 0.4rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.file-list {
+  margin-top: 1rem;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.note-item {
+  padding: 0.5rem;
+  background: #fff;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.note-item:hover {
+  background-color: #e3f2fd;
+}
+
+/* Text editor styles */
+.editor {
+  flex: 1;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+#text-input {
+  width: 100%;
+  height: 100%;
+  resize: none;
+  font-size: 1rem;
+  padding: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-family: monospace;
+}
