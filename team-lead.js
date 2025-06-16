@@ -1,26 +1,27 @@
 // team-lead.js
 
 const db = window.db;
+const auth = window.auth;  // Reuse auth from app.js
 let currentUser = null;
 let currentNoteId = null;
 let saveTimeout = null;
 
 // Cache DOM elements
-const newBtn = document.getElementById('new-file');
-const delBtn = document.getElementById('delete');
-const searchBtn = document.getElementById('search');
+const newBtn      = document.getElementById('new-file');
+const delBtn      = document.getElementById('delete');
+const searchBtn   = document.getElementById('search');
 const searchInput = document.getElementById('search-input');
-const fileNames = document.getElementById('file-names');
-const textArea = document.getElementById('text-input');
+const fileNames   = document.getElementById('file-names');
+const textArea    = document.getElementById('text-input');
 
-// Wait for auth to be ready
-firebase.auth().onAuthStateChanged(user => {
+// Wait for user to be authenticated
+auth.onAuthStateChanged(user => {
   if (!user) return;
   currentUser = user;
   loadNotes();
 });
 
-// Load all notes for the current user
+// Load notes from Firestore
 async function loadNotes() {
   fileNames.innerHTML = '';
   const snapshot = await db
@@ -42,12 +43,12 @@ async function loadNotes() {
 
 // Open a note
 function openNote(id, note) {
-  textArea.value = note.content;
   currentNoteId = id;
   textArea.dataset.noteId = id;
+  textArea.value = note.content;
 }
 
-// Create a new note (no prompt, just blank)
+// Create a new note
 newBtn.addEventListener('click', async () => {
   const docRef = await db
     .collection('users')
@@ -63,10 +64,11 @@ newBtn.addEventListener('click', async () => {
   currentNoteId = docRef.id;
   textArea.value = '';
   textArea.dataset.noteId = currentNoteId;
+  textArea.focus();
   loadNotes();
 });
 
-// Delete note
+// Delete current note
 delBtn.addEventListener('click', async () => {
   const noteId = textArea.dataset.noteId;
   if (!noteId) return alert('No note selected.');
@@ -78,19 +80,19 @@ delBtn.addEventListener('click', async () => {
     .doc(noteId)
     .delete();
 
-  currentNoteId = null;
   textArea.value = '';
   delete textArea.dataset.noteId;
+  currentNoteId = null;
   loadNotes();
 });
 
-// Show search field
+// Search button toggle
 searchBtn.addEventListener('click', () => {
   searchInput.style.display = 'block';
   searchInput.focus();
 });
 
-// Filter notes in the sidebar
+// Filter note titles in the sidebar
 searchInput.addEventListener('input', () => {
   const q = searchInput.value.toLowerCase();
   document.querySelectorAll('.note-item').forEach(item => {
@@ -98,7 +100,7 @@ searchInput.addEventListener('input', () => {
   });
 });
 
-// Save note on blur or CTRL/CMD + Enter
+// Save on blur or Ctrl/Cmd + Enter
 textArea.addEventListener('blur', saveCurrentNote);
 textArea.addEventListener('keydown', e => {
   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -106,16 +108,17 @@ textArea.addEventListener('keydown', e => {
   }
 });
 
-// Auto-save with first line as title
+// Auto-save on typing with first line as title
 textArea.addEventListener('input', () => {
   clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(() => autoSaveNote(), 500); // Debounced
+  saveTimeout = setTimeout(autoSaveNote, 400);
 });
 
+// Auto save implementation
 async function autoSaveNote() {
+  const noteId = textArea.dataset.noteId;
   const content = textArea.value;
   const title = content.split('\n')[0].trim();
-  const noteId = textArea.dataset.noteId;
 
   if (!noteId || !currentUser) return;
 
@@ -130,13 +133,14 @@ async function autoSaveNote() {
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
-  loadNotes(); // Refresh sidebar
+  loadNotes(); // Refresh note list titles
 }
 
-// Manual save
+// Manual save logic
 async function saveCurrentNote() {
   const noteId = textArea.dataset.noteId;
   const content = textArea.value;
+  const title = content.split('\n')[0].trim();
 
   if (!noteId || !currentUser) return;
 
@@ -147,7 +151,7 @@ async function saveCurrentNote() {
     .doc(noteId)
     .update({
       content,
-      title: content.split('\n')[0].trim(),
+      title,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 }
