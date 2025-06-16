@@ -1,4 +1,16 @@
 // team-lead.js
+// team-lead.js
+
+// 🔧 Use the already-initialized globals—no const/let here:
+db;   
+auth;
+
+let currentUser = null;
+let currentNoteId = null;
+let saveTimeout = null;
+
+// ...rest of your code unchanged...
+
 
 // ✅ Avoid redeclaring already-constant variables
 let db = window.db;
