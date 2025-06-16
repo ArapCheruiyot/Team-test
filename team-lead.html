@@ -16,7 +16,22 @@
 <body>
   <div class="container">
     <h1 id="welcome">Loading…</h1>
-    <button id="signout">Sign Out</button>
+    <button id="signout">Sign Out</button></div>
+
+  <section id="notepad">
+  <div class="sidebar">
+    <button id="new-file">New Note</button>
+    <button id="delete">Delete</button>
+    <button id="search">Search</button>
+    <input type="text" id="search-input" placeholder="Search notes..." style="display: none;" />
+    <div id="file-names" class="file-list"></div>
+  </div>
+
+  <div class="editor">
+    <textarea id="text-input" placeholder="Start typing your note..."></textarea>
+  </div>
+</section>
+
 
   <!-- Firebase compat scripts -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
