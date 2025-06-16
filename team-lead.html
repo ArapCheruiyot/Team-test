@@ -27,6 +27,10 @@
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
+  firebase.firestore().settings({
+  experimentalForceLongPolling: true
+});
+
 
   // ✅ Make them available globally
   window.db = db;
