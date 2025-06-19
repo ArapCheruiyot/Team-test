@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // === Messaging Logic ===
+  // === Messaging ===
   contactList.addEventListener('click', e => {
     if (e.target.tagName === 'LI') {
       document.querySelectorAll('#contact-list li').forEach(li => li.classList.remove('active'));
