@@ -282,6 +282,17 @@ document.addEventListener('DOMContentLoaded', () => {
       loadMessagesWithContact(activeContact);
     }
   });
+chatList.addEventListener('click', e => {
+  if (e.target.tagName === 'LI') {
+    document.querySelectorAll('#chat-list li').forEach(li => li.classList.remove('active'));
+    e.target.classList.add('active');
+
+    activeContact = e.target.textContent.replace('💬 ', '').trim();
+    chatHeader.textContent = `Chatting in group: ${activeContact}`;
+    chatBox.innerHTML = '';
+    loadMessagesWithContact(activeContact);
+  }
+});
 
   sendBtn.addEventListener('click', async () => {
     const text = chatInput.value.trim();
