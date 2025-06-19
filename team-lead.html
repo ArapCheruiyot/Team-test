@@ -54,25 +54,27 @@
     </div>
 
     <!-- Right: Chat UI -->
-<h2>Chat Tools</h2>
+<div id="contact-chat-controls">
+  <div class="chat-actions">
+    <button id="add-contact-btn">Add Contact</button>
+    <button id="start-chat-btn">Start Chat</button>
+  </div>
 
-<!-- Add Contact -->
-<div style="margin-bottom: 2rem;">
-  <button id="add-contact-btn">Add Contact</button>
-  <input type="email" id="contact-email" placeholder="Enter email…" style="display:none; margin-top: 0.5rem;"/>
-  <button id="save-contact" style="display:none;">Save Contact</button>
+  <!-- Contact input -->
+  <div id="add-contact-form" style="display: none;">
+    <input type="email" id="contact-email" placeholder="Enter email">
+    <button id="save-contact">Save</button>
+  </div>
+  <ul id="contact-list"></ul>
 
-  <ul id="contact-list" style="margin-top: 1rem; padding-left: 1rem;"></ul>
+  <!-- Chat input -->
+  <div id="start-chat-form" style="display: none;">
+    <input type="text" id="chat-name" placeholder="Enter chat name">
+    <button id="create-chat">Create</button>
+  </div>
+  <ul id="chat-list"></ul>
 </div>
 
-<!-- Start Chat -->
-<div>
-  <button id="start-chat-btn">Start a Chat</button>
-  <input type="text" id="chat-name" placeholder="Enter chat name…" style="display:none; margin-top: 0.5rem;"/>
-  <button id="create-chat" style="display:none;">Create Chat</button>
-
-  <ul id="chat-list" style="margin-top: 1rem; padding-left: 1rem;"></ul>
-</div>
 
 
   <!-- ✅ Auth Guard -->
