@@ -160,3 +160,9 @@
   background: #0056b3;
 }
 
+#contact-list li.active {
+  background-color: #d3eaff;
+  font-weight: bold;
+}
+
+
