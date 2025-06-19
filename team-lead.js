@@ -172,3 +172,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 });
+
+// self edititng and testing
+
+<script>
+  // Add Contact button toggle
+  document.getElementById('add-contact-btn').addEventListener('click', () => {
+    document.getElementById('contact-email').style.display = 'inline-block';
+    document.getElementById('save-contact').style.display = 'inline-block';
+  });
+
+  // Save contact
+  document.getElementById('save-contact').addEventListener('click', () => {
+    const email = document.getElementById('contact-email').value.trim();
+    if (email) {
+      const li = document.createElement('li');
+      li.textContent = email;
+      document.getElementById('contact-list').appendChild(li);
+      document.getElementById('contact-email').value = '';
+    }
+  });
+
+  // Start Chat button toggle
+  document.getElementById('start-chat-btn').addEventListener('click', () => {
+    document.getElementById('chat-name').style.display = 'inline-block';
+    document.getElementById('create-chat').style.display = 'inline-block';
+  });
+
+  // Create chat
+  document.getElementById('create-chat').addEventListener('click', () => {
+    const chatName = document.getElementById('chat-name').value.trim();
+    if (chatName) {
+      const li = document.createElement('li');
+      li.textContent = chatName;
+      document.getElementById('chat-list').appendChild(li);
+      document.getElementById('chat-name').value = '';
+    }
+  });
+</script>
+
