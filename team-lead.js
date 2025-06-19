@@ -264,3 +264,93 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 });
+
+// 👤 Track selected contact
+let activeContact = null;
+
+// 🔁 When a contact is clicked
+contactList.addEventListener('click', e => {
+  if (e.target.tagName === 'LI') {
+    // Remove highlight from previous
+    document.querySelectorAll('#contact-list li').forEach(li => li.classList.remove('active'));
+
+    // Highlight current
+    e.target.classList.add('active');
+    
+    // Extract email (remove "👤 ")
+    activeContact = e.target.textContent.replace('👤 ', '').trim();
+
+    // Update chat header
+    document.getElementById('chat-header').textContent = `Chatting with ${activeContact}`;
+
+    // Clear old messages from UI
+    document.getElementById('chat-messages').innerHTML = '';
+
+    // Load messages with that contact
+    loadMessagesWithContact(activeContact);
+  }
+});
+
+// 📥 Load messages from Firestore
+async function loadMessagesWithContact(contactEmail) {
+  const chatBox = document.getElementById('chat-messages');
+  chatBox.innerHTML = '';
+
+  try {
+    const snapshot = await db.collection('users')
+      .doc(currentUser.uid)
+      .collection('messages')
+      .where('to', '==', contactEmail)
+      .orderBy('timestamp')
+      .get();
+
+    snapshot.forEach(doc => {
+      const msg = doc.data();
+      const div = document.createElement('div');
+      div.className = 'chat-bubble';
+      div.textContent = msg.text;
+      chatBox.appendChild(div);
+    });
+
+  } catch (e) {
+    console.error("❌ Error loading messages:", e);
+  }
+}
+
+// ✉️ Send message logic
+const sendBtn = document.getElementById('send-message-btn');
+const chatInput = document.getElementById('chat-input');
+const chatBox = document.getElementById('chat-messages');
+
+sendBtn.addEventListener('click', async () => {
+  const text = chatInput.value.trim();
+  if (!text || !activeContact) {
+    alert("Please select a contact and type a message.");
+    return;
+  }
+
+  try {
+    await db.collection('users')
+      .doc(currentUser.uid)
+      .collection('messages')
+      .add({
+        to: activeContact,
+        from: currentUser.email,
+        text: text,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+    console.log("✅ Message sent:", text);
+
+    // Add to UI
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-bubble';
+    bubble.textContent = text;
+    chatBox.appendChild(bubble);
+
+    chatInput.value = '';
+  } catch (e) {
+    console.error("❌ Error sending message:", e);
+  }
+});
+
