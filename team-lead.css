@@ -89,3 +89,22 @@
   background-color: #f0f0f0;
   overflow-y: auto;
 }
+<--chat --->
+/* Tabs layout */
+.chat-tabs {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.chat-tabs button {
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+/* Panels */
+.chat-panel {
+  border: 1px solid #ddd;
+  padding: 10px;
+  background: #f9f9f9;
+}
