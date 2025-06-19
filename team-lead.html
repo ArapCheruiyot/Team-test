@@ -54,15 +54,45 @@
     </div>
 
     <!-- Right: Chat UI -->
-    <div id="notepad-right">
-      <h2>Chat Feature</h2>
-      <div id="chat-container">
-        <div id="chat-users">
-          <h3>Contacts</h3>
-          <div id="user-list">
-            <!-- Dynamic user list -->
-          </div>
-        </div>
+<!-- Right: Chat UI -->
+<div id="notepad-right">
+  <h2>Chat Feature</h2>
+
+  <!-- Tabs -->
+  <div class="chat-tabs">
+    <button id="tab-add-contact">Add Contact</button>
+    <button id="tab-start-chat">Start Chat</button>
+    <button id="tab-chat-room">Chat</button>
+  </div>
+
+  <!-- Tab Panels -->
+  <div id="panel-add-contact" class="chat-panel">
+    <h3>Add Contact</h3>
+    <input type="text" id="contact-email" placeholder="Enter email address" />
+    <button id="add-contact-btn">Add</button>
+    <div id="add-contact-status"></div>
+  </div>
+
+  <div id="panel-start-chat" class="chat-panel" style="display: none;">
+    <h3>Start New Chat</h3>
+    <div id="contact-list">
+      <!-- Dynamically populated list -->
+      <p>Loading contacts...</p>
+    </div>
+  </div>
+
+  <div id="panel-chat-room" class="chat-panel" style="display: none;">
+    <h3 id="chat-with">Chat with [Contact]</h3>
+    <div id="chat-messages" style="height: 200px; overflow-y: auto; border: 1px solid #ccc; margin-bottom: 8px;">
+      <!-- Chat messages will go here -->
+    </div>
+    <div id="chat-input-area">
+      <input type="text" id="chat-input" placeholder="Type a message..." />
+      <button id="send-btn">Send</button>
+    </div>
+  </div>
+</div>
+
 
         
       </div>
