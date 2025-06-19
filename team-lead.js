@@ -175,7 +175,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // self edititng and testing
 
-<script>
   // Add Contact button toggle
   document.getElementById('add-contact-btn').addEventListener('click', () => {
     document.getElementById('contact-email').style.display = 'inline-block';
@@ -209,5 +208,5 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('chat-name').value = '';
     }
   });
-</script>
+
 
