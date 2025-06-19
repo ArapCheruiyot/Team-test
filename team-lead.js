@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentUser   = null;
   let currentNoteId = null;
   let saveTimeout   = null;
+  let activeContact = null;
 
   // Cache DOM elements
   const newBtn         = document.getElementById('new-file');
@@ -26,6 +27,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const chatNameInput  = document.getElementById('chat-name');
   const createChatBtn  = document.getElementById('create-chat');
   const chatList       = document.getElementById('chat-list');
+
+  const sendBtn        = document.getElementById('send-message-btn');
+  const chatInput      = document.getElementById('chat-input');
+  const chatBox        = document.getElementById('chat-messages');
+  const chatHeader     = document.getElementById('chat-header');
 
   // === Auth Handling ===
   auth.onAuthStateChanged(user => {
@@ -263,94 +269,69 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error("❌ Failed to load chats:", e);
     }
   }
-});
 
-// 👤 Track selected contact
-let activeContact = null;
+  // === Messaging Logic ===
+  contactList.addEventListener('click', e => {
+    if (e.target.tagName === 'LI') {
+      document.querySelectorAll('#contact-list li').forEach(li => li.classList.remove('active'));
+      e.target.classList.add('active');
 
-// 🔁 When a contact is clicked
-contactList.addEventListener('click', e => {
-  if (e.target.tagName === 'LI') {
-    // Remove highlight from previous
-    document.querySelectorAll('#contact-list li').forEach(li => li.classList.remove('active'));
+      activeContact = e.target.textContent.replace('👤 ', '').trim();
+      chatHeader.textContent = `Chatting with ${activeContact}`;
+      chatBox.innerHTML = '';
+      loadMessagesWithContact(activeContact);
+    }
+  });
 
-    // Highlight current
-    e.target.classList.add('active');
-    
-    // Extract email (remove "👤 ")
-    activeContact = e.target.textContent.replace('👤 ', '').trim();
+  sendBtn.addEventListener('click', async () => {
+    const text = chatInput.value.trim();
+    if (!text || !activeContact) {
+      alert("Please select a contact and type a message.");
+      return;
+    }
 
-    // Update chat header
-    document.getElementById('chat-header').textContent = `Chatting with ${activeContact}`;
+    try {
+      await db.collection('users')
+        .doc(currentUser.uid)
+        .collection('messages')
+        .add({
+          to: activeContact,
+          from: currentUser.email,
+          text,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
 
-    // Clear old messages from UI
-    document.getElementById('chat-messages').innerHTML = '';
+      const bubble = document.createElement('div');
+      bubble.className = 'chat-bubble';
+      bubble.textContent = text;
+      chatBox.appendChild(bubble);
+      chatInput.value = '';
+    } catch (e) {
+      console.error("❌ Error sending message:", e);
+    }
+  });
 
-    // Load messages with that contact
-    loadMessagesWithContact(activeContact);
-  }
-});
+  async function loadMessagesWithContact(contactEmail) {
+    chatBox.innerHTML = '';
+    try {
+      const snapshot = await db.collection('users')
+        .doc(currentUser.uid)
+        .collection('messages')
+        .where('to', '==', contactEmail)
+        .orderBy('timestamp')
+        .get();
 
-// 📥 Load messages from Firestore
-async function loadMessagesWithContact(contactEmail) {
-  const chatBox = document.getElementById('chat-messages');
-  chatBox.innerHTML = '';
-
-  try {
-    const snapshot = await db.collection('users')
-      .doc(currentUser.uid)
-      .collection('messages')
-      .where('to', '==', contactEmail)
-      .orderBy('timestamp')
-      .get();
-
-    snapshot.forEach(doc => {
-      const msg = doc.data();
-      const div = document.createElement('div');
-      div.className = 'chat-bubble';
-      div.textContent = msg.text;
-      chatBox.appendChild(div);
-    });
-
-  } catch (e) {
-    console.error("❌ Error loading messages:", e);
-  }
-}
-
-// ✉️ Send message logic
-const sendBtn = document.getElementById('send-message-btn');
-const chatInput = document.getElementById('chat-input');
-const chatBox = document.getElementById('chat-messages');
-
-sendBtn.addEventListener('click', async () => {
-  const text = chatInput.value.trim();
-  if (!text || !activeContact) {
-    alert("Please select a contact and type a message.");
-    return;
-  }
-
-  try {
-    await db.collection('users')
-      .doc(currentUser.uid)
-      .collection('messages')
-      .add({
-        to: activeContact,
-        from: currentUser.email,
-        text: text,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      snapshot.forEach(doc => {
+        const msg = doc.data();
+        const div = document.createElement('div');
+        div.className = 'chat-bubble';
+        div.textContent = msg.text;
+        chatBox.appendChild(div);
       });
 
-    console.log("✅ Message sent:", text);
-
-    // Add to UI
-    const bubble = document.createElement('div');
-    bubble.className = 'chat-bubble';
-    bubble.textContent = text;
-    chatBox.appendChild(bubble);
-
-    chatInput.value = '';
-  } catch (e) {
-    console.error("❌ Error sending message:", e);
+    } catch (e) {
+      console.error("❌ Error loading messages:", e);
+    }
   }
-});
 
+});
