@@ -212,3 +212,77 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('chat-name').value = '';
     }
   });
+
+//i dont know what happening here
+// === Add Contact to Firestore ===
+const addContactBtn = document.getElementById('add-contact-btn');
+const saveContactBtn = document.getElementById('save-contact');
+const contactInput = document.getElementById('contact-email');
+const contactList = document.getElementById('contact-list');
+
+addContactBtn.addEventListener('click', () => {
+  contactInput.style.display = 'inline-block';
+  saveContactBtn.style.display = 'inline-block';
+});
+
+saveContactBtn.addEventListener('click', async () => {
+  const email = contactInput.value.trim();
+  if (!email) return;
+
+  try {
+    await db.collection('users')
+      .doc(currentUser.uid)
+      .collection('contacts')
+      .add({
+        email,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+    console.log("✅ Contact saved:", email);
+
+    const li = document.createElement('li');
+    li.textContent = email;
+    contactList.appendChild(li);
+
+    contactInput.value = '';
+  } catch (e) {
+    console.error("❌ Error saving contact:", e);
+  }
+});
+
+// chat logis
+const startChatBtn = document.getElementById('start-chat-btn');
+const createChatBtn = document.getElementById('create-chat');
+const chatNameInput = document.getElementById('chat-name');
+const chatList = document.getElementById('chat-list');
+
+startChatBtn.addEventListener('click', () => {
+  chatNameInput.style.display = 'inline-block';
+  createChatBtn.style.display = 'inline-block';
+});
+
+createChatBtn.addEventListener('click', async () => {
+  const chatName = chatNameInput.value.trim();
+  if (!chatName) return;
+
+  try {
+    await db.collection('users')
+      .doc(currentUser.uid)
+      .collection('chats')
+      .add({
+        name: chatName,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+    console.log("✅ Chat created:", chatName);
+
+    const li = document.createElement('li');
+    li.textContent = chatName;
+    chatList.appendChild(li);
+
+    chatNameInput.value = '';
+  } catch (e) {
+    console.error("❌ Error creating chat:", e);
+  }
+});
+
