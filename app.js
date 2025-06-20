@@ -81,9 +81,12 @@ function loginAsAgent() {
     return;
   }
 
+  const targetEmail = enteredEmail.trim().toLowerCase();
+  console.log("Entered email:", targetEmail);
+
   db.collection("users").get().then(snapshot => {
     if (snapshot.empty) {
-      alert("No workspaces exist yet. Please ask your team lead to invite you.");
+      alert("No workspaces exist yet.");
       return;
     }
 
@@ -91,27 +94,27 @@ function loginAsAgent() {
 
     snapshot.forEach(doc => {
       const data = doc.data();
-      if (data.contacts && data.contacts.includes(enteredEmail.trim().toLowerCase())) {
+      console.log("Checking team lead:", data.email);
+      console.log("Their contacts:", data.contacts);
+
+      if (Array.isArray(data.contacts) && data.contacts.includes(targetEmail)) {
         isInvited = true;
       }
     });
 
     if (isInvited) {
-      // 🔁 FORCE fresh login by signing out first
       auth.signOut().then(() => {
         auth.signInWithPopup(provider)
           .then((result) => {
             const signedInEmail = result.user.email.toLowerCase();
+            console.log("Signed-in email:", signedInEmail);
 
-            if (signedInEmail === enteredEmail.trim().toLowerCase()) {
+            if (signedInEmail === targetEmail) {
               window.location.href = "team-lead.html?asAgent=true";
             } else {
-              alert("Signed-in email doesn't match the invited email.");
+              alert("Signed-in email doesn't match the one you entered.");
               auth.signOut();
             }
-          })
-          .catch((error) => {
-            console.error("Agent login error:", error);
           });
       });
     } else {
