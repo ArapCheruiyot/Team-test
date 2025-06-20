@@ -35,3 +35,51 @@ function loginAsOwner() {
       });
   });
 }
+
+function loginAsAgent() {
+  const enteredEmail = prompt("Enter your email address to check if you’ve been invited:");
+
+  if (!enteredEmail) {
+    alert("Email is required to continue.");
+    return;
+  }
+
+  const trimmedEmail = enteredEmail.trim().toLowerCase();
+  let isInvited = false;
+
+  db.collection("users").get().then(snapshot => {
+    snapshot.forEach(doc => {
+      const data = doc.data();
+
+      if (Array.isArray(data.contacts) && data.contacts.includes(trimmedEmail)) {
+        isInvited = true;
+      }
+    });
+
+    if (isInvited) {
+      // ✅ Now allow sign-in
+      auth.signInWithPopup(provider)
+        .then((result) => {
+          const signedInEmail = result.user.email.toLowerCase();
+
+          if (signedInEmail === trimmedEmail) {
+            window.location.href = "team-lead.html?asAgent=true";
+          } else {
+            alert("The signed-in email doesn't match the invited one.");
+            auth.signOut();
+          }
+        })
+        .catch(err => {
+          console.error("Sign-in failed:", err);
+          alert("Something went wrong during login.");
+        });
+
+    } else {
+      alert("You are not invited to any workspace yet.");
+    }
+  }).catch(err => {
+    console.error("Error checking invitation list:", err);
+    alert("Could not check invitations. Please try again later.");
+  });
+}
+
