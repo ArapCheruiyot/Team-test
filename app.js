@@ -77,7 +77,7 @@ function loginAsAgent() {
         });
 
         if (isInvited) {
-          window.location.href = "dashboard.html?asAgent=true";
+          window.location.href = "team-lead.html?asAgent=true";
         } else {
           alert("You are not invited to any workspace yet.");
           auth.signOut();
