@@ -56,35 +56,48 @@ function loginAsOwner() {
 }
 
 function loginAsAgent() {
-  auth.signInWithPopup(provider)
-    .then((result) => {
-      const agentEmail = result.user.email;
+  const enteredEmail = prompt("Enter your email address to verify your invitation");
 
-      db.collection("users").get().then(snapshot => {
-        if (snapshot.empty) {
-          alert("No workspaces exist yet. Please ask your team lead to invite you.");
-          auth.signOut();
-          return;
-        }
+  if (!enteredEmail) {
+    alert("Email is required to proceed.");
+    return;
+  }
 
-        let isInvited = false;
+  db.collection("users").get().then(snapshot => {
+    if (snapshot.empty) {
+      alert("No workspaces exist yet. Please ask your team lead to invite you.");
+      return;
+    }
 
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          if (data.contacts && data.contacts.includes(agentEmail)) {
-            isInvited = true;
+    let isInvited = false;
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.contacts && data.contacts.includes(enteredEmail.trim().toLowerCase())) {
+        isInvited = true;
+      }
+    });
+
+    if (isInvited) {
+      // ✅ Email is in contact list — now allow Google Sign-In
+      auth.signInWithPopup(provider)
+        .then((result) => {
+          const signedInEmail = result.user.email.toLowerCase();
+
+          // Double-check match for safety
+          if (signedInEmail === enteredEmail.trim().toLowerCase()) {
+            window.location.href = "team-lead.html?asAgent=true";
+          } else {
+            alert("Signed-in email doesn't match the invited email.");
+            auth.signOut();
           }
+        })
+        .catch((error) => {
+          console.error("Agent login error:", error);
         });
 
-        if (isInvited) {
-          window.location.href = "team-lead.html?asAgent=true";
-        } else {
-          alert("You are not invited to any workspace yet.");
-          auth.signOut();
-        }
-      });
-    })
-    .catch((error) => {
-      console.error("Agent login error:", error);
-    });
+    } else {
+      alert("You are not invited to any workspace yet.");
+    }
+  });
 }
