@@ -87,7 +87,7 @@ function loginAsAgent() {
       }
     });
 
-        let isInvited = false;
+        
     if (isInvited) {
       // ✅ Email is in contact list — now allow Google Sign-In
       auth.signInWithPopup(provider)
