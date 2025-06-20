@@ -95,7 +95,7 @@ function loginAsAgent() {
           const signedInEmail = result.user.email.toLowerCase();
 
         snapshot.forEach(doc => {
-          const data = doc.data();Add commentMore actions
+          const data = doc.data();//Add commentMore actions
           if (data.contacts && data.contacts.includes(agentEmail)) {
             isInvited = true;
           // Double-check match for safety
