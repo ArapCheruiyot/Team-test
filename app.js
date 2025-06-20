@@ -47,7 +47,7 @@ function loginAsOwner() {
           });
         }
       }).then(() => {
-        window.location.href = "dashboard.html";
+        window.location.href = "team-lead.html";
       });
     })
     .catch((error) => {
