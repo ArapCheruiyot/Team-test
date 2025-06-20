@@ -1,13 +1,18 @@
 window.onload = function () {
   const ownerBtn = document.getElementById('owner-signin');
+  const agentBtn = document.getElementById('agent-signin'); // ✅ Attach agent button
 
   if (ownerBtn) {
     ownerBtn.addEventListener('click', loginAsOwner);
   }
+
+  if (agentBtn) {
+    agentBtn.addEventListener('click', loginAsAgent); // ✅ Listen for agent login
+  }
 };
 
+// ✅ TEAM LEAD LOGIN
 function loginAsOwner() {
-  // Log out any existing user to always start fresh
   auth.signOut().then(() => {
     auth.signInWithPopup(provider)
       .then((result) => {
@@ -16,17 +21,16 @@ function loginAsOwner() {
 
         return userRef.get().then((doc) => {
           if (!doc.exists) {
-            // First-time login — create user document
+            // First-time login — create team lead user doc
             return userRef.set({
-              email: user.email,
+              email: user.email.toLowerCase(),
               contacts: [],
               createdAt: new Date(),
               isOwner: true
             });
           }
         }).then(() => {
-          // ✅ Go to dashboard
-          window.location.href = "team-lead.html";
+          window.location.href = "team-lead.html"; // Full dashboard for team lead
         });
       })
       .catch((error) => {
@@ -36,6 +40,7 @@ function loginAsOwner() {
   });
 }
 
+// ✅ AGENT LOGIN
 function loginAsAgent() {
   const enteredEmail = prompt("Enter your email address to check if you’ve been invited:");
 
@@ -50,30 +55,34 @@ function loginAsAgent() {
   db.collection("users").get().then(snapshot => {
     snapshot.forEach(doc => {
       const data = doc.data();
-
-      if (Array.isArray(data.contacts) && data.contacts.includes(trimmedEmail)) {
-        isInvited = true;
+      if (Array.isArray(data.contacts)) {
+        // Debug log
+        console.log("Checking:", data.email, "Contacts:", data.contacts);
+        if (data.contacts.includes(trimmedEmail)) {
+          isInvited = true;
+        }
       }
     });
 
     if (isInvited) {
-      // ✅ Now allow sign-in
-      auth.signInWithPopup(provider)
-        .then((result) => {
-          const signedInEmail = result.user.email.toLowerCase();
+      // ✅ Now allow Google sign-in
+      auth.signOut().then(() => {
+        auth.signInWithPopup(provider)
+          .then((result) => {
+            const signedInEmail = result.user.email.toLowerCase();
 
-          if (signedInEmail === trimmedEmail) {
-            window.location.href = "team-lead.html?asAgent=true";
-          } else {
-            alert("The signed-in email doesn't match the invited one.");
-            auth.signOut();
-          }
-        })
-        .catch(err => {
-          console.error("Sign-in failed:", err);
-          alert("Something went wrong during login.");
-        });
-
+            if (signedInEmail === trimmedEmail) {
+              window.location.href = "team-lead.html?asAgent=true";
+            } else {
+              alert("The signed-in email does not match the one you entered.");
+              auth.signOut();
+            }
+          })
+          .catch(err => {
+            console.error("Sign-in failed:", err);
+            alert("Something went wrong during login.");
+          });
+      });
     } else {
       alert("You are not invited to any workspace yet.");
     }
@@ -82,4 +91,3 @@ function loginAsAgent() {
     alert("Could not check invitations. Please try again later.");
   });
 }
-
