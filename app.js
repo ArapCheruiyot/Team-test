@@ -3,17 +3,14 @@ window.onload = function () {
   const agentBtn = document.getElementById('agent-signin');
   const defaultBtn = document.getElementById('google-signin');
 
-  // ✅ If "Start My Workspace" button exists
   if (ownerBtn) {
     ownerBtn.addEventListener('click', loginAsOwner);
   }
 
-  // ✅ If "Login as Agent" button exists
   if (agentBtn) {
     agentBtn.addEventListener('click', loginAsAgent);
   }
 
-  // ✅ If default "Google Sign-in" button exists
   if (defaultBtn) {
     defaultBtn.addEventListener('click', () => {
       defaultBtn.disabled = true;
@@ -27,12 +24,12 @@ window.onload = function () {
   }
 };
 
-auth.onAuthStateChanged(user => {
-  if (user) {
-    // Default fallback redirect if used old button
-    window.location.href = 'team-lead.html';
-  }
-});
+// 🔁 TEMPORARILY DISABLED - Let agent/owner login handle routing
+// auth.onAuthStateChanged(user => {
+//   if (user) {
+//     window.location.href = 'team-lead.html';
+//   }
+// });
 
 function loginAsOwner() {
   auth.signInWithPopup(provider)
@@ -50,7 +47,7 @@ function loginAsOwner() {
           });
         }
       }).then(() => {
-        window.location.href = "dashboard.html"; // Full owner view
+        window.location.href = "dashboard.html";
       });
     })
     .catch((error) => {
@@ -64,6 +61,12 @@ function loginAsAgent() {
       const agentEmail = result.user.email;
 
       db.collection("users").get().then(snapshot => {
+        if (snapshot.empty) {
+          alert("No workspaces exist yet. Please ask your team lead to invite you.");
+          auth.signOut();
+          return;
+        }
+
         let isInvited = false;
 
         snapshot.forEach(doc => {
@@ -74,7 +77,7 @@ function loginAsAgent() {
         });
 
         if (isInvited) {
-          window.location.href = "dashboard.html?asAgent=true"; // Restricted agent view
+          window.location.href = "dashboard.html?asAgent=true";
         } else {
           alert("You are not invited to any workspace yet.");
           auth.signOut();
