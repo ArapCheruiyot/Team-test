@@ -1,9 +1,5 @@
-document.addEventListener('DOMContentLoaded', () => {Add commentMore actions
+document.addEventListener('DOMContentLoaded', () => {
   console.log("✅ team‑lead.js initialized");
-window.onload = function () {
-  const ownerBtn = document.getElementById('owner-signin');
-  const agentBtn = document.getElementById('agent-signin');
-  const defaultBtn = document.getElementById('google-signin');
 
   const db   = window.db;
   const auth = window.auth;
@@ -77,8 +73,6 @@ window.onload = function () {
     } catch (e) {
       console.error("Error loading notes:", e);
     }
-  if (ownerBtn) {
-    ownerBtn.addEventListener('click', loginAsOwner);
   }
 
   function openNote(id, note) {
@@ -86,8 +80,6 @@ window.onload = function () {
     textArea.dataset.noteId = id;
     textArea.value = note.content || '';
     textArea.focus();
-  if (agentBtn) {
-    agentBtn.addEventListener('click', loginAsAgent);
   }
 
   newBtn.addEventListener('click', async () => {
@@ -185,9 +177,6 @@ window.onload = function () {
   saveContactBtn.addEventListener('click', async () => {
     const email = contactInput.value.trim();
     if (!email) return;
-  if (defaultBtn) {
-    defaultBtn.addEventListener('click', () => {
-      defaultBtn.disabled = true;
 
     try {
       await db.collection('users')
@@ -196,10 +185,6 @@ window.onload = function () {
         .add({
           email,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      auth.signInWithPopup(provider)
-        .catch(err => console.error("Sign-in error:", err))
-        .finally(() => {
-          defaultBtn.disabled = false;
         });
 
       console.log("✅ Contact saved:", email);
@@ -232,7 +217,6 @@ window.onload = function () {
     } catch (e) {
       console.error("❌ Failed to load contacts:", e);
     }
-    });
   }
 
   // === Chats ===
@@ -280,32 +264,6 @@ window.onload = function () {
         const li = document.createElement('li');
         li.textContent = `💬 ${chat.name}`;
         chatList.appendChild(li);
-};
-
-// 🔁 TEMPORARILY DISABLED - Let agent/owner login handle routing
-// auth.onAuthStateChanged(user => {
-//   if (user) {
-//     window.location.href = 'team-lead.html';
-//   }
-// });
-
-function loginAsOwner() {
-  auth.signInWithPopup(provider)
-    .then((result) => {
-      const user = result.user;
-      const userRef = db.collection("users").doc(user.uid);
-
-      return userRef.get().then((doc) => {
-        if (!doc.exists) {
-          return userRef.set({
-            email: user.email,
-            contacts: [],
-            createdAt: new Date(),
-            isOwner: true
-          });
-        }
-      }).then(() => {
-        window.location.href = "team-lead.html";
       });
     } catch (e) {
       console.error("❌ Failed to load chats:", e);
@@ -333,27 +291,6 @@ chatList.addEventListener('click', e => {
     chatHeader.textContent = `Chatting in group: ${activeContact}`;
     chatBox.innerHTML = '';
     loadMessagesWithContact(activeContact);
-    })
-    .catch((error) => {
-      console.error("Owner login error:", error);
-    });
-}
-
-function loginAsAgent() {
-  auth.signInWithPopup(provider)
-    .then((result) => {
-      const agentEmail = result.user.email;
-  const enteredEmail = prompt("Enter your email address to verify your invitation");
-
-      db.collection("users").get().then(snapshot => {
-        if (snapshot.empty) {
-          alert("No workspaces exist yet. Please ask your team lead to invite you.");
-          auth.signOut();
-          return;
-        }
-  if (!enteredEmail) {
-    alert("Email is required to proceed.");
-    return;
   }
 });
 
@@ -361,9 +298,6 @@ function loginAsAgent() {
     const text = chatInput.value.trim();
     if (!text || !activeContact) {
       alert("Please select a contact and type a message.");
-  db.collection("users").get().then(snapshot => {
-    if (snapshot.empty) {
-      alert("No workspaces exist yet. Please ask your team lead to invite you.");
       return;
     }
 
@@ -377,7 +311,6 @@ function loginAsAgent() {
           text,
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
-    let isInvited = false;
 
       const bubble = document.createElement('div');
       bubble.className = 'chat-bubble';
@@ -388,12 +321,6 @@ function loginAsAgent() {
       console.error("❌ Error sending message:", e);
     }
   });
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      if (data.contacts && data.contacts.includes(enteredEmail.trim().toLowerCase())) {
-        isInvited = true;
-      }
-    });
 
   async function loadMessagesWithContact(contactEmail) {
     chatBox.innerHTML = '';
@@ -404,28 +331,6 @@ function loginAsAgent() {
         .where('to', '==', contactEmail)
         .orderBy('timestamp')
         .get();
-        let isInvited = false;
-    if (isInvited) {
-      // ✅ Email is in contact list — now allow Google Sign-In
-      auth.signInWithPopup(provider)
-        .then((result) => {
-          const signedInEmail = result.user.email.toLowerCase();
-
-        snapshot.forEach(doc => {
-          const data = doc.data();Add commentMore actions
-          if (data.contacts && data.contacts.includes(agentEmail)) {
-            isInvited = true;
-          // Double-check match for safety
-          if (signedInEmail === enteredEmail.trim().toLowerCase()) {
-            window.location.href = "team-lead.html?asAgent=true";
-          } else {
-            alert("Signed-in email doesn't match the invited email.");
-            auth.signOut();
-          }
-        })
-        .catch((error) => {
-          console.error("Agent login error:", error);
-        });
 
       snapshot.forEach(doc => {
         const msg = doc.data();
@@ -433,25 +338,11 @@ function loginAsAgent() {
         div.className = 'chat-bubble';
         div.textContent = msg.text;
         chatBox.appendChild(div);
-        if (isInvited) {
-          window.location.href = "team-lead.html?asAgent=true";
-        } else {
-          alert("You are not invited to any workspace yet.");
-          auth.signOut();
-        }
       });
 
     } catch (e) {
       console.error("❌ Error loading messages:", e);
-    })
-    .catch((error) => {
-      console.error("Agent login error:", error);
-    });
-    } else {
-      alert("You are not invited to any workspace yet.");
     }
   }
 
 });
-  });
-}
