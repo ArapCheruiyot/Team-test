@@ -1,4 +1,5 @@
 // team-lead.js — Dashboard logic (notes & contacts only)
+import { initChat } from './chat.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log("✅ team-lead.js initialized");
@@ -42,6 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     await loadNotes();
     await loadContacts();
+
+    // ✅ Initialize chat module after loading essentials
+    initChat(db, auth, leaderUid);
   });
 
   // === NOTES SECTION ===
