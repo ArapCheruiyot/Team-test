@@ -32,7 +32,13 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     currentUser = user;
-    leaderUid   = isAgent ? params.get('leader') : user.uid;
+    leaderUid = isAgent ? params.get('leader') : user.uid;
+
+if (isAgent && (!leaderUid || leaderUid.trim() === '')) {
+  alert("Error: Agent mode requires a 'leader' UID in the URL.");
+  return;
+}
+
 
     // Update welcome text
     const welcomeEl = document.getElementById('welcome');
