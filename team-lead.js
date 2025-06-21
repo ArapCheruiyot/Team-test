@@ -1,4 +1,4 @@
-// team-lead.js — Dashboard logic, roles & privacy
+// team-lead.js — Dashboard logic (notes & contacts only)
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log("✅ team-lead.js initialized");
@@ -6,18 +6,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const db   = window.db;
   const auth = window.auth;
 
-  // Read URL params up front
-  const params   = new URLSearchParams(window.location.search);
-  const isAgent  = params.get('asAgent') === 'true';
-  console.log("🕵️ Agent mode:", isAgent);
-
-  // We’ll set these once user is known
-  let currentUser = null;
-  let leaderUid   = null;
+  // Determine agent mode (for feature lockdown)
+  const params  = new URLSearchParams(window.location.search);
+  const isAgent = params.get('asAgent') === 'true';
 
   // Hide owner-only features immediately if agent
   if (isAgent) {
-    ['new-file','delete','add-contact-btn','start-chat-btn','add-contact-form','start-chat-form']
+    ['new-file','delete','add-contact-btn','add-contact-form']
       .forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
@@ -26,7 +21,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (wel) wel.textContent += ' (Agent)';
   }
 
-  // Auth listener: now we know who’s logged in
+  let currentUser = null;
+  let leaderUid   = null;
+
+  // Auth listener: set currentUser and leaderUid, then load data
   auth.onAuthStateChanged(async user => {
     if (!user) {
       window.location.href = 'index.html';
@@ -38,17 +36,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update welcome text
     const welcomeEl = document.getElementById('welcome');
     if (welcomeEl) {
-      welcomeEl.textContent = `Welcome, ${user.displayName || user.email}!` 
-                             + (isAgent ? ' (Agent)' : '');
+      welcomeEl.textContent = `Welcome, ${user.displayName || user.email}!` +
+                              (isAgent ? ' (Agent)' : '');
     }
 
-    // Load data once leaderUid is set
     await loadNotes();
     await loadContacts();
-    await loadChats();
   });
 
-  // === NOTES ===
+  // === NOTES SECTION ===
   const newBtn    = document.getElementById('new-file');
   const delBtn    = document.getElementById('delete');
   const fileNames = document.getElementById('file-names');
@@ -57,19 +53,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function loadNotes() {
     fileNames.innerHTML = '';
-    const snap = await db.collection('users')
-      .doc(leaderUid)
-      .collection('notes')
-      .orderBy('updatedAt', 'desc')
-      .get();
-    snap.forEach(doc => {
-      const note = doc.data();
-      const div = document.createElement('div');
-      div.className = 'note-item';
-      div.textContent = note.title?.trim() || '(Untitled)';
-      div.onclick = () => openNote(doc.id, note);
-      fileNames.appendChild(div);
-    });
+    try {
+      const snap = await db.collection('users')
+        .doc(leaderUid)
+        .collection('notes')
+        .orderBy('updatedAt', 'desc')
+        .get();
+      snap.forEach(doc => {
+        const note = doc.data();
+        const div  = document.createElement('div');
+        div.className = 'note-item';
+        div.textContent = note.title?.trim() || '(Untitled)';
+        div.onclick = () => openNote(doc.id, note);
+        fileNames.appendChild(div);
+      });
+    } catch (e) {
+      console.error("Error loading notes:", e);
+    }
   }
 
   function openNote(id, note) {
@@ -80,27 +80,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (newBtn) newBtn.onclick = async () => {
     if (isAgent) return;
-    const ref = await db.collection('users').doc(leaderUid)
-      .collection('notes')
-      .add({
-        title: '',
-        content: '',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    openNote(ref.id, { content: '' });
-    await loadNotes();
+    try {
+      const ref = await db.collection('users').doc(leaderUid)
+        .collection('notes')
+        .add({
+          title: '',
+          content: '',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      openNote(ref.id, { content: '' });
+      await loadNotes();
+    } catch (e) {
+      console.error("Error creating note:", e);
+    }
   };
 
   if (delBtn) delBtn.onclick = async () => {
     if (isAgent) return;
     const id = textArea.dataset.noteId;
     if (!id) return;
-    await db.collection('users').doc(leaderUid)
-      .collection('notes').doc(id).delete();
-    textArea.value = '';
-    delete textArea.dataset.noteId;
-    await loadNotes();
+    try {
+      await db.collection('users').doc(leaderUid)
+        .collection('notes').doc(id).delete();
+      textArea.value = '';
+      delete textArea.dataset.noteId;
+      await loadNotes();
+    } catch (e) {
+      console.error("Error deleting note:", e);
+    }
   };
 
   textArea.oninput = () => {
@@ -111,18 +119,22 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!id) return;
       const content = textArea.value.trim();
       const title   = content.split('\n')[0]?.trim() || '(Untitled)';
-      await db.collection('users').doc(leaderUid)
-        .collection('notes').doc(id)
-        .update({
-          title,
-          content,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      await loadNotes();
+      try {
+        await db.collection('users').doc(leaderUid)
+          .collection('notes').doc(id)
+          .update({
+            title,
+            content,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        await loadNotes();
+      } catch (e) {
+        console.error("Auto-save error:", e);
+      }
     }, 500);
   };
 
-  // === CONTACTS ===
+  // === CONTACTS SECTION ===
   const addContactBtn  = document.getElementById('add-contact-btn');
   const saveContactBtn = document.getElementById('save-contact');
   const contactInput   = document.getElementById('contact-email');
@@ -137,110 +149,32 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isAgent) return;
     const email = contactInput.value.trim().toLowerCase();
     if (!email) return;
-    await db.collection('users').doc(leaderUid)
-      .collection('contacts')
-      .add({ email, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-    contactInput.value = '';
-    await loadContacts();
+    try {
+      await db.collection('users').doc(leaderUid)
+        .collection('contacts')
+        .add({ email, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      contactInput.value = '';
+      await loadContacts();
+    } catch (e) {
+      console.error("Error saving contact:", e);
+    }
   };
 
   async function loadContacts() {
     contactList.innerHTML = '';
-    const snap = await db.collection('users').doc(leaderUid)
-      .collection('contacts')
-      .orderBy('createdAt', 'desc')
-      .get();
-    snap.forEach(doc => {
-      const c = doc.data();
-      const li = document.createElement('li');
-      li.textContent = `👤 ${c.email}`;
-      contactList.appendChild(li);
-    });
-  }
-
-  // === CHATS & MESSAGES ===
-  const startChatBtn  = document.getElementById('start-chat-btn');
-  const createChatBtn = document.getElementById('create-chat');
-  const chatNameInput = document.getElementById('chat-name');
-  const chatList      = document.getElementById('chat-list');
-  const chatHeader    = document.getElementById('chat-header');
-  const chatBox       = document.getElementById('chat-messages');
-  const sendBtn       = document.getElementById('send-message-btn');
-  const chatInput     = document.getElementById('chat-input');
-  let activeChatId    = null;
-
-  if (startChatBtn) startChatBtn.onclick = () => {
-    if (isAgent) return;
-    document.getElementById('start-chat-form').style.display = 'block';
-  };
-
-  if (createChatBtn) createChatBtn.onclick = async () => {
-    if (isAgent) return;
-    const nm = chatNameInput.value.trim();
-    if (!nm) return;
-    await db.collection('users').doc(leaderUid)
-      .collection('chats')
-      .add({
-        participants: [ currentUser.email ],
-        name: nm,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    try {
+      const snap = await db.collection('users').doc(leaderUid)
+        .collection('contacts')
+        .orderBy('createdAt', 'desc')
+        .get();
+      snap.forEach(doc => {
+        const c = doc.data();
+        const li = document.createElement('li');
+        li.textContent = `👤 ${c.email}`;
+        contactList.appendChild(li);
       });
-    chatNameInput.value = '';
-    await loadChats();
-  };
-
-  async function loadChats() {
-    chatList.innerHTML = '';
-    const snap = await db.collection('users').doc(leaderUid)
-      .collection('chats')
-      .where('participants', 'array-contains', currentUser.email)
-      .orderBy('createdAt', 'desc')
-      .get();
-    snap.forEach(doc => {
-      const c  = doc.data();
-      const li = document.createElement('li');
-      li.textContent = `💬 ${c.name}`;
-      li.onclick = () => {
-        activeChatId = doc.id;
-        chatHeader.textContent = `Chat: ${c.name}`;
-        chatBox.innerHTML = '';
-        loadMessages();
-      };
-      chatList.appendChild(li);
-    });
-  }
-
-  if (sendBtn) sendBtn.onclick = async () => {
-    if (!activeChatId) return alert("Select a chat first");
-    const txt = chatInput.value.trim();
-    if (!txt) return;
-    const senderName = currentUser.displayName || currentUser.email;
-    await db.collection('users').doc(leaderUid)
-      .collection('chats').doc(activeChatId)
-      .collection('messages')
-      .add({
-        fromEmail: currentUser.email,
-        fromName: senderName,
-        text: txt,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    chatInput.value = '';
-    loadMessages();
-  };
-
-  async function loadMessages() {
-    chatBox.innerHTML = '';
-    const snap = await db.collection('users').doc(leaderUid)
-      .collection('chats').doc(activeChatId)
-      .collection('messages')
-      .orderBy('timestamp')
-      .get();
-    snap.forEach(doc => {
-      const m = doc.data();
-      const d = document.createElement('div');
-      d.className = 'chat-bubble';
-      d.innerHTML = `<strong>${m.fromName}:</strong> ${m.text}`;
-      chatBox.appendChild(d);
-    });
+    } catch (e) {
+      console.error("Failed to load contacts:", e);
+    }
   }
 });
