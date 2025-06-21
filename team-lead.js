@@ -10,11 +10,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Determine agent mode from URL
   const params = new URLSearchParams(window.location.search);
-  const isAgent = params.get('asAgent') === 'true';
-  console.log("🕵️ Agent mode:", isAgent);
+const isAgent = params.get('asAgent') === 'true';
 
-  // leaderUid will be set after auth state is known
-  let currentUser = null;
+// leader and user placeholder
+let currentUser = null;
+let leaderUid = null;
+
   let leaderUid = null;
 
   // Hide owner-only features for agents
