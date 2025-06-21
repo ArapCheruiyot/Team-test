@@ -34,10 +34,12 @@ document.addEventListener('DOMContentLoaded', () => {
     currentUser = user;
     leaderUid = isAgent ? params.get('leader') : user.uid;
 
-if (isAgent && (!leaderUid || leaderUid.trim() === '')) {
-  alert("Error: Agent mode requires a 'leader' UID in the URL.");
-  return;
+if (isAgent) {
+  leaderUid = 'A3HIWA6XWvhFcGdsM3o5IV0Qx3B2'; // 👈 hardcoded for now
+} else {
+  leaderUid = user.uid;
 }
+
 
 
     // Update welcome text
