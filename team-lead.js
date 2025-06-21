@@ -34,21 +34,24 @@ document.addEventListener('DOMContentLoaded', () => {
   // ——————————————
   // 🔐 AUTH HANDLING
   // ——————————————
-  let currentUser = null;
-  auth.onAuthStateChanged(user => {
-    if (!user) {
-      return window.location.href = 'index.html';
-    }
-    currentUser = user;
-    const welcomeEl = document.getElementById('welcome');
-    if (welcomeEl) {
-      welcomeEl.textContent = Welcome, ${user.displayName || user.email || "User"}!;
-      if (isAgent) welcomeEl.textContent += " (Agent)";
-    }
-    loadNotes();
-    loadContacts();
-    loadChats();
-  });
+let currentUser = null;
+auth.onAuthStateChanged(user => {
+  if (!user) {
+    return window.location.href = 'index.html';
+  }
+
+  currentUser = user;
+  const welcomeEl = document.getElementById('welcome');
+  if (welcomeEl) {
+    welcomeEl.textContent = `Welcome, ${user.displayName || user.email || "User"}!`;
+    if (isAgent) welcomeEl.textContent += " (Agent)";
+  }
+
+  loadNotes();
+  loadContacts();
+  loadChats();
+});
+
 
   // ——————————————
   // 📒 NOTES
