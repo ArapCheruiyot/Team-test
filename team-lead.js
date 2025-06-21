@@ -189,25 +189,26 @@ auth.onAuthStateChanged(user => {
     }
   });
 
-  async function loadContacts() {
-    contactList.innerHTML = '';
-    try {
-      const snapshot = await db
-        .collection('users')
-        .doc(currentUser.uid)
-        .collection('contacts')
-        .orderBy('createdAt', 'desc')
-        .get();
-      snapshot.forEach(doc => {
-        const c = doc.data();
-        const li = document.createElement('li');
-        li.textContent = 👤 ${c.email};
-        contactList.appendChild(li);
-      });
-    } catch (e) {
-      console.error("Failed to load contacts:", e);
-    }
+ async function loadContacts() {
+  contactList.innerHTML = '';
+  try {
+    const snapshot = await db
+      .collection('users')
+      .doc(currentUser.uid)
+      .collection('contacts')
+      .orderBy('createdAt', 'desc')
+      .get();
+    snapshot.forEach(doc => {
+      const c = doc.data();
+      const li = document.createElement('li');
+      li.textContent = `👤 ${c.email}`;
+      contactList.appendChild(li);
+    });
+  } catch (e) {
+    console.error("Failed to load contacts:", e);
   }
+}
+
 
   // ——————————————
   // 💬 CHATS & MESSAGES
