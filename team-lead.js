@@ -1,244 +1,326 @@
 document.addEventListener('DOMContentLoaded', () => {
-  console.log("✅ team‑lead.js initialized");
+  console.log("✅ team-lead.js initialized");
 
   const db   = window.db;
   const auth = window.auth;
 
-  // Read URL params up front
-  const params   = new URLSearchParams(window.location.search);
-  const isAgent  = params.get('asAgent') === 'true';
-  const leaderParam = params.get('leader'); // may be null for owner
+  // ——————————————
+  // 🚩 AGENT DETECTION & UI LOCKDOWN
+  // ——————————————
+  const isAgent = new URLSearchParams(window.location.search).get('asAgent') === 'true';
+  console.log("🕵️ Agent mode:", isAgent);
 
-  console.log("🕵️ Agent mode:", isAgent, "→ leaderParam:", leaderParam);
-
-  // UI lockdown for agents
   if (isAgent) {
-    [
-      'new-file','delete',
-      'add-contact-btn','start-chat-btn',
-      'add-contact-form','start-chat-form'
-    ].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.style.display = 'none';
-    });
-    const wel = document.getElementById('welcome');
-    if (wel) wel.textContent += " (Agent)";
+    // Elements to hide from agents
+    const toHide = [
+      document.getElementById('new-file'),
+      document.getElementById('delete'),
+      document.getElementById('add-contact-btn'),
+      document.getElementById('start-chat-btn'),
+      document.getElementById('add-contact-form'),
+      document.getElementById('start-chat-form')
+    ];
+    toHide.forEach(el => { if (el) el.style.display = 'none'; });
+
+    // Optional: change welcome text to indicate agent mode
+    const welcomeEl = document.getElementById('welcome');
+    if (welcomeEl) {
+      welcomeEl.textContent += " (Agent)";
+    }
+
+    console.log("🔐 Restricted features hidden from Agent");
   }
 
-  // We'll set this after login
-  let leaderUid = null;
+  // ——————————————
+  // 🔐 AUTH HANDLING
+  // ——————————————
   let currentUser = null;
-
-  // Once auth is ready, we know both currentUser and leaderUid
-  auth.onAuthStateChanged(async user => {
+  auth.onAuthStateChanged(user => {
     if (!user) {
       return window.location.href = 'index.html';
     }
     currentUser = user;
-    leaderUid = isAgent ? leaderParam : user.uid;
-
-    // now that leaderUid is valid, we can safely call Firestore
-    document.getElementById('welcome').textContent =
-      `Welcome, ${user.displayName||user.email}!` +
-      (isAgent ? " (Agent)" : "");
-
-    // Cache elements that depend on login
-    const newBtn    = document.getElementById('new-file');
-    const delBtn    = document.getElementById('delete');
-    const fileNames = document.getElementById('file-names');
-    const textArea  = document.getElementById('text-input');
-
-    const addContactBtn  = document.getElementById('add-contact-btn');
-    const saveContactBtn = document.getElementById('save-contact');
-    const contactInput   = document.getElementById('contact-email');
-    const contactList    = document.getElementById('contact-list');
-
-    const startChatBtn  = document.getElementById('start-chat-btn');
-    const createChatBtn = document.getElementById('create-chat');
-    const chatNameInput = document.getElementById('chat-name');
-    const chatList      = document.getElementById('chat-list');
-    const chatInput     = document.getElementById('chat-input');
-    const sendBtn       = document.getElementById('send-message-btn');
-    const chatBox       = document.getElementById('chat-messages');
-    const chatHeader    = document.getElementById('chat-header');
-
-    // Helper to reload all panels
+    const welcomeEl = document.getElementById('welcome');
+    if (welcomeEl) {
+      welcomeEl.textContent = Welcome, ${user.displayName || user.email || "User"}!;
+      if (isAgent) welcomeEl.textContent += " (Agent)";
+    }
     loadNotes();
     loadContacts();
     loadChats();
+  });
 
-    // == Notes ==
-    let currentNoteId=null, saveTimeout=null;
+  // ——————————————
+  // 📒 NOTES
+  // ——————————————
+  const newBtn    = document.getElementById('new-file');
+  const delBtn    = document.getElementById('delete');
+  const fileNames = document.getElementById('file-names');
+  const textArea  = document.getElementById('text-input');
+  let currentNoteId = null;
+  let saveTimeout   = null;
 
-    async function loadNotes() {
-      fileNames.innerHTML = '';
-      const snap = await db.collection('users')
-        .doc(leaderUid)
+  async function loadNotes() {
+    fileNames.innerHTML = '';
+    try {
+      const snapshot = await db
+        .collection('users')
+        .doc(currentUser.uid)
         .collection('notes')
-        .orderBy('updatedAt','desc')
+        .orderBy('updatedAt', 'desc')
         .get();
-      snap.forEach(d => {
-        const note = d.data();
-        const title = note.title?.trim()||'(Untitled)';
-        const div = document.createElement('div');
-        div.className='note-item';
-        div.textContent=title;
-        div.onclick = () => openNote(d.id,note);
-        fileNames.appendChild(div);
+
+      snapshot.forEach(doc => {
+        const note = doc.data();
+        const title = note.title?.trim() || '(Untitled)';
+        const item = document.createElement('div');
+        item.className = 'note-item';
+        item.textContent = title;
+        item.onclick = () => openNote(doc.id, note);
+        fileNames.appendChild(item);
       });
+    } catch (e) {
+      console.error("Error loading notes:", e);
     }
+  }
 
-    function openNote(id,note){
-      currentNoteId=id;
-      textArea.dataset.noteId=id;
-      textArea.value=note.content||'';
-      textArea.focus();
-    }
+  function openNote(id, note) {
+    currentNoteId = id;
+    textArea.dataset.noteId = id;
+    textArea.value = note.content || '';
+    textArea.focus();
+  }
 
-    if (newBtn) newBtn.onclick = async ()=>{
-      if (isAgent) return;
-      const ref = await db.collection('users')
-        .doc(leaderUid)
+  if (newBtn) newBtn.addEventListener('click', async () => {
+    if (isAgent) return; // agents cannot create notes
+    try {
+      const docRef = await db
+        .collection('users')
+        .doc(currentUser.uid)
         .collection('notes')
         .add({
-          title:'', content:'',
+          title: '',
+          content: '',
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-      openNote(ref.id,{content:''});
+      openNote(docRef.id, { content: '' });
       loadNotes();
-    };
+    } catch (e) {
+      console.error("Error creating note:", e);
+    }
+  });
 
-    if (delBtn) delBtn.onclick = async ()=>{
-      if (isAgent) return;
-      const id=textArea.dataset.noteId; if(!id) return;
-      await db.collection('users')
-        .doc(leaderUid)
+  if (delBtn) delBtn.addEventListener('click', async () => {
+    if (isAgent) return; // agents cannot delete
+    const noteId = textArea.dataset.noteId;
+    if (!noteId) return;
+    try {
+      await db
+        .collection('users')
+        .doc(currentUser.uid)
         .collection('notes')
-        .doc(id).delete();
-      textArea.value=''; delete textArea.dataset.noteId;
+        .doc(noteId)
+        .delete();
+      textArea.value = '';
+      delete textArea.dataset.noteId;
+      currentNoteId = null;
       loadNotes();
-    };
+    } catch (e) {
+      console.error("Error deleting note:", e);
+    }
+  });
 
-    textArea.oninput = ()=>{
-      if (isAgent) return;
-      clearTimeout(saveTimeout);
-      saveTimeout = setTimeout(async ()=>{
-        const id=textArea.dataset.noteId; if(!id) return;
-        const c=textArea.value.trim();
-        const t=c.split('\n')[0]?.trim()||'(Untitled)';
-        await db.collection('users')
-          .doc(leaderUid)
+  textArea.addEventListener('input', () => {
+    if (isAgent) return; // agents cannot edit
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(async () => {
+      const noteId = textArea.dataset.noteId;
+      if (!noteId) return;
+      const content = textArea.value.trim();
+      const title = content.split('\n')[0]?.trim() || '(Untitled)';
+      try {
+        await db
+          .collection('users')
+          .doc(currentUser.uid)
           .collection('notes')
-          .doc(id)
+          .doc(noteId)
           .update({
-            title:t, content:c,
+            title,
+            content,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
           });
         loadNotes();
-      },500);
-    };
+      } catch (e) {
+        console.error("Auto-save error:", e);
+      }
+    }, 500);
+  });
 
-    // == Contacts ==
-    if (addContactBtn) addContactBtn.onclick = ()=>{
-      if (isAgent) return;
-      document.getElementById('add-contact-form').style.display='block';
-    };
-    if (saveContactBtn) saveContactBtn.onclick = async ()=>{
-      if (isAgent) return;
-      const email = contactInput.value.trim().toLowerCase(); if(!email) return;
+  // ——————————————
+  // 👥 CONTACTS
+  // ——————————————
+  const addContactBtn  = document.getElementById('add-contact-btn');
+  const saveContactBtn = document.getElementById('save-contact');
+  const contactInput   = document.getElementById('contact-email');
+  const contactList    = document.getElementById('contact-list');
+
+  if (addContactBtn) addContactBtn.addEventListener('click', () => {
+    if (isAgent) return;
+    document.getElementById('add-contact-form').style.display = 'block';
+  });
+
+  if (saveContactBtn) saveContactBtn.addEventListener('click', async () => {
+    if (isAgent) return;
+    const email = contactInput.value.trim().toLowerCase();
+    if (!email) return;
+    try {
       await db.collection('users')
-        .doc(leaderUid)
+        .doc(currentUser.uid)
         .collection('contacts')
         .add({ email, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-      contactInput.value=''; loadContacts();
-    };
-    async function loadContacts() {
-      contactList.innerHTML='';
-      const snap = await db.collection('users')
-        .doc(leaderUid)
-        .collection('contacts')
-        .orderBy('createdAt','desc')
-        .get();
-      snap.forEach(d => {
-        const c=d.data(), li=document.createElement('li');
-        li.textContent=`👤 ${c.email}`; contactList.appendChild(li);
-      });
+      contactInput.value = '';
+      loadContacts();
+    } catch (e) {
+      console.error("Error saving contact:", e);
     }
+  });
 
-    // == Chats ==
-    let activeChatId=null;
-    if (startChatBtn) startChatBtn.onclick = ()=>{
-      if (isAgent) return;
-      document.getElementById('start-chat-form').style.display='block';
-    };
-    if (createChatBtn) createChatBtn.onclick = async ()=>{
-      if (isAgent) return;
-      const name=chatNameInput.value.trim(); if(!name) return;
-      const ref = await db.collection('users')
-        .doc(leaderUid)
-        .collection('chats')
-        .add({
-          participants: [currentUser.email],
-          name,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      chatNameInput.value=''; loadChats();
-    };
-    async function loadChats() {
-      chatList.innerHTML='';
-      const snap = await db.collection('users')
-        .doc(leaderUid)
-        .collection('chats')
-        .where('participants','array-contains', currentUser.email)
-        .orderBy('createdAt','desc')
+  async function loadContacts() {
+    contactList.innerHTML = '';
+    try {
+      const snapshot = await db
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('contacts')
+        .orderBy('createdAt', 'desc')
         .get();
-      snap.forEach(d => {
-        const c=d.data(), li=document.createElement('li');
-        li.textContent=`💬 ${c.name}`;
-        li.onclick = ()=>selectChat(d.id, c.name);
+      snapshot.forEach(doc => {
+        const c = doc.data();
+        const li = document.createElement('li');
+        li.textContent = 👤 ${c.email};
+        contactList.appendChild(li);
+      });
+    } catch (e) {
+      console.error("Failed to load contacts:", e);
+    }
+  }
+
+  // ——————————————
+  // 💬 CHATS & MESSAGES
+  // ——————————————
+  const startChatBtn = document.getElementById('start-chat-btn');
+  const createChatBtn = document.getElementById('create-chat');
+  const chatNameInput = document.getElementById('chat-name');
+  const chatList      = document.getElementById('chat-list');
+  const chatInput     = document.getElementById('chat-input');
+  const sendBtn       = document.getElementById('send-message-btn');
+  const chatBox       = document.getElementById('chat-messages');
+  const chatHeader    = document.getElementById('chat-header');
+
+  if (startChatBtn) startChatBtn.addEventListener('click', () => {
+    if (isAgent) return;
+    document.getElementById('start-chat-form').style.display = 'block';
+  });
+
+  if (createChatBtn) createChatBtn.addEventListener('click', async () => {
+    if (isAgent) return;
+    const chatName = chatNameInput.value.trim();
+    if (!chatName) return;
+    try {
+      await db.collection('users')
+        .doc(currentUser.uid)
+        .collection('chats')
+        .add({ name: chatName, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      chatNameInput.value = '';
+      loadChats();
+    } catch (e) {
+      console.error("Error creating chat:", e);
+    }
+  });
+
+  async function loadChats() {
+    chatList.innerHTML = '';
+    try {
+      const snapshot = await db
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('chats')
+        .orderBy('createdAt', 'desc')
+        .get();
+      snapshot.forEach(doc => {
+        const chat = doc.data();
+        const li = document.createElement('li');
+        li.textContent = 💬 ${chat.name};
         chatList.appendChild(li);
       });
+    } catch (e) {
+      console.error("Failed to load chats:", e);
     }
-    function selectChat(id,name){
-      activeChatId=id;
-      chatHeader.textContent = `Chat: ${name}`;
-      chatBox.innerHTML='';
-      loadMessages();
-    }
+  }
 
-    if (sendBtn) sendBtn.onclick = async ()=>{
-      if (!activeChatId) return alert("Select a chat first");
-      const txt=chatInput.value.trim(); if(!txt) return;
-      const senderName = currentUser.displayName||currentUser.email;
-      await db.collection('users').doc(leaderUid)
-        .collection('chats').doc(activeChatId)
+  contactList.addEventListener('click', e => {
+    if (e.target.tagName === 'LI') {
+      document.querySelectorAll('#contact-list li').forEach(li => li.classList.remove('active'));
+      e.target.classList.add('active');
+      activeContact = e.target.textContent.replace('👤 ', '').trim();
+      chatHeader.textContent = Chatting with ${activeContact};
+      chatBox.innerHTML = '';
+      loadMessagesWithContact(activeContact);
+    }
+  });
+
+  chatList.addEventListener('click', e => {
+    if (e.target.tagName === 'LI') {
+      document.querySelectorAll('#chat-list li').forEach(li => li.classList.remove('active'));
+      e.target.classList.add('active');
+      activeContact = e.target.textContent.replace('💬 ', '').trim();
+      chatHeader.textContent = Chatting in group: ${activeContact};
+      chatBox.innerHTML = '';
+      loadMessagesWithContact(activeContact);
+    }
+  });
+
+  if (sendBtn) sendBtn.addEventListener('click', async () => {
+    if (!activeContact) return alert("Please select a contact first.");
+    const text = chatInput.value.trim();
+    if (!text) return;
+    try {
+      await db.collection('users')
+        .doc(currentUser.uid)
         .collection('messages')
         .add({
-          fromEmail: currentUser.email,
-          fromName: senderName,
-          text: txt,
+          to: activeContact,
+          from: currentUser.email,
+          text,
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
-      chatInput.value=''; loadMessages();
-    };
-    async function loadMessages() {
-      chatBox.innerHTML='';
-      const snap = await db.collection('users').doc(leaderUid)
-        .collection('chats').doc(activeChatId)
+      loadMessagesWithContact(activeContact);
+      chatInput.value = '';
+    } catch (e) {
+      console.error("Error sending message:", e);
+    }
+  });
+
+  async function loadMessagesWithContact(contactEmail) {
+    chatBox.innerHTML = '';
+    try {
+      const snapshot = await db.collection('users')
+        .doc(currentUser.uid)
         .collection('messages')
+        .where('to', '==', contactEmail)
         .orderBy('timestamp')
         .get();
-      snap.forEach(d => {
-        const m=d.data(), div=document.createElement('div');
-        div.className='chat-bubble';
-        div.innerHTML=`<strong>${m.fromName}:</strong> ${m.text}`;
+      snapshot.forEach(doc => {
+        const msg = doc.data();
+        const div = document.createElement('div');
+        div.className = 'chat-bubble';
+        div.textContent = msg.text;
         chatBox.appendChild(div);
       });
+    } catch (e) {
+      console.error("Error loading messages:", e);
     }
+  }
 
-    // Finally initial load
-    loadContacts();
-    loadChats();
-  });
 });
