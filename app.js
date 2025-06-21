@@ -5,21 +5,19 @@ window.onload = function () {
   if (ownerBtn) {
     ownerBtn.addEventListener('click', loginAsOwner);
   }
-
   if (agentBtn) {
     agentBtn.addEventListener('click', loginAsAgent);
   }
 };
 
-// ✅ TEAM LEAD (OWNER) LOGIN
+// ─── TEAM LEAD (OWNER) LOGIN ─────────────────────────────────────────
 function loginAsOwner() {
   auth.signOut().then(() => {
     auth.signInWithPopup(provider)
       .then((result) => {
         const user = result.user;
         const userRef = db.collection("users").doc(user.uid);
-
-        return userRef.get().then((doc) => {
+        return userRef.get().then(doc => {
           if (!doc.exists) {
             return userRef.set({
               email: user.email.toLowerCase(),
@@ -28,64 +26,49 @@ function loginAsOwner() {
               isOwner: true
             });
           }
-        }).then(() => {
-          window.location.href = "team-lead.html";
         });
       })
-      .catch((error) => {
-        console.error("Owner login error:", error);
+      .then(() => {
+        window.location.href = "team-lead.html";
+      })
+      .catch(err => {
+        console.error("Owner login error:", err);
         alert("Something went wrong during sign-in.");
       });
   });
 }
 
-// ✅ AGENT LOGIN WITHOUT PROMPT
-function loginAsAgent() {
-  auth.signInWithPopup(provider)
-    .then((result) => {
-      const signedInEmail = result.user.email.toLowerCase();
-      console.log("🔍 Signed in as agent:", signedInEmail);
+// ─── AGENT LOGIN (PASSING LEADER UID) ────────────────────────────────
+async function loginAsAgent() {
+  try {
+    await auth.signOut();
+    const result = await auth.signInWithPopup(provider);
+    const agentEmail = result.user.email.toLowerCase();
 
-      // Step 1: Fetch all users (team leads)
-      db.collection("users").get()
-        .then(snapshot => {
-          const userChecks = [];
+    // find which leader invited this agent
+    const usersSnap = await db.collection("users").get();
+    let invitedByUid = null;
+    for (const doc of usersSnap.docs) {
+      const contactSnap = await db
+        .collection("users").doc(doc.id)
+        .collection("contacts")
+        .where("email", "==", agentEmail)
+        .get();
+      if (!contactSnap.empty) {
+        invitedByUid = doc.id;
+        break;
+      }
+    }
 
-          snapshot.forEach(userDoc => {
-            const userId = userDoc.id;
-
-            // Step 2: For each user, check their contacts subcollection
-            const check = db.collection("users").doc(userId).collection("contacts")
-              .where("email", "==", signedInEmail)
-              .get()
-              .then(contactSnapshot => {
-                return !contactSnapshot.empty; // true if match found
-              });
-
-            userChecks.push(check);
-          });
-
-          // Step 3: Wait for all checks to finish
-          return Promise.all(userChecks);
-        })
-        .then(results => {
-          const isInvited = results.some(found => found);
-
-          if (isInvited) {
-            console.log("✅ Agent is invited, redirecting to dashboard...");
-            window.location.href = "team-lead.html?asAgent=true";
-          } else {
-            alert("❌ You are not invited to any workspace yet.");
-            auth.signOut();
-          }
-        })
-        .catch(error => {
-          console.error("❌ Error during agent login:", error);
-          alert("Something went wrong. Please try again.");
-        });
-    })
-    .catch((error) => {
-      console.error("❌ Sign-in failed:", error);
-      alert("Login failed.");
-    });
+    if (invitedByUid) {
+      window.location.href =
+        `team-lead.html?asAgent=true&leader=${invitedByUid}`;
+    } else {
+      alert("❌ You are not invited to any workspace yet.");
+      auth.signOut();
+    }
+  } catch (err) {
+    console.error("Agent login error:", err);
+    alert("Login failed. Please try again.");
+  }
 }
