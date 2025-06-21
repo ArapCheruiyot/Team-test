@@ -1,17 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
   console.log("✅ team-lead.js initialized");
 
-  const db   = window.db;
+  const db = window.db;
   const auth = window.auth;
 
-  // ——————————————
-  // 🚩 AGENT DETECTION & UI LOCKDOWN
-  // ——————————————
   const isAgent = new URLSearchParams(window.location.search).get('asAgent') === 'true';
   console.log("🕵️ Agent mode:", isAgent);
 
   if (isAgent) {
-    // Elements to hide from agents
     const toHide = [
       document.getElementById('new-file'),
       document.getElementById('delete'),
@@ -22,46 +18,36 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
     toHide.forEach(el => { if (el) el.style.display = 'none'; });
 
-    // Optional: change welcome text to indicate agent mode
     const welcomeEl = document.getElementById('welcome');
-    if (welcomeEl) {
-      welcomeEl.textContent += " (Agent)";
-    }
+    if (welcomeEl) welcomeEl.textContent += " (Agent)";
 
     console.log("🔐 Restricted features hidden from Agent");
   }
 
-  // ——————————————
-  // 🔐 AUTH HANDLING
-  // ——————————————
-let currentUser = null;
-auth.onAuthStateChanged(user => {
-  if (!user) {
-    return window.location.href = 'index.html';
-  }
+  // 🔐 AUTH
+  let currentUser = null;
+  auth.onAuthStateChanged(user => {
+    if (!user) return window.location.href = 'index.html';
 
-  currentUser = user;
-  const welcomeEl = document.getElementById('welcome');
-  if (welcomeEl) {
-    welcomeEl.textContent = `Welcome, ${user.displayName || user.email || "User"}!`;
-    if (isAgent) welcomeEl.textContent += " (Agent)";
-  }
+    currentUser = user;
+    const welcomeEl = document.getElementById('welcome');
+    if (welcomeEl) {
+      welcomeEl.textContent = `Welcome, ${user.displayName || user.email || "User"}!`;
+      if (isAgent) welcomeEl.textContent += " (Agent)";
+    }
 
-  loadNotes();
-  loadContacts();
-  loadChats();
-});
+    loadNotes();
+    loadContacts();
+    loadChats();
+  });
 
-
-  // ——————————————
   // 📒 NOTES
-  // ——————————————
-  const newBtn    = document.getElementById('new-file');
-  const delBtn    = document.getElementById('delete');
+  const newBtn = document.getElementById('new-file');
+  const delBtn = document.getElementById('delete');
   const fileNames = document.getElementById('file-names');
-  const textArea  = document.getElementById('text-input');
+  const textArea = document.getElementById('text-input');
   let currentNoteId = null;
-  let saveTimeout   = null;
+  let saveTimeout = null;
 
   async function loadNotes() {
     fileNames.innerHTML = '';
@@ -95,7 +81,7 @@ auth.onAuthStateChanged(user => {
   }
 
   if (newBtn) newBtn.addEventListener('click', async () => {
-    if (isAgent) return; // agents cannot create notes
+    if (isAgent) return;
     try {
       const docRef = await db
         .collection('users')
@@ -115,7 +101,7 @@ auth.onAuthStateChanged(user => {
   });
 
   if (delBtn) delBtn.addEventListener('click', async () => {
-    if (isAgent) return; // agents cannot delete
+    if (isAgent) return;
     const noteId = textArea.dataset.noteId;
     if (!noteId) return;
     try {
@@ -135,7 +121,7 @@ auth.onAuthStateChanged(user => {
   });
 
   textArea.addEventListener('input', () => {
-    if (isAgent) return; // agents cannot edit
+    if (isAgent) return;
     clearTimeout(saveTimeout);
     saveTimeout = setTimeout(async () => {
       const noteId = textArea.dataset.noteId;
@@ -160,13 +146,11 @@ auth.onAuthStateChanged(user => {
     }, 500);
   });
 
-  // ——————————————
   // 👥 CONTACTS
-  // ——————————————
-  const addContactBtn  = document.getElementById('add-contact-btn');
+  const addContactBtn = document.getElementById('add-contact-btn');
   const saveContactBtn = document.getElementById('save-contact');
-  const contactInput   = document.getElementById('contact-email');
-  const contactList    = document.getElementById('contact-list');
+  const contactInput = document.getElementById('contact-email');
+  const contactList = document.getElementById('contact-list');
 
   if (addContactBtn) addContactBtn.addEventListener('click', () => {
     if (isAgent) return;
@@ -189,38 +173,36 @@ auth.onAuthStateChanged(user => {
     }
   });
 
- async function loadContacts() {
-  contactList.innerHTML = '';
-  try {
-    const snapshot = await db
-      .collection('users')
-      .doc(currentUser.uid)
-      .collection('contacts')
-      .orderBy('createdAt', 'desc')
-      .get();
-    snapshot.forEach(doc => {
-      const c = doc.data();
-      const li = document.createElement('li');
-      li.textContent = `👤 ${c.email}`;
-      contactList.appendChild(li);
-    });
-  } catch (e) {
-    console.error("Failed to load contacts:", e);
+  async function loadContacts() {
+    contactList.innerHTML = '';
+    try {
+      const snapshot = await db
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('contacts')
+        .orderBy('createdAt', 'desc')
+        .get();
+      snapshot.forEach(doc => {
+        const c = doc.data();
+        const li = document.createElement('li');
+        li.textContent = `👤 ${c.email}`;
+        contactList.appendChild(li);
+      });
+    } catch (e) {
+      console.error("Failed to load contacts:", e);
+    }
   }
-}
 
-
-  // ——————————————
-  // 💬 CHATS & MESSAGES
-  // ——————————————
+  // 💬 CHATS
   const startChatBtn = document.getElementById('start-chat-btn');
   const createChatBtn = document.getElementById('create-chat');
   const chatNameInput = document.getElementById('chat-name');
-  const chatList      = document.getElementById('chat-list');
-  const chatInput     = document.getElementById('chat-input');
-  const sendBtn       = document.getElementById('send-message-btn');
-  const chatBox       = document.getElementById('chat-messages');
-  const chatHeader    = document.getElementById('chat-header');
+  const chatList = document.getElementById('chat-list');
+  const chatInput = document.getElementById('chat-input');
+  const sendBtn = document.getElementById('send-message-btn');
+  const chatBox = document.getElementById('chat-messages');
+  const chatHeader = document.getElementById('chat-header');
+  let activeContact = null;
 
   if (startChatBtn) startChatBtn.addEventListener('click', () => {
     if (isAgent) return;
@@ -255,7 +237,7 @@ auth.onAuthStateChanged(user => {
       snapshot.forEach(doc => {
         const chat = doc.data();
         const li = document.createElement('li');
-        li.textContent = 💬 ${chat.name};
+        li.textContent = `💬 ${chat.name}`;
         chatList.appendChild(li);
       });
     } catch (e) {
@@ -268,7 +250,7 @@ auth.onAuthStateChanged(user => {
       document.querySelectorAll('#contact-list li').forEach(li => li.classList.remove('active'));
       e.target.classList.add('active');
       activeContact = e.target.textContent.replace('👤 ', '').trim();
-      chatHeader.textContent = Chatting with ${activeContact};
+      chatHeader.textContent = `Chatting with ${activeContact}`;
       chatBox.innerHTML = '';
       loadMessagesWithContact(activeContact);
     }
@@ -279,7 +261,7 @@ auth.onAuthStateChanged(user => {
       document.querySelectorAll('#chat-list li').forEach(li => li.classList.remove('active'));
       e.target.classList.add('active');
       activeContact = e.target.textContent.replace('💬 ', '').trim();
-      chatHeader.textContent = Chatting in group: ${activeContact};
+      chatHeader.textContent = `Chatting in group: ${activeContact}`;
       chatBox.innerHTML = '';
       loadMessagesWithContact(activeContact);
     }
