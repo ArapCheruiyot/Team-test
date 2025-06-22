@@ -32,10 +32,21 @@
   </script>
 </head>
 <body>
-  <div class="container">
+<div class="container">
+  <!-- Left side: Welcome and sign out -->
+  <div class="user-section">
     <h1 id="welcome">Loading…</h1>
     <button id="signout">Sign Out</button>
   </div>
+
+  <!-- Right side: Scrolling announcement -->
+  <div id="announcement-banner">
+    <div id="announcement-marquee">
+      <span id="announcement-text-scroll">📣 Announcement will scroll here...</span>
+    </div>
+  </div>
+</div>
+
 
   <!-- ✅ Notepad split into left and right halves -->
   <section id="notepad">
@@ -119,13 +130,6 @@
 
   <!-- ✅ Main JS -->
  <script type="module" src="team-lead.js"></script>
-<div id="announcement-banner" style="display: none;">
-  <div class="announcement-wrapper">
-    <div id="announcement-marquee">
-      <span id="announcement-text-scroll"></span>
-    </div>
-  </div>
-</div>
 
 
 </body>
