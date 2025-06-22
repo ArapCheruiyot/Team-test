@@ -246,26 +246,33 @@
 }
 #announcement-banner {
   background-color: #003366;
-  color: #fff;
-  padding: 8px 0;
+  color: white;
   overflow: hidden;
-  white-space: nowrap;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  position: relative;
   font-weight: bold;
   font-family: Arial, sans-serif;
+  z-index: 10;
+  border-bottom: 2px solid #0056b3;
 }
 
 #announcement-marquee {
+  position: absolute;
+  white-space: nowrap;
+  will-change: transform;
+  animation: scroll-left 18s linear infinite;
+}
+
+#announcement-text-scroll {
+  padding-left: 100%; /* ensures it starts off-screen */
   display: inline-block;
-  animation: scroll-left 15s linear infinite;
 }
 
 @keyframes scroll-left {
   0% {
     transform: translateX(100%);
   }
-
   100% {
-    transform: translateX(-100%);
-  }
-}
-
+    tran
