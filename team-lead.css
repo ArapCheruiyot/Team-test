@@ -244,4 +244,28 @@
 #send-message-btn:hover {
   background-color: #105de0;
 }
+#announcement-banner {
+  background-color: #003366;
+  color: #fff;
+  padding: 8px 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-weight: bold;
+  font-family: Arial, sans-serif;
+}
+
+#announcement-marquee {
+  display: inline-block;
+  animation: scroll-left 15s linear infinite;
+}
+
+@keyframes scroll-left {
+  0% {
+    transform: translateX(100%);
+  }
+
+  100% {
+    transform: translateX(-100%);
+  }
+}
 
