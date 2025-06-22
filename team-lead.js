@@ -9,6 +9,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const params  = new URLSearchParams(window.location.search);
   const isAgent = params.get('asAgent') === 'true';
+  if (isAgent) {
+  // Ensure banner is visible early in case delay happens
+  const banner = document.getElementById('announcement-banner');
+  if (banner) banner.style.display = 'block';
+}
+
 
   if (isAgent) {
     ['new-file','delete','add-contact-btn','add-contact-form','announcement-panel']
