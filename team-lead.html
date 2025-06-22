@@ -32,21 +32,18 @@
   </script>
 </head>
 <body>
-<div class="container">
-  <!-- Left side: Welcome and sign out -->
-  <div class="user-section">
-    <h1 id="welcome">Loading…</h1>
-    <button id="signout">Sign Out</button>
-  </div>
+  <div class="container">
+    <!-- Left side: Welcome and sign out -->
+    <div class="user-section">
+      <h1 id="welcome">Loading…</h1>
+      <button id="signout">Sign Out</button>
+    </div>
 
-  <!-- Right side: Scrolling announcement -->
-  <div id="announcement-banner" style="display: none; visibility: visible;">
-    <div id="announcement-marquee">
-      <span id="announcement-text-scroll">📣 Announcement will scroll here...</span>
+    <!-- Right side: Scrolling announcement -->
+    <div id="announcement-banner" style="display: none; visibility: hidden;">
+      <div id="announcement-text-scroll">📣 Announcement will scroll here...</div>
     </div>
   </div>
-</div>
-
 
   <!-- ✅ Notepad split into left and right halves -->
   <section id="notepad">
@@ -63,53 +60,47 @@
         <textarea id="text-input" placeholder="Start typing your note..."></textarea>
       </div>
     </div>
-    <!-- ✅ Announcement Panel (Visible to Team Leader Only) -->
-<div id="announcement-panel">
-  <h3>📣 Team Announcement</h3>
-  <textarea id="announcement-input" placeholder="Write your announcement..."></textarea>
-  <button id="post-announcement">Post</button>
-</div>
 
+    <!-- ✅ Announcement Panel (Visible to Team Leader Only) -->
+    <div id="announcement-panel">
+      <h3>📣 Team Announcement</h3>
+      <textarea id="announcement-input" placeholder="Write your announcement..."></textarea>
+      <button id="post-announcement">Post</button>
+    </div>
 
     <!-- Right: Chat UI -->
-<div id="contact-chat-controls">
-  <div class="chat-actions">
-    <button id="add-contact-btn">Add Contact</button>
-    <button id="start-chat-btn">Start Chat</button>
-  </div>
+    <div id="contact-chat-controls">
+      <div class="chat-actions">
+        <button id="add-contact-btn">Add Contact</button>
+        <button id="start-chat-btn">Start Chat</button>
+      </div>
 
-  <!-- Contact input -->
-  <p>Click Contact to Strat Chatting </p>
-  <div id="add-contact-form" style="display: none;">
-    <input type="email" id="contact-email" placeholder="Enter email">
-    <button id="save-contact">Save</button>
-  </div>
-  <ul id="contact-list"></ul>
+      <!-- Contact input -->
+      <p>Click a contact to start chatting</p>
+      <div id="add-contact-form" style="display: none;">
+        <input type="email" id="contact-email" placeholder="Enter email">
+        <button id="save-contact">Save</button>
+      </div>
+      <ul id="contact-list"></ul>
 
-  <!-- Chat input -->
-  <div id="start-chat-form" style="display: none;">
-    <input type="text" id="chat-name" placeholder="Enter chat name">
-    <button id="create-chat">Create</button>
-  </div>
-  <ul id="chat-list"></ul>
-</div>
+      <!-- Chat input -->
+      <div id="start-chat-form" style="display: none;">
+        <input type="text" id="chat-name" placeholder="Enter chat name">
+        <button id="create-chat">Create</button>
+      </div>
+      <ul id="chat-list"></ul>
+    </div>
 
-
-<!-- 🔽 Chat Window -->
-<div id="chat-panel">
-  <h3 id="chat-header">No chat selected</h3>
-
-  <div id="chat-messages" class="chat-box">
-    <!-- Messages will appear here -->
-  </div>
-
-  <div id="chat-input-area">
-    <input type="text" id="chat-input" placeholder="Type a message..." />
-    <button id="send-message-btn">Send</button>
-  </div>
-</div>
-
-
+    <!-- 🔽 Chat Window -->
+    <div id="chat-panel">
+      <h3 id="chat-header">No chat selected</h3>
+      <div id="chat-messages" class="chat-box"></div>
+      <div id="chat-input-area">
+        <input type="text" id="chat-input" placeholder="Type a message..." />
+        <button id="send-message-btn">Send</button>
+      </div>
+    </div>
+  </section>
 
   <!-- ✅ Auth Guard -->
   <script>
@@ -117,20 +108,16 @@
       if (!user) {
         window.location.href = 'index.html';
       } else {
-        document.getElementById('welcome').textContent = `Welcome, ${user.displayName || user.email || "User"}!`;
+        document.getElementById('welcome').textContent = `Welcome, ${user.displayName || user.email}!`;
       }
     });
 
     document.getElementById('signout').addEventListener('click', () => {
-      auth.signOut().then(() => {
-        window.location.href = 'index.html';
-      });
+      auth.signOut().then(() => window.location.href = 'index.html');
     });
   </script>
 
   <!-- ✅ Main JS -->
- <script type="module" src="team-lead.js"></script>
-
-
+  <script type="module" src="team-lead.js"></script>
 </body>
 </html>
