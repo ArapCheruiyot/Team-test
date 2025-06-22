@@ -1,4 +1,4 @@
-// team-lead.js — Dashboard logic (notes & contacts only)
+// team-lead.js — Dashboard logic (notes, contacts, chat, announcements)
 import { initChat } from './chat.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -7,13 +7,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const db   = window.db;
   const auth = window.auth;
 
-  // Determine agent mode (for feature lockdown)
   const params  = new URLSearchParams(window.location.search);
   const isAgent = params.get('asAgent') === 'true';
 
-  // Hide owner-only features immediately if agent
   if (isAgent) {
-    ['new-file','delete','add-contact-btn','add-contact-form']
+    ['new-file','delete','add-contact-btn','add-contact-form','announcement-panel']
       .forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
@@ -25,24 +23,19 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentUser = null;
   let leaderUid   = null;
 
-  // Auth listener: set currentUser and leaderUid, then load data
   auth.onAuthStateChanged(async user => {
     if (!user) {
       window.location.href = 'index.html';
       return;
     }
     currentUser = user;
-    leaderUid = isAgent ? params.get('leader') : user.uid;
 
-if (isAgent) {
-  leaderUid = 'A3HIWA6XWvhFcGdsM3o5IV0Qx3B2'; // 👈 hardcoded for now
-} else {
-  leaderUid = user.uid;
-}
+    if (isAgent) {
+      leaderUid = 'A3HIWA6XWvhFcGdsM3o5IV0Qx3B2';
+    } else {
+      leaderUid = user.uid;
+    }
 
-
-
-    // Update welcome text
     const welcomeEl = document.getElementById('welcome');
     if (welcomeEl) {
       welcomeEl.textContent = `Welcome, ${user.displayName || user.email}!` +
@@ -51,10 +44,48 @@ if (isAgent) {
 
     await loadNotes();
     await loadContacts();
+    await loadAnnouncement();
 
-    // ✅ Initialize chat module after loading essentials
     initChat(db, auth, leaderUid);
   });
+
+  // === ANNOUNCEMENT SECTION ===
+  const announcementPanel = document.getElementById('announcement-panel');
+  const announcementInput = document.getElementById('announcement-input');
+  const postBtn = document.getElementById('post-announcement');
+  const announcementDisplay = document.getElementById('announcement-display');
+  const announcementText = document.getElementById('announcement-text');
+
+  if (postBtn) postBtn.onclick = async () => {
+    const text = announcementInput.value.trim();
+    if (!text) return;
+    try {
+      await db.collection('users').doc(leaderUid).collection('announcement').doc('latest')
+        .set({
+          text,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      announcementInput.value = '';
+      alert('Announcement posted!');
+    } catch (e) {
+      console.error("Error posting announcement:", e);
+    }
+  };
+
+  async function loadAnnouncement() {
+    try {
+      const doc = await db.collection('users').doc(leaderUid).collection('announcement').doc('latest').get();
+      if (doc.exists) {
+        const data = doc.data();
+        if (isAgent && announcementDisplay) {
+          announcementDisplay.style.display = 'block';
+          announcementText.textContent = data.text;
+        }
+      }
+    } catch (e) {
+      console.error("Error loading announcement:", e);
+    }
+  }
 
   // === NOTES SECTION ===
   const newBtn    = document.getElementById('new-file');
