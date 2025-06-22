@@ -52,6 +52,13 @@
         <textarea id="text-input" placeholder="Start typing your note..."></textarea>
       </div>
     </div>
+    <!-- ✅ Announcement Panel (Visible to Team Leader Only) -->
+<div id="announcement-panel" style="display: none; padding: 1em; border-top: 1px solid #ccc;">
+  <h3>📢 Team Announcement</h3>
+  <textarea id="announcement-input" placeholder="Write your announcement..." rows="4" style="width: 100%;"></textarea>
+  <button id="post-announcement">Post Announcement</button>
+</div>
+
 
     <!-- Right: Chat UI -->
 <div id="contact-chat-controls">
@@ -75,6 +82,12 @@
   </div>
   <ul id="chat-list"></ul>
 </div>
+<!-- ✅ Agent Announcement Display -->
+<div id="announcement-display" style="display: none; background: #fef7dd; padding: 1em; border-left: 4px solid orange;">
+  <strong>📣 Announcement from Team Leader:</strong>
+  <p id="announcement-text">No new announcements</p>
+</div>
+
 <!-- 🔽 Chat Window -->
 <div id="chat-panel">
   <h3 id="chat-header">No chat selected</h3>
