@@ -57,20 +57,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const announcementText = document.getElementById('announcement-text');
 
   if (postBtn) postBtn.onclick = async () => {
-    const text = announcementInput.value.trim();
-    if (!text) return;
-    try {
-      await db.collection('users').doc(leaderUid).collection('announcement').doc('latest')
-        .set({
-          text,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      announcementInput.value = '';
-      alert('Announcement posted!');
-    } catch (e) {
-      console.error("Error posting announcement:", e);
-    }
-  };
+  const text = announcementInput.value.trim();
+  if (!text) return;
+  try {
+    await db.collection('users').doc('A3HIWA6XWvhFcGdsM3o5IV0Qx3B2')
+      .collection('announcement').doc('latest')
+      .set({
+        text,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    announcementInput.value = '';
+    alert('✅ Announcement posted!');
+  } catch (e) {
+    console.error("Error posting announcement:", e);
+  }
+};
+
 
   async function loadAnnouncement() {
     try {
