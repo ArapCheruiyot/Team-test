@@ -294,3 +294,42 @@
   50%  { transform: translateX(0%);   }
   100% { transform: translateX(100%); }
 }
+/* Align container content (Welcome on left, announcement on right) */
+.container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 20px;
+  background-color: #003366;
+  color: white;
+}
+
+/* Marquee banner (announcement right) */
+#announcement-banner {
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 60%;
+}
+
+#announcement-marquee {
+  display: inline-block;
+  animation: scroll-left 12s linear infinite;
+  font-weight: bold;
+  font-family: Arial, sans-serif;
+  font-size: 1rem;
+  color: #fff;
+}
+
+@keyframes scroll-left {
+  0% {
+    transform: translateX(100%);
+  }
+
+  50% {
+    transform: translateX(0%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
