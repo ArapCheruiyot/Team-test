@@ -74,20 +74,29 @@ document.addEventListener('DOMContentLoaded', () => {
 };
 
 
-  async function loadAnnouncement() {
-    try {
-      const doc = await db.collection('users').doc(leaderUid).collection('announcement').doc('latest').get();
-      if (doc.exists) {
-        const data = doc.data();
-        if (isAgent && announcementDisplay) {
-          announcementDisplay.style.display = 'block';
-          announcementText.textContent = data.text;
+async function loadAnnouncement() {
+  try {
+    const doc = await db.collection('users').doc('A3HIWA6XWvhFcGdsM3o5IV0Qx3B2')
+      .collection('announcement').doc('latest').get();
+
+    if (doc.exists) {
+      const data = doc.data();
+
+      if (isAgent) {
+        const banner = document.getElementById('announcement-banner');
+        const scrollText = document.getElementById('announcement-text-scroll');
+
+        if (banner && scrollText) {
+          scrollText.textContent = data.text;
+          banner.style.display = 'block';
         }
       }
-    } catch (e) {
-      console.error("Error loading announcement:", e);
     }
+  } catch (e) {
+    console.error("Error loading announcement:", e);
   }
+}
+
 
   // === NOTES SECTION ===
   const newBtn    = document.getElementById('new-file');
