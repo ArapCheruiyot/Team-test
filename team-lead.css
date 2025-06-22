@@ -261,17 +261,40 @@
   align-items: center;
   gap: 1rem;
 }
+display: inline-block;
+  padding-left: 100%;
+  animation: scroll-mid 10s linear infinite;
+  color: #003366;
+  font-weight: bold;
+  font-family: Arial, sans-serif;
+}
 
-/* Right: scrolling announcement */
+.container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 20px;
+  background-color: #003366;
+  color: white;
+}
+
+/* Left section: Welcome and sign out */
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Right section: Scrolling announcement */
 #announcement-banner {
-  flex: 1;
-  overflow: hidden;
-  height: 30px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
   max-width: 60%;
+  height: 30px;
+  visibility: hidden; /* default hidden until shown by JS */
 }
 
 #announcement-marquee {
@@ -283,36 +306,6 @@
 #announcement-text-scroll {
   display: inline-block;
   padding-left: 100%;
-  animation: scroll-mid 10s linear infinite;
-  color: #003366;
-  font-weight: bold;
-  font-family: Arial, sans-serif;
-}
-
-@keyframes scroll-mid {
-  0%   { transform: translateX(100%); }
-  50%  { transform: translateX(0%);   }
-  100% { transform: translateX(100%); }
-}
-/* Align container content (Welcome on left, announcement on right) */
-.container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 20px;
-  background-color: #003366;
-  color: white;
-}
-
-/* Marquee banner (announcement right) */
-#announcement-banner {
-  overflow: hidden;
-  white-space: nowrap;
-  max-width: 60%;
-}
-
-#announcement-marquee {
-  display: inline-block;
   animation: scroll-left 12s linear infinite;
   font-weight: bold;
   font-family: Arial, sans-serif;
@@ -321,15 +314,8 @@
 }
 
 @keyframes scroll-left {
-  0% {
-    transform: translateX(100%);
-  }
-
-  50% {
-    transform: translateX(0%);
-  }
-
-  100% {
-    transform: translateX(100%);
-  }
+  0%   { transform: translateX(100%); }
+  50%  { transform: translateX(0%);   }
+  100% { transform: translateX(100%); }
 }
+
