@@ -1,4 +1,4 @@
-// chat.js — Modular one-to-one messaging logic
+// chat.js — Modular one-to-one messaging logic with replies
 
 export function initChat(db, auth, leaderUid) {
   const contactList  = document.getElementById('contact-list');
@@ -10,6 +10,7 @@ export function initChat(db, auth, leaderUid) {
   let currentUser = auth.currentUser;
   let activeContact = null;
   let activeChatId = null;
+  let replyToMessage = null;
 
   contactList.addEventListener('click', async e => {
     if (e.target.tagName !== 'LI') return;
@@ -30,16 +31,27 @@ export function initChat(db, auth, leaderUid) {
     const text = chatInput.value.trim();
     if (!text || !activeChatId) return;
 
+    const messageData = {
+      text,
+      fromEmail: currentUser.email,
+      toEmail: activeContact,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    if (replyToMessage) {
+      messageData.replyTo = {
+        messageId: replyToMessage.id,
+        text: replyToMessage.text
+      };
+    }
+
     await db.collection('users').doc(leaderUid)
       .collection('chats').doc(activeChatId)
-      .collection('messages').add({
-        text,
-        fromEmail: currentUser.email,
-        toEmail: activeContact,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      });
+      .collection('messages').add(messageData);
 
     chatInput.value = '';
+    replyToMessage = null;
+    clearReplyPreview();
     loadMessagesFor(activeChatId, currentUser.email);
   });
 
@@ -75,10 +87,61 @@ export function initChat(db, auth, leaderUid) {
       const m = doc.data();
       const bubble = document.createElement('div');
       bubble.className = `chat-bubble ${m.fromEmail === currentEmail ? 'sent' : 'received'}`;
-      bubble.innerHTML = `<strong>${m.fromEmail}:</strong> ${m.text}`;
+
+      let replyHTML = '';
+      if (m.replyTo) {
+        replyHTML = `
+          <div class="reply-preview">
+            <em>Replying to:</em> <div class="reply-text">${m.replyTo.text}</div>
+          </div>
+        `;
+      }
+
+      bubble.innerHTML = `
+        ${replyHTML}
+        <strong>${m.fromEmail}:</strong> ${m.text}
+        <button class="reply-btn" data-id="${doc.id}" data-text="${m.text}">↩️</button>
+      `;
       chatBox.appendChild(bubble);
     });
 
     chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Attach reply button handlers
+    document.querySelectorAll('.reply-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        replyToMessage = {
+          id: btn.dataset.id,
+          text: btn.dataset.text
+        };
+        showReplyPreview(replyToMessage.text);
+      });
+    });
   }
-}
+
+  function showReplyPreview(text) {
+    let preview = document.getElementById('reply-preview');
+    if (!preview) {
+      preview = document.createElement('div');
+      preview.id = 'reply-preview';
+      preview.innerHTML = `
+        <div class="preview-text"></div>
+        <button id="cancel-reply">❌</button>
+      `;
+      chatInput.parentElement.insertBefore(preview, chatInput);
+    }
+    preview.querySelector('.preview-text').textContent = `Replying to: ${text}`;
+    preview.style.display = 'block';
+    document.getElementById('cancel-reply').onclick = () => {
+      replyToMessage = null;
+      clearReplyPreview();
+    };
+  }
+
+  function clearReplyPreview() {
+    const preview = document.getElementById('reply-preview');
+    if (preview) {
+      preview.remove();
+    }
+  }
+} 
