@@ -80,34 +80,93 @@ document.addEventListener('DOMContentLoaded', () => {
 };
 
 
-async function loadAnnouncement() {
-  try {
-    const doc = await db.collection('users').doc('A3HIWA6XWvhFcGdsM3o5IV0Qx3B2')
-      .collection('announcement').doc('latest').get();
+// team-lead.js — Dashboard logic (notes, contacts, chat, announcements)
+import { initChat } from './chat.js';
 
-    console.log("🛠 Checking announcement for agent...");
-    if (doc.exists) {
-      const data = doc.data();
-      console.log("📢 Announcement found:", data.text);
+document.addEventListener('DOMContentLoaded', () => {
+  console.log("✅ team-lead.js initialized");
 
-      if (isAgent) {
+  const db   = window.db;
+  const auth = window.auth;
+
+  // Is this an agent session?
+  const params  = new URLSearchParams(window.location.search);
+  const isAgent = params.get('asAgent') === 'true';
+
+  // Hide owner-only panels (including announcement panel)
+  if (isAgent) {
+    ['new-file','delete','add-contact-btn','add-contact-form','announcement-panel']
+      .forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+    const wel = document.getElementById('welcome');
+    if (wel) wel.textContent += ' (Agent)';
+  }
+
+  let currentUser = null;
+  let leaderUid   = null;
+
+  auth.onAuthStateChanged(async user => {
+    if (!user) return window.location.href = 'index.html';
+    currentUser = user;
+    leaderUid   = isAgent ? 'A3HIWA6XWvhFcGdsM3o5IV0Qx3B2' : user.uid;
+
+    // Update welcome
+    document.getElementById('welcome').textContent =
+      `Welcome, ${user.displayName || user.email}!` + (isAgent ? ' (Agent)' : '');
+
+    // Load core data
+    await loadNotes();
+    await loadContacts();
+    await loadAnnouncement();
+
+    // Initialize chat
+    initChat(db, auth, leaderUid);
+  });
+
+  // === ANNOUNCEMENTS ===
+  const postBtn = document.getElementById('post-announcement');
+  if (postBtn) postBtn.onclick = async () => {
+    const input = document.getElementById('announcement-input');
+    const text  = input.value.trim();
+    if (!text) return;
+    try {
+      await db.collection('users')
+        .doc('A3HIWA6XWvhFcGdsM3o5IV0Qx3B2')
+        .collection('announcement')
+        .doc('latest')
+        .set({ text, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+      input.value = '';
+      alert('✅ Announcement posted!');
+    } catch (e) {
+      console.error('Error posting announcement:', e);
+    }
+  };
+
+  async function loadAnnouncement() {
+    try {
+      const doc = await db.collection('users')
+        .doc('A3HIWA6XWvhFcGdsM3o5IV0Qx3B2')
+        .collection('announcement')
+        .doc('latest')
+        .get();
+      if (doc.exists && isAgent) {
+        const { text } = doc.data();
         const banner = document.getElementById('announcement-banner');
         const scrollText = document.getElementById('announcement-text-scroll');
-
         if (banner && scrollText) {
-          scrollText.textContent = `📣 ${data.text}`;
-          scrollText.style.display = 'inline-block';  // Ensure visible
-          banner.style.display = 'flex';              // Make sure banner is flex
-          banner.style.visibility = 'visible';        // Ensure it's visible
+          scrollText.textContent = `📣 ${text}`;
+          // Ensure banner is visible and styled as flex
+          banner.style.display = 'flex';
+          banner.style.visibility = 'visible';
         }
       }
-    } else {
-      console.log("📭 No announcement found.");
+    } catch (e) {
+      console.error('Error loading announcement:', e);
     }
-  } catch (e) {
-    console.error("❌ Error loading announcement:", e);
   }
-}
+
 
   // === NOTES SECTION ===
   const newBtn    = document.getElementById('new-file');
