@@ -85,8 +85,10 @@ async function loadAnnouncement() {
     const doc = await db.collection('users').doc('A3HIWA6XWvhFcGdsM3o5IV0Qx3B2')
       .collection('announcement').doc('latest').get();
 
+    console.log("🛠 Checking announcement for agent...");
     if (doc.exists) {
       const data = doc.data();
+      console.log("📢 Announcement found:", data.text);
 
       if (isAgent) {
         const banner = document.getElementById('announcement-banner');
@@ -97,11 +99,14 @@ async function loadAnnouncement() {
           banner.style.display = 'block';
         }
       }
+    } else {
+      console.log("📭 No announcement found.");
     }
   } catch (e) {
-    console.error("Error loading announcement:", e);
+    console.error("❌ Error loading announcement:", e);
   }
 }
+
 
 
   // === NOTES SECTION ===
