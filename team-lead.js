@@ -95,8 +95,10 @@ async function loadAnnouncement() {
         const scrollText = document.getElementById('announcement-text-scroll');
 
         if (banner && scrollText) {
-          scrollText.textContent = data.text;
-          banner.style.display = 'block';
+          scrollText.textContent = `📣 ${data.text}`;
+          scrollText.style.display = 'inline-block';  // Ensure visible
+          banner.style.display = 'flex';              // Make sure banner is flex
+          banner.style.visibility = 'visible';        // Ensure it's visible
         }
       }
     } else {
@@ -106,8 +108,6 @@ async function loadAnnouncement() {
     console.error("❌ Error loading announcement:", e);
   }
 }
-
-
 
   // === NOTES SECTION ===
   const newBtn    = document.getElementById('new-file');
