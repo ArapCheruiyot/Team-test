@@ -1,86 +1,79 @@
-/* Global Layout */
+/* ==============================
+   Global Layout & Header
+   ============================== */
 .container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 20px;
+  padding: 0 20px;
   background-color: #003366;
   color: #fff;
   height: 60px;
   box-sizing: border-box;
+  position: relative;
 }
 
-/* Left: Welcome & Sign Out */
 .user-section {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
-
 .user-section h1 {
   margin: 0;
   font-size: 1.25rem;
 }
-
 .user-section button {
   padding: 6px 12px;
   background: #2b7cff;
-  color: white;
+  color: #fff;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
-
 .user-section button:hover {
   background: #105de0;
 }
 
-/* Right: Announcement Banner */
+/* Announcement banner (hidden until JS shows it) */
 #announcement-banner {
   flex: 1;
+  height: 1.2em;
   overflow: hidden;
+  display: none;
   position: relative;
-  height: 30px;
 }
-
-#announcement-marquee {
-  display: inline-block;
-  white-space: nowrap;
+#announcement-text-scroll {
   position: absolute;
-  will-change: transform;
-  animation: scroll-left 15s linear infinite;
+  white-space: nowrap;
+  top: 0;
+  transform: translateX(100%);
+  animation: scroll-left 12s linear infinite;
   font-weight: bold;
   font-family: Arial, sans-serif;
   font-size: 1rem;
   color: #fff;
 }
-
 @keyframes scroll-left {
-  0% {
-    transform: translateX(100%);
-  }
-  100% {
-    transform: translateX(-100%);
-  }
+  0%   { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
 }
 
-/* Notepad & Sidebar */
+/* ==============================
+   Notepad & Sidebar
+   ============================== */
 #notepad {
   display: flex;
   height: calc(100vh - 60px);
-  width: 100%;
   overflow: hidden;
 }
-
 #notepad-left {
-  display: flex;
   width: 50%;
   border-right: 1px solid #ccc;
+  display: flex;
 }
-
 .sidebar {
   width: 250px;
-  background-color: #f9f9f9;
+  background: #f9f9f9;
   padding: 1rem;
   box-sizing: border-box;
   display: flex;
@@ -88,32 +81,27 @@
   gap: 0.5rem;
   overflow-y: auto;
 }
-
 .sidebar button {
   padding: 0.5rem;
-  background-color: #007bff;
+  background: #007bff;
+  color: #fff;
   border: none;
-  color: white;
   border-radius: 4px;
   cursor: pointer;
 }
-
 .sidebar button:hover {
-  background-color: #0056b3;
+  background: #0056b3;
 }
-
 #search-input {
   padding: 0.5rem;
   margin-bottom: 1rem;
   border-radius: 4px;
   border: 1px solid #ccc;
 }
-
 .file-list {
   flex-grow: 1;
   overflow-y: auto;
 }
-
 .note-item {
   padding: 0.5rem;
   margin-bottom: 0.5rem;
@@ -122,18 +110,14 @@
   border-radius: 4px;
   cursor: pointer;
 }
-
 .note-item:hover {
-  background-color: #e3f2fd;
+  background: #e3f2fd;
 }
-
-/* Editor */
 .editor {
   flex: 1;
   padding: 1rem;
   box-sizing: border-box;
 }
-
 #text-input {
   width: 100%;
   height: 100%;
@@ -146,42 +130,39 @@
   box-sizing: border-box;
 }
 
-/* Chat & Contacts */
+/* ==============================
+   Contacts & Chat
+   ============================== */
 #contact-chat-controls {
   width: 25%;
   padding: 1rem;
-  box-sizing: border-box;
   background: #f0f0f0;
   overflow-y: auto;
+  box-sizing: border-box;
 }
-
 .chat-actions {
   display: flex;
   gap: 0.5rem;
   margin-bottom: 1rem;
 }
-
 .chat-actions button {
   flex: 1;
   padding: 0.5rem;
-  border: none;
   background: #007bff;
-  color: white;
+  color: #fff;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
 }
-
 .chat-actions button:hover {
   background: #0056b3;
 }
-
 #contact-list,
 #chat-list {
   list-style: none;
   padding: 0;
   margin: 0 0 1rem;
 }
-
 #contact-list li,
 #chat-list li {
   padding: 0.5rem;
@@ -191,7 +172,6 @@
   margin-bottom: 0.5rem;
   cursor: pointer;
 }
-
 #contact-list li.active,
 #chat-list li.active {
   background: #d3eaff;
@@ -206,14 +186,12 @@
   border-left: 1px solid #ccc;
   padding: 1rem;
 }
-
 #chat-header {
   margin: 0 0 0.5rem;
   font-weight: bold;
   font-size: 1.2rem;
   color: #444;
 }
-
 .chat-box {
   flex: 1;
   overflow-y: auto;
@@ -223,7 +201,6 @@
   border-radius: 5px;
   margin-bottom: 1rem;
 }
-
 .chat-bubble {
   padding: 8px 12px;
   margin: 6px 0;
@@ -231,40 +208,34 @@
   border-radius: 15px;
   word-wrap: break-word;
 }
-
 .chat-bubble.sent {
   background: #dcf8c6;
   align-self: flex-end;
   text-align: right;
 }
-
 .chat-bubble.received {
   background: #e3e3e3;
   align-self: flex-start;
   text-align: left;
 }
-
 #chat-input-area {
   display: flex;
   gap: 0.5rem;
 }
-
 #chat-input {
   flex: 1;
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
-
 #send-message-btn {
   padding: 8px 14px;
   background-color: #2b7cff;
-  color: white;
+  color: #fff;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
-
 #send-message-btn:hover {
   background-color: #105de0;
 }
