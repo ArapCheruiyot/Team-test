@@ -1,5 +1,5 @@
 /* ==============================
-   Global Layout & Header
+   Header & Announcement Banner
    ============================== */
 .container {
   display: flex;
@@ -7,12 +7,13 @@
   align-items: center;
   padding: 0 20px;
   background-color: #003366;
-  color: #fff;
+  color: white;
   height: 60px;
   box-sizing: border-box;
   position: relative;
 }
 
+/* Welcome & Sign Out */
 .user-section {
   display: flex;
   align-items: center;
@@ -25,7 +26,7 @@
 .user-section button {
   padding: 6px 12px;
   background: #2b7cff;
-  color: #fff;
+  color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -34,14 +35,17 @@
   background: #105de0;
 }
 
-/* Announcement banner (hidden until JS shows it) */
+/* Announcement Banner (hidden by default) */
 #announcement-banner {
   flex: 1;
-  height: 1.2em;
   overflow: hidden;
-  display: none;
   position: relative;
+  height: 1.2em;
+  display: none;           /* JS will switch to flex */
+  margin-left: 1rem;
 }
+
+/* The scrolling text */
 #announcement-text-scroll {
   position: absolute;
   white-space: nowrap;
@@ -51,12 +55,14 @@
   font-weight: bold;
   font-family: Arial, sans-serif;
   font-size: 1rem;
-  color: #fff;
+  color: white;
 }
+
 @keyframes scroll-left {
-  0%   { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
+  from { transform: translateX(100%); }
+  to   { transform: translateX(-100%); }
 }
+
 
 /* ==============================
    Notepad & Sidebar
