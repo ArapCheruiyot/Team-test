@@ -48,7 +48,7 @@
   white-space: nowrap;
   /* start off the right edge */
   transform: translateX(100%);
-  animation: scroll-left 12s linear infinite;
+  animation: scroll-left 20s linear infinite;
   font-weight: bold;
   font-family: Arial, sans-serif;
   font-size: 1rem;
