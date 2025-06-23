@@ -36,41 +36,33 @@
 }
 
 /* Right: Announcement Banner */
-/* Announcement banner container (right side of header) */
 #announcement-banner {
-  display: none;            /* JS will flip this to flex/block */
   flex: 1;
-  overflow: hidden;         /* hide overflow so only part of the span shows */
-  white-space: nowrap;
-  height: 1.5em;            /* adjust to match your header font-size */
-  align-items: center;      /* vertically center if you use flex */
+  overflow: hidden;
+  position: relative;
+  height: 30px;
 }
 
-/* Tell the banner to use flex layout */
-.container { 
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  /* … your other header styles … */
-}
-
-/* The scrolling text itself */
-#announcement-text-scroll {
+#announcement-marquee {
   display: inline-block;
-  padding-left: 100%;       /* start off-screen to the right */
-  animation: scroll-left 12s linear infinite;
+  white-space: nowrap;
+  position: absolute;
+  will-change: transform;
+  animation: scroll-left 15s linear infinite;
   font-weight: bold;
   font-family: Arial, sans-serif;
   font-size: 1rem;
-  color: white;
+  color: #fff;
 }
 
-/* Keyframes: slide from right (100%) to left (-100%) */
 @keyframes scroll-left {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-100%); }
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
 }
-
 
 /* Notepad & Sidebar */
 #notepad {
