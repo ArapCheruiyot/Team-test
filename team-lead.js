@@ -75,29 +75,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  async function loadAnnouncement() {
-    try {
-      const snap = await db.collection('users')
-        .doc('A3HIWA6XWvhFcGdsM3o5IV0Qx3B2')
-        .collection('announcement')
-        .doc('latest')
-        .get();
+async function loadAnnouncement() {
+  try {
+    const doc = await db
+      .collection('users').doc(leaderUid)
+      .collection('announcement').doc('latest')
+      .get();
 
-      if (snap.exists && isAgent) {
-        const { text } = snap.data();
-        const banner = document.getElementById('announcement-banner');
-        const marquee = document.getElementById('announcement-text-scroll');
-        if (banner && marquee) {
-          marquee.textContent = `📣 ${text}`;
-          banner.style.display    = 'flex';
-          banner.style.visibility = 'visible';
-        }
-      }
-    } catch (e) {
-      console.error('Error loading announcement:', e);
+    if (doc.exists && isAgent) {
+      const { text } = doc.data();
+      const banner = document.getElementById('announcement-banner');
+      const span   = document.getElementById('announcement-text-scroll');
+      span.textContent = `📣 ${text}`;
+      banner.classList.remove('hide');   // makes it display via CSS flex
     }
+  } catch (e) {
+    console.error("Error loading announcement:", e);
   }
-
+}
   //
   // NOTES
   //
