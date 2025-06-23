@@ -10,10 +10,8 @@
   color: white;
   height: 60px;
   box-sizing: border-box;
-  position: relative;
 }
 
-/* Welcome & Sign Out */
 .user-section {
   display: flex;
   align-items: center;
@@ -35,21 +33,20 @@
   background: #105de0;
 }
 
-/* Announcement Banner (hidden by default) */
+/* Announcement Banner */
 #announcement-banner {
   flex: 1;
-  overflow: hidden;
-  position: relative;
-  height: 1.2em;
-  display: none;           /* JS will switch to flex */
+  height: 30px;            /* visible height */
+  overflow: hidden;        /* clip overflowing text */
+  display: flex;           /* let us center the text vertically */
+  align-items: center;
   margin-left: 1rem;
 }
 
-/* The scrolling text */
 #announcement-text-scroll {
-  position: absolute;
+  display: inline-block;
   white-space: nowrap;
-  top: 0;
+  /* start off the right edge */
   transform: translateX(100%);
   animation: scroll-left 12s linear infinite;
   font-weight: bold;
@@ -62,7 +59,6 @@
   from { transform: translateX(100%); }
   to   { transform: translateX(-100%); }
 }
-
 
 /* ==============================
    Notepad & Sidebar
