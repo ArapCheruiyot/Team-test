@@ -3,6 +3,14 @@ import { initChat } from './chat.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log("✅ team-lead.js initialized");
+document.getElementById('open-offers-btn').addEventListener('click', () => {
+  window.open(
+    'https://arapcheruiyot.github.io/offer-search/',
+    'offerSearch',
+    'width=800,height=600,toolbar=no,menubar=no'
+  );
+});
+
 
   const db   = window.db;
   const auth = window.auth;
