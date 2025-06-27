@@ -22,37 +22,36 @@
       appId: "1:147934510488:web:cdf01aed4342a43475bfed",
       measurementId: "G-ZPBL7DC3YG"
     };
-
     firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    window.db = db;
-    window.auth = auth;
+    window.auth = firebase.auth();
+    window.db   = firebase.firestore();
   </script>
 </head>
 <body>
-<div class="container">
-  <!-- Left: Welcome & Sign Out -->
-  <div class="user-section">
-    <h1 id="welcome">Loading…</h1>
-    <button id="signout">Sign Out</button>
+  <div class="container">
+    <!-- Left: Welcome & Sign Out -->
+    <div class="user-section">
+      <h1 id="welcome">Loading…</h1>
+      <button id="signout">Sign Out</button>
+      <!-- Gear icon to toggle contacts -->
+      <button id="settings-btn" class="gear-btn" aria-label="Settings">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 8a4 4 0 100 8 4 4 0 000-8zm0-5a1 1 0 011 1v1.08a7.003 7.003 0 013.546 1.953l.764-.763a1 1 0 111.414 1.414l-.763.764A7.003 7.003 0 0121.92 11H23a1 1 0 110 2h-1.08a7.003 7.003 0 01-1.953 3.546l.763.764a1 1 0 11-1.414 1.414l-.764-.763A7.003 7.003 0 0113 21.92V23a1 1 0 11-2 0v-1.08a7.003 7.003 0 01-3.546-1.953l-.764.763a1 1 0 11-1.414-1.414l.763-.764A7.003 7.003 0 012.08 13H1a1 1 0 110-2h1.08a7.003 7.003 0 011.953-3.546l-.763-.764a1 1 0 111.414-1.414l.764.763A7.003 7.003 0 0111 4.08V3a1 1 0 011-1z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Right: Announcement Banner -->
+    <div id="announcement-banner">
+      <span id="announcement-text-scroll">📣 Announcement will scroll here…</span>
+    </div>
   </div>
 
-  <!-- Right: Announcement Banner -->
-  <div id="announcement-banner">
-    <span id="announcement-text-scroll">📣 Announcement will scroll here…</span>
-  </div>
-</div>
-
-  <!-- ✅ Notepad split into left and right halves -->
   <section id="notepad">
-    <!-- Left: Notepad -->
+    <!-- Notepad Left -->
     <div id="notepad-left">
       <div class="sidebar">
-        <img src="logo.png" alt="team-hub logo"
-     style="width:200px; display:block; margin:20px auto;" />
-
+        <img src="logo.png" alt="team-hub logo" style="width:200px; display:block; margin:20px auto;" />
         <button id="new-file">New Note</button>
         <button id="delete">Delete</button>
         <button id="search">Search</button>
@@ -64,21 +63,20 @@
       </div>
     </div>
 
-    <!-- ✅ Announcement Panel (Visible to Team Leader Only) -->
+    <!-- Announcement Panel (Team Lead only) -->
     <div id="announcement-panel">
       <h3>📣 Team Announcement</h3>
       <textarea id="announcement-input" placeholder="Write your announcement..."></textarea>
       <button id="post-announcement">Post</button>
     </div>
 
-    <!-- Right: Chat UI -->
-    <div id="contact-chat-controls">
+    <!-- Contacts Panel (hidden by default) -->
+    <div id="contact-chat-controls" class="controls-hidden">
       <div class="chat-actions">
         <button id="add-contact-btn">Add Contact</button>
         <button id="start-chat-btn">Start Chat</button>
       </div>
 
-      <!-- Contact input -->
       <p>Click a contact to start chatting</p>
       <div id="add-contact-form" style="display: none;">
         <input type="email" id="contact-email" placeholder="Enter email">
@@ -86,7 +84,6 @@
       </div>
       <ul id="contact-list"></ul>
 
-      <!-- Chat input -->
       <div id="start-chat-form" style="display: none;">
         <input type="text" id="chat-name" placeholder="Enter chat name">
         <button id="create-chat">Create</button>
@@ -94,7 +91,7 @@
       <ul id="chat-list"></ul>
     </div>
 
-    <!-- 🔽 Chat Window -->
+    <!-- Chat Window -->
     <div id="chat-panel">
       <button id="open-offers-btn">Offers Finder</button>
       <h3 id="chat-header">No chat selected</h3>
@@ -106,22 +103,22 @@
     </div>
   </section>
 
-  <!-- ✅ Auth Guard -->
+  <!-- Auth Guard -->
   <script>
     auth.onAuthStateChanged(user => {
       if (!user) {
         window.location.href = 'index.html';
       } else {
-        document.getElementById('welcome').textContent = `Welcome, ${user.displayName || user.email}!`;
+        document.getElementById('welcome').textContent =
+          `Welcome, ${user.displayName || user.email}!`;
       }
     });
-
-    document.getElementById('signout').addEventListener('click', () => {
-      auth.signOut().then(() => window.location.href = 'index.html');
-    });
+    document.getElementById('signout').addEventListener('click', () =>
+      auth.signOut().then(() => window.location.href = 'index.html')
+    );
   </script>
 
-  <!-- ✅ Main JS -->
+  <!-- Main JS -->
   <script type="module" src="team-lead.js"></script>
 </body>
 </html>
