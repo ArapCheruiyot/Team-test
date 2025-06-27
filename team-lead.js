@@ -3,7 +3,11 @@ import { initChat } from './chat.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log("✅ team-lead.js initialized");
-
+  const settingsBtn  = document.getElementById('settings-btn');
+  const contactsPane = document.getElementById('contact-chat-controls');
+  settingsBtn?.addEventListener('click', () => {
+    contactsPane.classList.toggle('controls-hidden');
+  });
   const offersBtn = document.getElementById('open-offers-btn');
   console.log('🕵️ offersBtn is', offersBtn);
 
