@@ -54,16 +54,4 @@ button.google-signin:hover {
 }
 ground-color: red; /* 🔴 for test */
 }
-/* hide contacts by default */
-#contact-chat-controls.controls-hidden { display: none; }
-#contact-chat-controls { /* when shown */ display: block; }
-
-/* style your gear button */
-.gear-btn {
-  background: none;
-  border: none;
-  padding: 0 8px;
-  cursor: pointer;
-}
-
 
