@@ -1,133 +1,310 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TeamHub Dashboard</title>
-  <link rel="stylesheet" href="team-lead.css"/>
+// team-lead.js — Dashboard logic (notes, contacts, chat, announcements)
+import { initChat } from './chat.js';
 
-  <!-- ✅ Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+document.addEventListener('DOMContentLoaded', () => {
+  console.log("✅ team-lead.js initialized");
 
-  <!-- ✅ Firebase Config -->
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBQSl1HtlJBPRBcgt5culdCDj_cBVN40Io",
-      authDomain: "offer-upload.firebaseapp.com",
-      projectId: "offer-upload",
-      storageBucket: "offer-upload.firebasestorage.app",
-      messagingSenderId: "147934510488",
-      appId: "1:147934510488:web:cdf01aed4342a43475bfed",
-      measurementId: "G-ZPBL7DC3YG"
-    };
-    firebase.initializeApp(firebaseConfig);
-    window.auth = firebase.auth();
-    window.db   = firebase.firestore();
-  </script>
-</head>
-<body>
-  <div class="container">
-    <!-- Left: Welcome & Sign Out -->
-    <div class="user-section">
-      <h1 id="welcome">Loading…</h1>
-      <button id="signout">Sign Out</button>
-      <!-- Gear icon to toggle contacts -->
-      <button id="settings-btn" class="gear-btn" aria-label="Settings">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 8a4 4 0 100 8 4 4 0 000-8zm0-5a1 1 0 011 1v1.08a7.003 7.003 0 013.546 1.953l.764-.763a1 1 0 111.414 1.414l-.763.764A7.003 7.003 0 0121.92 11H23a1 1 0 110 2h-1.08a7.003 7.003 0 01-1.953 3.546l.763.764a1 1 0 11-1.414 1.414l-.764-.763A7.003 7.003 0 0113 21.92V23a1 1 0 11-2 0v-1.08a7.003 7.003 0 01-3.546-1.953l-.764.763a1 1 0 11-1.414-1.414l.763-.764A7.003 7.003 0 012.08 13H1a1 1 0 110-2h1.08a7.003 7.003 0 011.953-3.546l-.763-.764a1 1 0 111.414-1.414l.764.763A7.003 7.003 0 0111 4.08V3a1 1 0 011-1z"/>
-        </svg>
-      </button>
-    </div>
+  // 1) Gear‐button → toggle contact pane
+  const settingsBtn  = document.getElementById('settings-btn');
+  const contactsPane = document.getElementById('contact-chat-controls');
+  settingsBtn?.addEventListener('click', () => {
+    contactsPane.classList.toggle('controls-hidden');
+  });
 
-    <!-- Right: Announcement Banner -->
-    <div id="announcement-banner">
-      <span id="announcement-text-scroll">📣 Announcement will scroll here…</span>
-    </div>
-  </div>
+  // 2) Offers Finder popup
+  const offersBtn = document.getElementById('open-offers-btn');
+  if (offersBtn) {
+    offersBtn.addEventListener('click', () => {
+      window.open(
+        'https://arapcheruiyot.github.io/offer-search/',
+        'offerSearch',
+        'width=800,height=600,toolbar=no,menubar=no'
+      );
+    });
+  }
 
-  <section id="notepad">
-    <!-- Notepad Left -->
-    <div id="notepad-left">
-      <div class="sidebar">
-        <img src="logo.png" alt="team-hub logo" style="width:200px; display:block; margin:20px auto;" />
-        <button id="new-file">New Note</button>
-        <button id="delete">Delete</button>
-        <button id="search">Search</button>
-        <input type="text" id="search-input" placeholder="Search notes..." style="display: none;" />
-        <div id="file-names" class="file-list"></div>
-      </div>
-      <div class="editor">
-        <textarea id="text-input" placeholder="Start typing your note..."></textarea>
-      </div>
-    </div>
+  // 3) Replace static "No chat selected" with a <select>
+  const oldHeader = document.getElementById('chat-header');
+  const chatSelect = document.createElement('select');
+  chatSelect.id = 'chat-select';
+  chatSelect.classList.add('chat-dropdown');
+  chatSelect.innerHTML = `<option value="" selected>No chat selected</option>`;
+  if (oldHeader) oldHeader.replaceWith(chatSelect);
 
-    <!-- Announcement Panel (Team Lead only) -->
-    <div id="announcement-panel">
-      <h3>📣 Team Announcement</h3>
-      <textarea id="announcement-input" placeholder="Write your announcement..."></textarea>
-      <button id="post-announcement">Post</button>
-    </div>
+  // 4) When the user picks someone from the dropdown…
+  chatSelect.addEventListener('change', async () => {
+    const chatId     = chatSelect.value;
+    const messagesDiv = document.getElementById('chat-messages');
+    messagesDiv.innerHTML = '';    // clear previous
+    if (!chatId) return;          // placeholder
+    await loadChatMessages(chatId);
+  });
 
-    <!-- Contacts Panel (hidden by default) -->
-    <div id="contact-chat-controls" class="controls-hidden">
-      <div class="chat-actions">
-        <button id="add-contact-btn">Add Contact</button>
-        <button id="start-chat-btn">Start Chat</button>
-      </div>
+  // The rest of your initialization happens once auth state settles…
+});
 
-      <p>Click a contact to start chatting</p>
-      <div id="add-contact-form" style="display: none;">
-        <input type="email" id="contact-email" placeholder="Enter email">
-        <button id="save-contact">Save</button>
-      </div>
-      <ul id="contact-list"></ul>
+const db   = window.db;
+const auth = window.auth;
 
-      <div id="start-chat-form" style="display: none;">
-        <input type="text" id="chat-name" placeholder="Enter chat name">
-        <button id="create-chat">Create</button>
-      </div>
-      <ul id="chat-list"></ul>
-    </div>
+// Detect agent vs. owner
+const params   = new URLSearchParams(window.location.search);
+const isAgent  = params.get('asAgent') === 'true';
 
-    <!-- Chat Window -->
- <!-- 🔽 Chat Window -->
-<div id="chat-panel">
-  <button id="open-offers-btn">Offers Finder</button>
-  
-  <!-- Replace the <h3> with a <select> -->
-  <label for="chat-select" class="visually-hidden">Select a chat</label>
-  <select id="chat-select" class="chat-dropdown">
-    <option value="" selected>No chat selected</option>
-    <!-- JS will append <option value="chatId">Chat Name</option> here -->
-  </select>
-  
-  <div id="chat-messages" class="chat-box"></div>
-  <div id="chat-input-area">
-    <input type="text" id="chat-input" placeholder="Type a message..." />
-    <button id="send-message-btn">Send</button>
-  </div>
-</div>
+// Hide owner-only panels for agents
+if (isAgent) {
+  ['new-file','delete','add-contact-btn','add-contact-form','announcement-panel']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+  const welcome = document.getElementById('welcome');
+  if (welcome) welcome.textContent += ' (Agent)';
+}
 
-  </section>
+let currentUser = null;
+let leaderUid   = null;
 
-  <!-- Auth Guard -->
-  <script>
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = 'index.html';
-      } else {
-        document.getElementById('welcome').textContent =
-          `Welcome, ${user.displayName || user.email}!`;
+auth.onAuthStateChanged(async user => {
+  if (!user) {
+    window.location.href = 'index.html';
+    return;
+  }
+  currentUser = user;
+  leaderUid   = isAgent
+    ? 'A3HIWA6XWvhFcGdsM3o5IV0Qx3B2'
+    : user.uid;
+
+  // Update welcome text
+  document.getElementById('welcome').textContent =
+    `Welcome, ${user.displayName || user.email}!` + (isAgent ? ' (Agent)' : '');
+
+  // Load all panels
+  await loadNotes();
+  await loadContacts();
+  await loadAnnouncement();
+
+  // Start chat engine
+  initChat(db, auth, leaderUid);
+});
+
+//
+// ANNOUNCEMENTS
+//
+const postBtn = document.getElementById('post-announcement');
+if (postBtn) {
+  postBtn.addEventListener('click', async () => {
+    const input = document.getElementById('announcement-input');
+    const text  = input.value.trim();
+    if (!text) return;
+    try {
+      await db.collection('users')
+        .doc('A3HIWA6XWvhFcGdsM3o5IV0Qx3B2')
+        .collection('announcement')
+        .doc('latest')
+        .set({
+          text,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      input.value = '';
+      alert('✅ Announcement posted!');
+    } catch (e) {
+      console.error('Error posting announcement:', e);
+    }
+  });
+}
+
+async function loadAnnouncement() {
+  try {
+    const doc = await db
+      .collection('users').doc(leaderUid)
+      .collection('announcement').doc('latest')
+      .get();
+    if (doc.exists && isAgent) {
+      const { text } = doc.data();
+      const banner   = document.getElementById('announcement-banner');
+      const span     = document.getElementById('announcement-text-scroll');
+      span.textContent = `📣 ${text}`;
+      banner.classList.remove('hide');
+    }
+  } catch (e) {
+    console.error("Error loading announcement:", e);
+  }
+}
+
+//
+// NOTES
+//
+const newBtn    = document.getElementById('new-file');
+const delBtn    = document.getElementById('delete');
+const fileNames = document.getElementById('file-names');
+const textArea  = document.getElementById('text-input');
+let saveTimeout = null;
+
+async function loadNotes() {
+  fileNames.innerHTML = '';
+  try {
+    const snap = await db.collection('users')
+      .doc(leaderUid)
+      .collection('notes')
+      .orderBy('updatedAt','desc')
+      .get();
+    snap.forEach(doc => {
+      const note = doc.data();
+      const div  = document.createElement('div');
+      div.className = 'note-item';
+      div.textContent = note.title?.trim() || '(Untitled)';
+      div.onclick     = () => openNote(doc.id, note);
+      fileNames.appendChild(div);
+    });
+  } catch (e) {
+    console.error('Error loading notes:', e);
+  }
+}
+
+function openNote(id, note) {
+  textArea.dataset.noteId = id;
+  textArea.value = note.content || '';
+  textArea.focus();
+}
+
+if (newBtn) {
+  newBtn.addEventListener('click', async () => {
+    if (isAgent) return;
+    try {
+      const ref = await db.collection('users').doc(leaderUid)
+        .collection('notes')
+        .add({
+          title: '',
+          content: '',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      openNote(ref.id, { content: '' });
+      await loadNotes();
+    } catch (e) {
+      console.error('Error creating note:', e);
+    }
+  });
+}
+
+if (delBtn) {
+  delBtn.addEventListener('click', async () => {
+    if (isAgent) return;
+    const id = textArea.dataset.noteId;
+    if (!id) return;
+    try {
+      await db.collection('users').doc(leaderUid)
+        .collection('notes').doc(id).delete();
+      textArea.value = '';
+      delete textArea.dataset.noteId;
+      await loadNotes();
+    } catch (e) {
+      console.error('Error deleting note:', e);
+    }
+  });
+}
+
+textArea.addEventListener('input', () => {
+  if (isAgent) return;
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(async () => {
+    const id      = textArea.dataset.noteId;
+    if (!id) return;
+    const content = textArea.value.trim();
+    const title   = content.split('\n')[0]?.trim() || '(Untitled)';
+    try {
+      await db.collection('users').doc(leaderUid)
+        .collection('notes').doc(id)
+        .update({
+          title,
+          content,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      await loadNotes();
+    } catch (e) {
+      console.error('Auto-save error:', e);
+    }
+  }, 500);
+});
+
+//
+// CONTACTS & CHAT‐DROPDOWN
+//
+const addContactBtn  = document.getElementById('add-contact-btn');
+const saveContactBtn = document.getElementById('save-contact');
+const contactInput   = document.getElementById('contact-email');
+const contactList    = document.getElementById('contact-list');
+
+if (addContactBtn) {
+  addContactBtn.addEventListener('click', () => {
+    if (isAgent) return;
+    document.getElementById('add-contact-form').style.display = 'block';
+  });
+}
+
+if (saveContactBtn) {
+  saveContactBtn.addEventListener('click', async () => {
+    if (isAgent) return;
+    const email = contactInput.value.trim().toLowerCase();
+    if (!email) return;
+    try {
+      await db.collection('users').doc(leaderUid)
+        .collection('contacts')
+        .add({ email, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      contactInput.value = '';
+      await loadContacts();
+    } catch (e) {
+      console.error('Error saving contact:', e);
+    }
+  });
+}
+
+async function loadContacts() {
+  // clear the <ul>
+  contactList.innerHTML = '';
+  // clear the <select> except placeholder
+  const chatSelect = document.getElementById('chat-select');
+  if (chatSelect) {
+    chatSelect.querySelectorAll('option:not([value=""])').forEach(o => o.remove());
+  }
+
+  try {
+    const snap = await db.collection('users').doc(leaderUid)
+      .collection('contacts')
+      .orderBy('createdAt','desc')
+      .get();
+
+    snap.forEach(doc => {
+      const { email } = doc.data();
+      const id        = doc.id;
+
+      // 1) populate the <ul>
+      const li = document.createElement('li');
+      li.textContent = `👤 ${email}`;
+      li.onclick     = () => {
+        if (chatSelect) {
+          chatSelect.value = id;
+          chatSelect.dispatchEvent(new Event('change'));
+        }
+      };
+      contactList.appendChild(li);
+
+      // 2) populate the <select>
+      if (chatSelect) {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.text  = email;
+        chatSelect.appendChild(opt);
       }
     });
-    document.getElementById('signout').addEventListener('click', () =>
-      auth.signOut().then(() => window.location.href = 'index.html')
-    );
-  </script>
+  } catch (e) {
+    console.error('Failed to load contacts:', e);
+  }
+}
 
-  <!-- Main JS -->
-  <script type="module" src="team-lead.js"></script>
-</body>
-</html>
+// Stub — replace with your real chat-message fetch/render
+async function loadChatMessages(chatId) {
+  const messagesDiv = document.getElementById('chat-messages');
+  messagesDiv.innerHTML = `<p>Loading chat with ID “${chatId}”…</p>`;
+  // TODO: fetch messages from Firestore and append bubbles here
+}
