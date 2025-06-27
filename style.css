@@ -52,3 +52,10 @@ button.google-signin {
 button.google-signin:hover {
   background-color: #3367d6;
 }
+.logo {
+  width: 120px;        /* Adjust this size to your liking */
+  height: auto;        /* Maintain aspect ratio */
+  margin-bottom: 1rem; /* Space below the logo */
+  display: block;
+}
+
