@@ -59,4 +59,7 @@ button.google-signin:hover {
   margin: 20px auto;
   display: block;
 }
+.logo {
+  background-color: red;  /* 🔴 for test */
+}
 
