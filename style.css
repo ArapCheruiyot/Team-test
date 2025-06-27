@@ -58,8 +58,7 @@ button.google-signin:hover {
   max-height: 100px;
   margin: 20px auto;
   display: block;
+  background-color: red; /* 🔴 for test */
 }
-.logo {
-  background-color: red;  /* 🔴 for test */
-}
+
 
