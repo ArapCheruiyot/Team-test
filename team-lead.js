@@ -1,19 +1,19 @@
-// team-lead.js — Dashboard logic (notes, contacts, chat, announcements)
 import { initChat } from './chat.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log("✅ team-lead.js initialized");
+
+  // 1) Gear‐button → toggle contact pane
   const settingsBtn  = document.getElementById('settings-btn');
   const contactsPane = document.getElementById('contact-chat-controls');
   settingsBtn?.addEventListener('click', () => {
     contactsPane.classList.toggle('controls-hidden');
   });
-  const offersBtn = document.getElementById('open-offers-btn');
-  console.log('🕵️ offersBtn is', offersBtn);
 
+  // 2) Offers Finder popup
+  const offersBtn = document.getElementById('open-offers-btn');
   if (offersBtn) {
     offersBtn.addEventListener('click', () => {
-      console.log('🚀 Opening Offers Finder popup');
       window.open(
         'https://arapcheruiyot.github.io/offer-search/',
         'offerSearch',
@@ -21,8 +21,27 @@ document.addEventListener('DOMContentLoaded', () => {
       );
     });
   }
-  // … rest of your code …
+
+  // 3) **Replace your static “No chat selected” header**
+  const oldHeader = document.getElementById('chat-header');
+  const chatSelect = document.createElement('select');
+  chatSelect.id = 'chat-select';
+  chatSelect.classList.add('chat-dropdown');
+  chatSelect.innerHTML = `<option value="" selected>No chat selected</option>`;
+  if (oldHeader) oldHeader.replaceWith(chatSelect);
+
+  // 4) When the user picks someone from the dropdown…
+  chatSelect.addEventListener('change', async () => {
+    const chatId = chatSelect.value;
+    const messagesDiv = document.getElementById('chat-messages');
+    messagesDiv.innerHTML = '';               // clear previous
+    if (!chatId) return;                     // placeholder chosen
+    await loadChatMessages(chatId);           // your fetch-and-render fn
+  });
+
+  // …rest of your code (auth.onAuthStateChanged, loadNotes, etc)…
 });
+
 
 
 
