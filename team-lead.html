@@ -92,15 +92,24 @@
     </div>
 
     <!-- Chat Window -->
-    <div id="chat-panel">
-      <button id="open-offers-btn">Offers Finder</button>
-      <h3 id="chat-header">No chat selected</h3>
-      <div id="chat-messages" class="chat-box"></div>
-      <div id="chat-input-area">
-        <input type="text" id="chat-input" placeholder="Type a message..." />
-        <button id="send-message-btn">Send</button>
-      </div>
-    </div>
+ <!-- 🔽 Chat Window -->
+<div id="chat-panel">
+  <button id="open-offers-btn">Offers Finder</button>
+  
+  <!-- Replace the <h3> with a <select> -->
+  <label for="chat-select" class="visually-hidden">Select a chat</label>
+  <select id="chat-select" class="chat-dropdown">
+    <option value="" selected>No chat selected</option>
+    <!-- JS will append <option value="chatId">Chat Name</option> here -->
+  </select>
+  
+  <div id="chat-messages" class="chat-box"></div>
+  <div id="chat-input-area">
+    <input type="text" id="chat-input" placeholder="Type a message..." />
+    <button id="send-message-btn">Send</button>
+  </div>
+</div>
+
   </section>
 
   <!-- Auth Guard -->
