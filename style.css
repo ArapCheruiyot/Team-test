@@ -52,13 +52,7 @@ button.google-signin {
 button.google-signin:hover {
   background-color: #3367d6;
 }
-.logo {
-  width: 100px;
-  height: auto;
-  max-height: 100px;
-  margin: 20px auto;
-  display: block;
-  background-color: red; /* 🔴 for test */
+ground-color: red; /* 🔴 for test */
 }
 
 
