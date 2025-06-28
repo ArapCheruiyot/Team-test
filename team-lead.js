@@ -1,7 +1,11 @@
 // team-lead.js — Dashboard logic (notes, contacts, chat, announcements)
-import { initChat, findOrCreateChat, startListeningToMessages } from './chat.js';
+import {
+  initChat,
+  findOrCreateChat,
+  startListeningToMessages
+} from './chat.js';
 
-// — Module-wide state & Firebase handles —
+// — Module‐wide state & Firebase handles —
 let currentUser     = null;
 let leaderUid       = null;
 let unsubscribeChat = null;
@@ -11,7 +15,7 @@ const auth    = window.auth;
 const isAgent = new URLSearchParams(window.location.search)
                   .get('asAgent') === 'true';
 
-// Immediately hide agent-only controls
+// Immediately hide agent‐only controls if needed
 if (isAgent) {
   ['new-file','delete','add-contact-btn','add-contact-form','announcement-panel']
     .forEach(id => document.getElementById(id)?.style.setProperty('display','none'));
@@ -20,7 +24,7 @@ if (isAgent) {
 document.addEventListener('DOMContentLoaded', () => {
   console.log("✅ team-lead.js initialized");
 
-  // 1) Gear button toggles contact pane
+  // 1) Gear button → toggle contacts pane
   document.getElementById('settings-btn')
     ?.addEventListener('click', () => {
       document.getElementById('contact-chat-controls')
@@ -37,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
       );
     });
 
-  // 3) Swap out static header for a <select>
+  // 3) Replace static header with <select>
   const headerElem = document.getElementById('chat-header');
   const chatSelect = document.createElement('select');
   chatSelect.id    = 'chat-select';
@@ -45,31 +49,43 @@ document.addEventListener('DOMContentLoaded', () => {
   chatSelect.innerHTML = `<option value="" selected>No chat selected</option>`;
   if (headerElem) headerElem.replaceWith(chatSelect);
 
-  // 4) When a contact is selected, find/create the chat and listen
+  // 4) When a contact is selected, findOrCreateChat → listen
   chatSelect.addEventListener('change', async () => {
-    const selectedEmail = chatSelect.value;
-    if (!selectedEmail) {
-      document.getElementById('chat-messages').innerHTML = '';
+    const email = chatSelect.value;
+    const box   = document.getElementById('chat-messages');
+    box.innerHTML = '';
+    if (!email) {
+      unsubscribeChat?.();
       return;
     }
-    // Find or create the chat between currentUser.email and selectedEmail
-    const chatId = await findOrCreateChat(db, leaderUid, currentUser.email, selectedEmail);
-    // Unsubscribe previous listener, subscribe to new
-    if (unsubscribeChat) unsubscribeChat();
-    unsubscribeChat = startListeningToMessages(db, leaderUid, chatId, messages => {
-      const box = document.getElementById('chat-messages');
-      box.innerHTML = '';
-      messages.forEach(m => {
-        const b = document.createElement('div');
-        b.className = `chat-bubble ${(m.sender === currentUser.email) ? 'sent' : 'received'}`;
-        b.textContent = m.text;
-        box.appendChild(b);
-      });
-      box.scrollTop = box.scrollHeight;
-    });
+
+    // Ensure a chat doc exists for the two emails
+    const chatId = await findOrCreateChat(
+      db, leaderUid,
+      currentUser.email,
+      email
+    );
+
+    // Detach previous listener
+    unsubscribeChat?.();
+
+    // Start real‐time listener
+    unsubscribeChat = startListeningToMessages(
+      db, leaderUid, chatId,
+      (messages) => {
+        box.innerHTML = '';
+        messages.forEach(m => {
+          const b = document.createElement('div');
+          b.className = `chat-bubble ${(m.fromEmail === currentUser.email) ? 'sent' : 'received'}`;
+          b.textContent = m.text;
+          box.appendChild(b);
+        });
+        box.scrollTop = box.scrollHeight;
+      }
+    );
   });
 
-  // 5) Show & save new contacts
+  // 5) Show “Add Contact” form & save new contact
   document.getElementById('add-contact-btn')
     ?.addEventListener('click', () => {
       document.getElementById('add-contact-form').style.display = 'block';
@@ -99,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-  // 6) Post announcements
+  // 6) Post announcement
   document.getElementById('post-announcement')
     ?.addEventListener('click', async () => {
       const txt = document.getElementById('announcement-input').value.trim();
@@ -139,25 +155,29 @@ document.addEventListener('DOMContentLoaded', () => {
     initChat(db, auth, leaderUid);
   });
 
-  // 8) Send a new message
+  // 8) Send message button (in case user clicks instead of Enter)
   document.getElementById('send-message-btn')
     ?.addEventListener('click', async () => {
-      const chatId = document.getElementById('chat-select').value;
-      const input  = document.getElementById('chat-input');
-      const txt    = input.value.trim();
-      if (!chatId || !txt) return;
-      try {
-        await db.collection('users').doc(leaderUid)
-          .collection('chats').doc(chatId)
-          .collection('messages').add({
-            text: txt,
-            sender: currentUser.email,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        input.value = '';
-      } catch (e) {
-        console.error(e);
-      }
+      const sel  = document.getElementById('chat-select');
+      const email= sel.value;
+      const txt  = document.getElementById('chat-input').value.trim();
+      if (!email || !txt) return;
+
+      // We already have a listener on that chat, so just add:
+      const chatId = await findOrCreateChat(
+        db, leaderUid,
+        currentUser.email,
+        email
+      );
+      await db.collection('users').doc(leaderUid)
+        .collection('chats').doc(chatId)
+        .collection('messages').add({
+          text: txt,
+          fromEmail: currentUser.email,
+          toEmail:   email,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      document.getElementById('chat-input').value = '';
     });
 });
 
@@ -204,11 +224,12 @@ async function loadNotes() {
   }
 }
 
-// Contacts → populates both UL and the SELECT by **email**
+// Contacts & chat‐dropdown
 async function loadContacts() {
   const ul  = document.getElementById('contact-list');
   const sel = document.getElementById('chat-select');
-  ul.innerHTML  = '';
+  ul.innerHTML = '';
+  // clear old options but keep the placeholder
   sel.querySelectorAll('option:not([value=""])').forEach(o => o.remove());
 
   try {
@@ -216,7 +237,6 @@ async function loadContacts() {
       .collection('contacts').orderBy('createdAt','desc').get();
     snap.forEach(doc => {
       const { email } = doc.data();
-
       // UL entry
       const li = document.createElement('li');
       li.textContent = `👤 ${email}`;
@@ -225,7 +245,6 @@ async function loadContacts() {
         sel.dispatchEvent(new Event('change'));
       };
       ul.appendChild(li);
-
       // SELECT option
       const opt = document.createElement('option');
       opt.value       = email;
@@ -235,4 +254,9 @@ async function loadContacts() {
   } catch (e) {
     console.error('Failed to load contacts:', e);
   }
+}
+
+// Live chat listener
+function startListeningToMessages(chatId) {
+  // delegated to chat.js
 }
