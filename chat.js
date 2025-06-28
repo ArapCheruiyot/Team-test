@@ -6,7 +6,7 @@
  */
 export async function findOrCreateChat(db, leaderUid, email1, email2) {
   const chatsRef = db.collection('users').doc(leaderUid).collection('chats');
-  // Look for either ordering of participants
+
   const q = await chatsRef
     .where('participants', 'in', [
       [email1, email2],
@@ -14,26 +14,28 @@ export async function findOrCreateChat(db, leaderUid, email1, email2) {
     ])
     .limit(1)
     .get();
+
   if (!q.empty) {
+    console.log("✅ Existing chat found");
     return q.docs[0].id;
   }
+
   // Not found → create new
   const docRef = await chatsRef.add({
     participants: [email1, email2],
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
+  console.log("🆕 New chat created:", docRef.id);
   return docRef.id;
 }
 
 /**
  * Subscribes to real-time updates of a chat’s messages.
- * @param {object} db Firestore instance
- * @param {string} leaderUid Firestore user doc ID
- * @param {string} chatId Chat document ID
- * @param {(messages:Array<Object>)=>void} callback receives array of messages
  * @returns {function()} unsubscribe function
  */
 export function startListeningToMessages(db, leaderUid, chatId, callback) {
+  console.log("📡 Listening to chat:", chatId);
+
   const ref = db
     .collection('users').doc(leaderUid)
     .collection('chats').doc(chatId)
@@ -41,60 +43,62 @@ export function startListeningToMessages(db, leaderUid, chatId, callback) {
     .orderBy('timestamp');
 
   const unsubscribe = ref.onSnapshot(snapshot => {
+    console.log("📬 Snapshot received. Message count:", snapshot.size);
+
     const msgs = [];
     snapshot.forEach(doc => {
+      console.log("🧾 Message doc:", doc.data());
       msgs.push({ id: doc.id, ...doc.data() });
     });
+
     callback(msgs);
+  }, (error) => {
+    console.error("❌ Snapshot error:", error);
   });
 
   return unsubscribe;
 }
 
 /**
- * Original initChat — sets up click-to-chat with reply support.
+ * Initializes chat logic on dashboard
  */
 export function initChat(db, auth, leaderUid) {
-  const contactList  = document.getElementById('contact-list');
-  const chatBox      = document.getElementById('chat-messages');
-  const chatInput    = document.getElementById('chat-input');
-  const sendBtn      = document.getElementById('send-message-btn');
+  const contactList = document.getElementById('contact-list');
+  const chatBox     = document.getElementById('chat-messages');
+  const chatInput   = document.getElementById('chat-input');
+  const sendBtn     = document.getElementById('send-message-btn');
 
-  let currentUser    = null;
-  let activeContact  = null;
-  let activeChatId   = null;
-  let replyToMessage = null;
-  let unsubscribeSnap= null;
+  let currentUser     = null;
+  let activeContact   = null;
+  let activeChatId    = null;
+  let replyToMessage  = null;
+  let unsubscribeSnap = null;
 
   auth.onAuthStateChanged(user => {
     currentUser = user;
   });
 
-  // 1) Click on contact list item → open chat
-  contactList.addEventListener('click', async e => {
+  // Contact click → open chat
+  contactList?.addEventListener('click', async e => {
     if (e.target.tagName !== 'LI') return;
 
-    // Highlight selected
     contactList.querySelectorAll('li').forEach(li => li.classList.remove('active'));
     e.target.classList.add('active');
 
     activeContact = e.target.textContent.replace('👤 ', '').trim();
     chatBox.innerHTML = '';
 
-    // Unsubscribe old listener
     unsubscribeSnap?.();
 
-    // Find or create chat doc
     activeChatId = await findOrCreateChat(db, leaderUid, currentUser.email, activeContact);
 
-    // Subscribe to updates
     unsubscribeSnap = startListeningToMessages(db, leaderUid, activeChatId, messages => {
       chatBox.innerHTML = '';
+
       messages.forEach(m => {
         const bubble = document.createElement('div');
         bubble.className = `chat-bubble ${m.fromEmail === currentUser.email ? 'sent' : 'received'}`;
 
-        // Include any reply preview
         let replyHTML = '';
         if (m.replyTo) {
           replyHTML = `
@@ -110,11 +114,12 @@ export function initChat(db, auth, leaderUid) {
           <strong>${m.fromEmail}:</strong> ${m.text}
           <button class="reply-btn" data-id="${m.id}" data-text="${m.text}">↩️</button>
         `;
+
         chatBox.appendChild(bubble);
       });
+
       chatBox.scrollTop = chatBox.scrollHeight;
 
-      // Wire up reply buttons
       document.querySelectorAll('.reply-btn').forEach(btn => {
         btn.onclick = () => {
           replyToMessage = { id: btn.dataset.id, text: btn.dataset.text };
@@ -124,10 +129,10 @@ export function initChat(db, auth, leaderUid) {
     });
   });
 
-  // 2) Send new message
-  sendBtn.addEventListener('click', async () => {
+  // Send button click
+  sendBtn?.addEventListener('click', async () => {
     const text = chatInput.value.trim();
-    if (!text || !activeChatId) return;
+    if (!text || !activeChatId || !currentUser || !activeContact) return;
 
     const messageData = {
       text,
@@ -154,7 +159,7 @@ export function initChat(db, auth, leaderUid) {
     clearReplyPreview();
   });
 
-  // Helpers for reply preview UI
+  // Helpers
   function clearReplyPreview() {
     document.getElementById('reply-preview')?.remove();
   }
