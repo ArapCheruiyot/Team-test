@@ -16,12 +16,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const oldHeader = document.getElementById('chat-header');
-  const chatSelect = document.createElement('select');
-  chatSelect.id = 'chat-select';
-  chatSelect.classList.add('chat-dropdown');
-  chatSelect.innerHTML = `<option value="" selected>No chat selected</option>`;
-  if (oldHeader) oldHeader.replaceWith(chatSelect);
+document.addEventListener('DOMContentLoaded', () => {
+  console.log("✅ team-lead.js initialized");
+
+  const chatSelect = document.getElementById('chat-select');
+  if (chatSelect) {
+    chatSelect.addEventListener('change', async () => {
+      const chatId = chatSelect.value;
+      console.log('🟡 Chat selected:', chatId); // debug
+      if (!chatId) return;
+      startListeningToMessages(chatId);
+    });
+  } else {
+    console.error('❌ chat-select dropdown not found in DOM.');
+  }
+
+  // ... rest of your DOMContentLoaded code
+});
+
 
   chatSelect.addEventListener('change', async () => {
     const chatId = chatSelect.value;
