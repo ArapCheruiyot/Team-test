@@ -8,7 +8,10 @@ export async function findOrCreateChat(db, leaderUid, email1, email2) {
   const chatsRef = db.collection('users').doc(leaderUid).collection('chats');
   // Look for either ordering of participants
   const q = await chatsRef
-    .where('participants', 'in', [[email1, email2], [email2, email1]])
+    .where('participants', 'in', [
+      [email1, email2],
+      [email2, email1]
+    ])
     .limit(1)
     .get();
   if (!q.empty) {
@@ -24,17 +27,19 @@ export async function findOrCreateChat(db, leaderUid, email1, email2) {
 
 /**
  * Subscribes to real-time updates of a chat’s messages.
- * @param {(messages:Array<Object>)=>void} callback receives array of {id, sender, text, timestamp, ...}
+ * @param {object} db Firestore instance
+ * @param {string} leaderUid Firestore user doc ID
+ * @param {string} chatId Chat document ID
+ * @param {(messages:Array<Object>)=>void} callback receives array of messages
  * @returns {function()} unsubscribe function
  */
 export function startListeningToMessages(db, leaderUid, chatId, callback) {
   const ref = db
-    .collection('users')
-    .doc(leaderUid)
-    .collection('chats')
-    .doc(chatId)
+    .collection('users').doc(leaderUid)
+    .collection('chats').doc(chatId)
     .collection('messages')
     .orderBy('timestamp');
+
   const unsubscribe = ref.onSnapshot(snapshot => {
     const msgs = [];
     snapshot.forEach(doc => {
@@ -42,12 +47,12 @@ export function startListeningToMessages(db, leaderUid, chatId, callback) {
     });
     callback(msgs);
   });
+
   return unsubscribe;
 }
 
 /**
- * Your original initChat — left unchanged.
- * (If you’d rather collapse everything into team-lead.js you can remove this.)
+ * Original initChat — sets up click-to-chat with reply support.
  */
 export function initChat(db, auth, leaderUid) {
   const contactList  = document.getElementById('contact-list');
@@ -65,29 +70,31 @@ export function initChat(db, auth, leaderUid) {
     currentUser = user;
   });
 
-  // Click-to-chat (legacy)
+  // 1) Click on contact list item → open chat
   contactList.addEventListener('click', async e => {
     if (e.target.tagName !== 'LI') return;
-    // Highlight
+
+    // Highlight selected
     contactList.querySelectorAll('li').forEach(li => li.classList.remove('active'));
     e.target.classList.add('active');
 
     activeContact = e.target.textContent.replace('👤 ', '').trim();
     chatBox.innerHTML = '';
 
-    // Unsubscribe old
+    // Unsubscribe old listener
     unsubscribeSnap?.();
 
-    // Find or create
+    // Find or create chat doc
     activeChatId = await findOrCreateChat(db, leaderUid, currentUser.email, activeContact);
 
-    // Listen
+    // Subscribe to updates
     unsubscribeSnap = startListeningToMessages(db, leaderUid, activeChatId, messages => {
       chatBox.innerHTML = '';
       messages.forEach(m => {
         const bubble = document.createElement('div');
         bubble.className = `chat-bubble ${m.fromEmail === currentUser.email ? 'sent' : 'received'}`;
-        // reply preview block
+
+        // Include any reply preview
         let replyHTML = '';
         if (m.replyTo) {
           replyHTML = `
@@ -97,6 +104,7 @@ export function initChat(db, auth, leaderUid) {
             </div>
           `;
         }
+
         bubble.innerHTML = `
           ${replyHTML}
           <strong>${m.fromEmail}:</strong> ${m.text}
@@ -106,7 +114,7 @@ export function initChat(db, auth, leaderUid) {
       });
       chatBox.scrollTop = chatBox.scrollHeight;
 
-      // Attach reply handlers
+      // Wire up reply buttons
       document.querySelectorAll('.reply-btn').forEach(btn => {
         btn.onclick = () => {
           replyToMessage = { id: btn.dataset.id, text: btn.dataset.text };
@@ -116,19 +124,25 @@ export function initChat(db, auth, leaderUid) {
     });
   });
 
-  // Send
+  // 2) Send new message
   sendBtn.addEventListener('click', async () => {
     const text = chatInput.value.trim();
     if (!text || !activeChatId) return;
+
     const messageData = {
       text,
       fromEmail: currentUser.email,
       toEmail: activeContact,
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
+
     if (replyToMessage) {
-      messageData.replyTo = { messageId: replyToMessage.id, text: replyToMessage.text };
+      messageData.replyTo = {
+        messageId: replyToMessage.id,
+        text: replyToMessage.text
+      };
     }
+
     await db
       .collection('users').doc(leaderUid)
       .collection('chats').doc(activeChatId)
@@ -140,6 +154,7 @@ export function initChat(db, auth, leaderUid) {
     clearReplyPreview();
   });
 
+  // Helpers for reply preview UI
   function clearReplyPreview() {
     document.getElementById('reply-preview')?.remove();
   }
