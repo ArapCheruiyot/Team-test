@@ -1,3 +1,5 @@
+// chat.js — Modular one-to-one messaging logic
+
 export async function findOrCreateChat(db, leaderUid, email1, email2) {
   const chatsRef = db.collection('users').doc(leaderUid).collection('chats');
   const q = await chatsRef
@@ -7,10 +9,12 @@ export async function findOrCreateChat(db, leaderUid, email1, email2) {
     ])
     .limit(1)
     .get();
+
   if (!q.empty) {
     console.log("✅ Existing chat found");
     return q.docs[0].id;
   }
+
   const docRef = await chatsRef.add({
     participants: [email1, email2],
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -27,20 +31,20 @@ export function startListeningToMessages(db, leaderUid, chatId, callback) {
     .orderBy('timestamp');
 
   const unsubscribe = ref.onSnapshot(snapshot => {
-    console.log(`📡 startListeningToMessages fired. Messages: ${snapshot.size}`);
-    if (snapshot.empty) {
-      console.warn("⚠️ No messages yet.");
-    }
-
+    console.log(`📡 Listening to chat (${chatId}), Messages: ${snapshot.size}`);
     const msgs = [];
     snapshot.forEach(doc => {
-      console.log("🧾 Message:", doc.data());
-      msgs.push({ id: doc.id, ...doc.data() });
+      const data = doc.data();
+      if (data.text && data.timestamp) {
+        msgs.push({ id: doc.id, ...data });
+      } else {
+        console.warn("⚠️ Skipped invalid message:", data);
+      }
     });
 
     callback(msgs);
-  }, error => {
-    console.error("❌ Error in snapshot listener:", error);
+  }, err => {
+    console.error("❌ Error in message listener:", err);
   });
 
   return unsubscribe;
@@ -55,7 +59,6 @@ export function initChat(db, auth, leaderUid) {
   let currentUser     = null;
   let activeContact   = null;
   let activeChatId    = null;
-  let replyToMessage  = null;
   let unsubscribeSnap = null;
 
   auth.onAuthStateChanged(user => {
@@ -79,15 +82,10 @@ export function initChat(db, auth, leaderUid) {
       console.log("📨 Rendering messages:", messages.length);
       chatBox.innerHTML = '';
 
-      if (!Array.isArray(messages)) {
-        console.error("❌ Messages is not an array:", messages);
-        return;
-      }
-
       messages.forEach(m => {
         const bubble = document.createElement('div');
         bubble.className = `chat-bubble ${m.fromEmail === currentUser.email ? 'sent' : 'received'}`;
-        bubble.textContent = m.text;
+        bubble.textContent = m.text || '[No Text]';
         chatBox.appendChild(bubble);
       });
 
@@ -99,18 +97,16 @@ export function initChat(db, auth, leaderUid) {
     const text = chatInput.value.trim();
     if (!text || !activeChatId || !currentUser || !activeContact) return;
 
-    const messageData = {
-      text,
-      fromEmail: currentUser.email,
-      toEmail: activeContact,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    };
-
     await db
       .collection('users').doc(leaderUid)
       .collection('chats').doc(activeChatId)
       .collection('messages')
-      .add(messageData);
+      .add({
+        text,
+        fromEmail: currentUser.email,
+        toEmail: activeContact,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
 
     chatInput.value = '';
   });
