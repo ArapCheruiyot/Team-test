@@ -272,49 +272,31 @@ function startListeningToMessages(chatId) {
   const messagesDiv = document.getElementById('chat-messages');
   if (unsubscribeChat) unsubscribeChat();
 
+  console.log(`📡 Listening to chat: ${chatId}`); // ✅ Log selected chat ID
+
   unsubscribeChat = db.collection('users').doc(leaderUid)
     .collection('chats').doc(chatId)
     .collection('messages')
     .orderBy('timestamp')
     .onSnapshot(snapshot => {
+      console.log(`📥 Received ${snapshot.size} message(s) in chat: ${chatId}`);
+
       messagesDiv.innerHTML = '';
       snapshot.forEach(doc => {
-        const { sender, text } = doc.data();
+        const data = doc.data();
+        console.log('💬 Message doc:', data); // ✅ Debug each message doc
+
+        const { sender, text } = data;
         const bubble = document.createElement('div');
         bubble.classList.add('chat-bubble');
         bubble.classList.add(sender === currentUser.email ? 'sent' : 'received');
         bubble.textContent = text;
         messagesDiv.appendChild(bubble);
       });
+
+      // Scroll to latest message
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }, error => {
+      console.error(`❌ Error listening to messages for chat ${chatId}:`, error);
     });
 }
-
-const chatInput = document.getElementById('chat-input');
-const sendBtn = document.getElementById('send-message-btn');
-
-sendBtn?.addEventListener('click', async () => {
-  const text = chatInput.value.trim();
-  const chatId = document.getElementById('chat-select')?.value;
-  if (!text || !chatId) return;
-
-  try {
-    await db.collection('users').doc(leaderUid)
-      .collection('chats').doc(chatId)
-      .collection('messages').add({
-        text,
-        sender: currentUser.email,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    chatInput.value = '';
-  } catch (e) {
-    console.error('Failed to send message:', e);
-  }
-});
-chatInput?.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendBtn.click(); // Trigger the send logic
-  }
-});
-
