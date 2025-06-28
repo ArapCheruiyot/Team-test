@@ -1,29 +1,21 @@
-// team-lead.js — Dashboard logic (notes, contacts, chat, announcements)
 import { initChat } from './chat.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log("✅ team-lead.js initialized");
 
-  // 1) Gear‐button → toggle contact pane
   const settingsBtn  = document.getElementById('settings-btn');
   const contactsPane = document.getElementById('contact-chat-controls');
   settingsBtn?.addEventListener('click', () => {
     contactsPane.classList.toggle('controls-hidden');
   });
 
-  // 2) Offers Finder popup
   const offersBtn = document.getElementById('open-offers-btn');
   if (offersBtn) {
     offersBtn.addEventListener('click', () => {
-      window.open(
-        'https://arapcheruiyot.github.io/offer-search/',
-        'offerSearch',
-        'width=800,height=600,toolbar=no,menubar=no'
-      );
+      window.open('https://arapcheruiyot.github.io/offer-search/', 'offerSearch', 'width=800,height=600,toolbar=no,menubar=no');
     });
   }
 
-  // 3) Replace static "No chat selected" with a <select>
   const oldHeader = document.getElementById('chat-header');
   const chatSelect = document.createElement('select');
   chatSelect.id = 'chat-select';
@@ -31,38 +23,30 @@ document.addEventListener('DOMContentLoaded', () => {
   chatSelect.innerHTML = `<option value="" selected>No chat selected</option>`;
   if (oldHeader) oldHeader.replaceWith(chatSelect);
 
-  // 4) When the user picks someone from the dropdown…
   chatSelect.addEventListener('change', async () => {
-    const chatId     = chatSelect.value;
-    const messagesDiv = document.getElementById('chat-messages');
-    messagesDiv.innerHTML = '';    // clear previous
-    if (!chatId) return;          // placeholder
-    await loadChatMessages(chatId);
+    const chatId = chatSelect.value;
+    if (!chatId) return;
+    startListeningToMessages(chatId);
   });
-
-  // The rest of your initialization happens once auth state settles…
 });
 
 const db   = window.db;
 const auth = window.auth;
-
-// Detect agent vs. owner
 const params   = new URLSearchParams(window.location.search);
 const isAgent  = params.get('asAgent') === 'true';
 
-// Hide owner-only panels for agents
 if (isAgent) {
-  ['new-file','delete','add-contact-btn','add-contact-form','announcement-panel']
-    .forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.style.display = 'none';
-    });
+  ['new-file','delete','add-contact-btn','add-contact-form','announcement-panel'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
   const welcome = document.getElementById('welcome');
   if (welcome) welcome.textContent += ' (Agent)';
 }
 
 let currentUser = null;
 let leaderUid   = null;
+let unsubscribeChat = null;
 
 auth.onAuthStateChanged(async user => {
   if (!user) {
@@ -70,26 +54,18 @@ auth.onAuthStateChanged(async user => {
     return;
   }
   currentUser = user;
-  leaderUid   = isAgent
-    ? 'A3HIWA6XWvhFcGdsM3o5IV0Qx3B2'
-    : user.uid;
+  leaderUid   = isAgent ? 'A3HIWA6XWvhFcGdsM3o5IV0Qx3B2' : user.uid;
 
-  // Update welcome text
   document.getElementById('welcome').textContent =
     `Welcome, ${user.displayName || user.email}!` + (isAgent ? ' (Agent)' : '');
 
-  // Load all panels
   await loadNotes();
   await loadContacts();
   await loadAnnouncement();
 
-  // Start chat engine
   initChat(db, auth, leaderUid);
 });
 
-//
-// ANNOUNCEMENTS
-//
 const postBtn = document.getElementById('post-announcement');
 if (postBtn) {
   postBtn.addEventListener('click', async () => {
@@ -131,9 +107,6 @@ async function loadAnnouncement() {
   }
 }
 
-//
-// NOTES
-//
 const newBtn    = document.getElementById('new-file');
 const delBtn    = document.getElementById('delete');
 const fileNames = document.getElementById('file-names');
@@ -227,9 +200,6 @@ textArea.addEventListener('input', () => {
   }, 500);
 });
 
-//
-// CONTACTS & CHAT‐DROPDOWN
-//
 const addContactBtn  = document.getElementById('add-contact-btn');
 const saveContactBtn = document.getElementById('save-contact');
 const contactInput   = document.getElementById('contact-email');
@@ -260,9 +230,7 @@ if (saveContactBtn) {
 }
 
 async function loadContacts() {
-  // clear the <ul>
   contactList.innerHTML = '';
-  // clear the <select> except placeholder
   const chatSelect = document.getElementById('chat-select');
   if (chatSelect) {
     chatSelect.querySelectorAll('option:not([value=""])').forEach(o => o.remove());
@@ -278,7 +246,6 @@ async function loadContacts() {
       const { email } = doc.data();
       const id        = doc.id;
 
-      // 1) populate the <ul>
       const li = document.createElement('li');
       li.textContent = `👤 ${email}`;
       li.onclick     = () => {
@@ -289,7 +256,6 @@ async function loadContacts() {
       };
       contactList.appendChild(li);
 
-      // 2) populate the <select>
       if (chatSelect) {
         const opt = document.createElement('option');
         opt.value = id;
@@ -302,9 +268,47 @@ async function loadContacts() {
   }
 }
 
-// Stub — replace with your real chat-message fetch/render
-async function loadChatMessages(chatId) {
+function startListeningToMessages(chatId) {
   const messagesDiv = document.getElementById('chat-messages');
-  messagesDiv.innerHTML = `<p>Loading chat with ID “${chatId}”…</p>`;
-  // TODO: fetch messages from Firestore and append bubbles here
+  if (unsubscribeChat) unsubscribeChat();
+
+  unsubscribeChat = db.collection('users').doc(leaderUid)
+    .collection('chats').doc(chatId)
+    .collection('messages')
+    .orderBy('timestamp')
+    .onSnapshot(snapshot => {
+      messagesDiv.innerHTML = '';
+      snapshot.forEach(doc => {
+        const { sender, text } = doc.data();
+        const bubble = document.createElement('div');
+        bubble.classList.add('chat-bubble');
+        bubble.classList.add(sender === currentUser.email ? 'sent' : 'received');
+        bubble.textContent = text;
+        messagesDiv.appendChild(bubble);
+      });
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
 }
+
+const messageForm = document.getElementById('message-form');
+const messageInput = document.getElementById('message-input');
+
+messageForm?.addEventListener('submit', async e => {
+  e.preventDefault();
+  const text = messageInput.value.trim();
+  const chatId = document.getElementById('chat-select')?.value;
+  if (!text || !chatId) return;
+
+  try {
+    await db.collection('users').doc(leaderUid)
+      .collection('chats').doc(chatId)
+      .collection('messages').add({
+        text,
+        sender: currentUser.email,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    messageInput.value = '';
+  } catch (e) {
+    console.error('Failed to send message:', e);
+  }
+});
