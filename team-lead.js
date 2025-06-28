@@ -9,6 +9,7 @@ import {
 let currentUser     = null;
 let leaderUid       = null;
 let unsubscribeChat = null;
+let replyToMessage  = null;
 
 const db      = window.db;
 const auth    = window.auth;
@@ -54,35 +55,52 @@ document.addEventListener('DOMContentLoaded', () => {
     const email = chatSelect.value;
     const box   = document.getElementById('chat-messages');
     box.innerHTML = '';
+    document.getElementById('reply-preview')?.remove();
+
     if (!email) {
       unsubscribeChat?.();
       return;
     }
 
-    // Ensure a chat doc exists for the two emails
-    const chatId = await findOrCreateChat(
-      db, leaderUid,
-      currentUser.email,
-      email
-    );
-
-    // Detach previous listener
+    const chatId = await findOrCreateChat(db, leaderUid, currentUser.email, email);
     unsubscribeChat?.();
 
-    // Start real‐time listener
-    unsubscribeChat = startListeningToMessages(
-      db, leaderUid, chatId,
-      (messages) => {
-        box.innerHTML = '';
-        messages.forEach(m => {
-          const b = document.createElement('div');
-          b.className = `chat-bubble ${(m.fromEmail === currentUser.email) ? 'sent' : 'received'}`;
-          b.textContent = m.text;
-          box.appendChild(b);
-        });
-        box.scrollTop = box.scrollHeight;
-      }
-    );
+    unsubscribeChat = startListeningToMessages(db, leaderUid, chatId, (messages) => {
+      box.innerHTML = '';
+      messages.forEach(m => {
+        const bubble = document.createElement('div');
+        bubble.className = `chat-bubble ${m.fromEmail === currentUser.email ? 'sent' : 'received'}`;
+
+        let replyHTML = '';
+        if (m.replyTo) {
+          replyHTML = `
+            <div class="reply-preview">
+              <em>Replying to:</em>
+              <div class="reply-text">${m.replyTo.text}</div>
+            </div>
+          `;
+        }
+
+        bubble.innerHTML = `
+          ${replyHTML}
+          <strong>${m.fromEmail}:</strong> ${m.text}
+          <button class="reply-btn" data-id="${m.id}" data-text="${m.text}">↩️</button>
+        `;
+        box.appendChild(bubble);
+      });
+
+      box.scrollTop = box.scrollHeight;
+
+      document.querySelectorAll('.reply-btn').forEach(btn => {
+        btn.onclick = () => {
+          replyToMessage = {
+            id: btn.dataset.id,
+            text: btn.dataset.text
+          };
+          showReplyPreview(replyToMessage.text);
+        };
+      });
+    });
   });
 
   // 5) Show “Add Contact” form & save new contact
@@ -107,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
           });
         input.value = '';
-        document.getElementById('add-contact-form').style.display = 'none';
+        document.getElementById('add-contact-form').style.display = 'none';https://github.com/ArapCheruiyot/Teamhub/blob/main/team-lead.js
         await loadContacts();
       } catch (e) {
         console.error(e);
@@ -142,12 +160,10 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     currentUser = user;
-    leaderUid   = isAgent
-      ? 'A3HIWA6XWvhFcGdsM3o5IV0Qx3B2'
-      : user.uid;
+    leaderUid   = isAgent ? 'A3HIWA6XWvhFcGdsM3o5IV0Qx3B2' : user.uid;
 
     document.getElementById('welcome').textContent =
-      `Welcome, ${user.displayName||user.email}!` + (isAgent ? ' (Agent)' : '');
+      `Welcome, ${user.displayName || user.email}!` + (isAgent ? ' (Agent)' : '');
 
     await loadNotes();
     await loadContacts();
@@ -158,32 +174,57 @@ document.addEventListener('DOMContentLoaded', () => {
   // 8) Send message button (fallback)
   document.getElementById('send-message-btn')
     ?.addEventListener('click', async () => {
-      const sel  = document.getElementById('chat-select');
-      const email= sel.value;
-      const txt  = document.getElementById('chat-input').value.trim();
+      const sel   = document.getElementById('chat-select');
+      const email = sel.value;
+      const txt   = document.getElementById('chat-input').value.trim();
       if (!email || !txt) return;
 
-      const chatId = await findOrCreateChat(
-        db, leaderUid,
-        currentUser.email,
-        email
-      );
+      const chatId = await findOrCreateChat(db, leaderUid, currentUser.email, email);
+      const messageData = {
+        text: txt,
+        fromEmail: currentUser.email,
+        toEmail: email,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      if (replyToMessage) {
+        messageData.replyTo = {
+          messageId: replyToMessage.id,
+          text: replyToMessage.text
+        };
+      }
+
       await db.collection('users').doc(leaderUid)
         .collection('chats').doc(chatId)
-        .collection('messages').add({
-          text: txt,
-          fromEmail: currentUser.email,
-          toEmail:   email,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        .collection('messages').add(messageData);
+
       document.getElementById('chat-input').value = '';
+      replyToMessage = null;
+      clearReplyPreview();
     });
 });
 
+// — Reply Preview Helpers —
+function clearReplyPreview() {
+  document.getElementById('reply-preview')?.remove();
+}
+function showReplyPreview(text) {
+  clearReplyPreview();
+  const preview = document.createElement('div');
+  preview.id = 'reply-preview';
+  preview.innerHTML = `
+    <span>Replying to: ${text}</span>
+    <button id="cancel-reply">❌</button>
+  `;
+  const input = document.getElementById('chat-input');
+  input.parentElement.insertBefore(preview, input);
+  preview.querySelector('#cancel-reply').onclick = () => {
+    replyToMessage = null;
+    clearReplyPreview();
+  };
+}
 
 // — Loaders & helpers —
-
-// Announcements
 async function loadAnnouncement() {
   try {
     const doc = await db.collection('users').doc(leaderUid)
@@ -198,7 +239,6 @@ async function loadAnnouncement() {
   }
 }
 
-// Notes
 async function loadNotes() {
   const fileNames = document.getElementById('file-names');
   const textArea  = document.getElementById('text-input');
@@ -223,7 +263,6 @@ async function loadNotes() {
   }
 }
 
-// Contacts & chat‐dropdown
 async function loadContacts() {
   const ul  = document.getElementById('contact-list');
   const sel = document.getElementById('chat-select');
@@ -235,7 +274,6 @@ async function loadContacts() {
       .collection('contacts').orderBy('createdAt','desc').get();
     snap.forEach(doc => {
       const { email } = doc.data();
-      // UL entry
       const li = document.createElement('li');
       li.textContent = `👤 ${email}`;
       li.onclick = () => {
@@ -243,7 +281,7 @@ async function loadContacts() {
         sel.dispatchEvent(new Event('change'));
       };
       ul.appendChild(li);
-      // SELECT option
+
       const opt = document.createElement('option');
       opt.value       = email;
       opt.textContent = email;
