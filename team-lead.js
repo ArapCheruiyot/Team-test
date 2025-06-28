@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initChat(db, auth, leaderUid);
   });
 
-  // 8) Send message button (in case user clicks instead of Enter)
+  // 8) Send message button (fallback)
   document.getElementById('send-message-btn')
     ?.addEventListener('click', async () => {
       const sel  = document.getElementById('chat-select');
@@ -163,7 +163,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const txt  = document.getElementById('chat-input').value.trim();
       if (!email || !txt) return;
 
-      // We already have a listener on that chat, so just add:
       const chatId = await findOrCreateChat(
         db, leaderUid,
         currentUser.email,
@@ -229,7 +228,6 @@ async function loadContacts() {
   const ul  = document.getElementById('contact-list');
   const sel = document.getElementById('chat-select');
   ul.innerHTML = '';
-  // clear old options but keep the placeholder
   sel.querySelectorAll('option:not([value=""])').forEach(o => o.remove());
 
   try {
@@ -254,9 +252,4 @@ async function loadContacts() {
   } catch (e) {
     console.error('Failed to load contacts:', e);
   }
-}
-
-// Live chat listener
-function startListeningToMessages(chatId) {
-  // delegated to chat.js
 }
