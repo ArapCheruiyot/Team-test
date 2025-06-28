@@ -1,10 +1,9 @@
-// team-lead.js — Dashboard logic (notes, contacts, chat, announcements)
 import { initChat } from './chat.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log("✅ team-lead.js initialized");
 
-  // 1) Gear-button → toggle contact pane
+  // 1) Gear‐button → toggle contact pane
   const settingsBtn  = document.getElementById('settings-btn');
   const contactsPane = document.getElementById('contact-chat-controls');
   settingsBtn?.addEventListener('click', () => {
@@ -21,68 +20,77 @@ document.addEventListener('DOMContentLoaded', () => {
     );
   });
 
-  // 3) Wire up the dropdown (already in your HTML)
-  const chatSelect = document.getElementById('chat-select');
-  if (!chatSelect) {
-    console.error('❌ [team-lead.js] <select id="chat-select"> not found!');
-  } else {
-    // Debug log to confirm we found it
-    console.log('🟢 chat-select found:', chatSelect);
+  // 3) Replace static "No chat selected" header with a <select>
+  const oldHeader = document.getElementById('chat-header');
+  const chatSelect = document.createElement('select');
+  chatSelect.id = 'chat-select';
+  chatSelect.classList.add('chat-dropdown');
+  chatSelect.innerHTML = `<option value="" selected>No chat selected</option>`;
+  if (oldHeader) oldHeader.replaceWith(chatSelect);
 
-    chatSelect.addEventListener('change', async () => {
-      const chatId = chatSelect.value;
-      console.log('🟡 Chat selected:', chatId);
-      if (!chatId) return;
-      startListeningToMessages(chatId);
-    });
-  }
+  // 4) Wire up chat‐select dropdown change
+  chatSelect.addEventListener('change', async () => {
+    const chatId = chatSelect.value;
+    if (!chatId) return;
+    startListeningToMessages(chatId);
+  });
 
-  // Everything else (auth listener, loadNotes, etc.) lives below…
+  // 5) Add Contact form show + save
+  const addContactBtn  = document.getElementById('add-contact-btn');
+  const saveContactBtn = document.getElementById('save-contact');
+  const contactInput   = document.getElementById('contact-email');
 
+  addContactBtn?.addEventListener('click', () => {
+    document.getElementById('add-contact-form').style.display = 'block';
+  });
+
+  saveContactBtn?.addEventListener('click', async () => {
+    const email = contactInput.value.trim().toLowerCase();
+    if (!email) {
+      alert('Please enter an email address.');
+      return;
+    }
+    try {
+      await db.collection('users').doc(leaderUid)
+        .collection('contacts')
+        .add({
+          email,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      contactInput.value = '';
+      document.getElementById('add-contact-form').style.display = 'none';
+      await loadContacts();
+    } catch (e) {
+      console.error('Error saving contact:', e);
+      alert('Failed to save contact.');
+    }
+  });
+
+  // 6) Kick off auth+data load
+  auth.onAuthStateChanged(async user => {
+    if (!user) {
+      window.location.href = 'index.html';
+      return;
+    }
+    currentUser = user;
+    leaderUid   = isAgent
+      ? 'A3HIWA6XWvhFcGdsM3o5IV0Qx3B2'
+      : user.uid;
+
+    // Update welcome text
+    document.getElementById('welcome').textContent =
+      `Welcome, ${user.displayName || user.email}!` + (isAgent ? ' (Agent)' : '');
+
+    // Load panels
+    await loadNotes();
+    await loadContacts();
+    await loadAnnouncement();
+
+    // Start chat engine
+    initChat(db, auth, leaderUid);
+  });
 });
 
-// ————————————————————————————————————————————————————————————————
-
-const db   = window.db;
-const auth = window.auth;
-
-// Agent vs owner
-const params  = new URLSearchParams(window.location.search);
-const isAgent = params.get('asAgent') === 'true';
-
-// Hide panels for agents
-if (isAgent) {
-  ['new-file','delete','add-contact-btn','add-contact-form','announcement-panel']
-    .forEach(id => document.getElementById(id)?.remove());
-  document.getElementById('welcome').textContent += ' (Agent)';
-}
-
-let currentUser = null;
-let leaderUid   = null;
-let unsubscribeChat = null;
-
-// Auth guard & initial loads
-auth.onAuthStateChanged(async user => {
-  if (!user) {
-    return window.location.href = 'index.html';
-  }
-  currentUser = user;
-  leaderUid   = isAgent
-    ? 'A3HIWA6XWvhFcGdsM3o5IV0Qx3B2'
-    : user.uid;
-
-  // Welcome text
-  document.getElementById('welcome').textContent =
-    `Welcome, ${user.displayName || user.email}!` + (isAgent ? ' (Agent)' : '');
-
-  // Load data panels
-  await loadNotes();
-  await loadContacts();
-  await loadAnnouncement();
-
-  // Kick off chat engine (if needed)
-  initChat(db, auth, leaderUid);
-});
 
 // — ANNOUNCEMENTS ————————————————————————————————————————————————
 
