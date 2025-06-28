@@ -290,12 +290,11 @@ function startListeningToMessages(chatId) {
     });
 }
 
-const messageForm = document.getElementById('message-form');
-const messageInput = document.getElementById('message-input');
+const chatInput = document.getElementById('chat-input');
+const sendBtn = document.getElementById('send-message-btn');
 
-messageForm?.addEventListener('submit', async e => {
-  e.preventDefault();
-  const text = messageInput.value.trim();
+sendBtn?.addEventListener('click', async () => {
+  const text = chatInput.value.trim();
   const chatId = document.getElementById('chat-select')?.value;
   if (!text || !chatId) return;
 
@@ -307,8 +306,15 @@ messageForm?.addEventListener('submit', async e => {
         sender: currentUser.email,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
       });
-    messageInput.value = '';
+    chatInput.value = '';
   } catch (e) {
     console.error('Failed to send message:', e);
   }
 });
+chatInput?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendBtn.click(); // Trigger the send logic
+  }
+});
+
