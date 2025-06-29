@@ -257,6 +257,28 @@ async function loadContactsAndForums() {
 }
 
 // — Announcement & reply preview —
-async function loadAnnouncement() { /* ... */ }
+async function loadAnnouncement() {
+  const doc = await db.collection('users').doc(leaderUid).get();
+  const data = doc.data();
+  const text = data?.announcement || '📣 No announcements yet.';
+  document.getElementById('announcement-text-scroll').textContent = text;
+
+  // Team lead can post new one
+  const postBtn = document.getElementById('post-announcement');
+  const inputEl = document.getElementById('announcement-input');
+
+  if (postBtn && inputEl && !isAgent) {
+    postBtn.addEventListener('click', async () => {
+      const msg = inputEl.value.trim();
+      if (!msg) return alert('Announcement cannot be empty');
+      await db.collection('users').doc(leaderUid).update({
+        announcement: msg
+      });
+      inputEl.value = '';
+      document.getElementById('announcement-text-scroll').textContent = msg;
+    });
+  }
+}
+
 function clearReplyPreview()      { /* ... */ }
 function showReplyPreview(text)   { /* ... */ }
