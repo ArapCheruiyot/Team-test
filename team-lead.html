@@ -74,7 +74,7 @@
     <div id="contact-chat-controls" class="controls-hidden">
       <div class="chat-actions">
         <button id="add-contact-btn">Add Contact</button>
-        <button id="start-chat-btn">Start Chat</button>
+        <button id="start-chat-btn">New Forum</button>
       </div>
 
       <p>Click a contact to start chatting</p>
@@ -82,6 +82,11 @@
         <input type="email" id="contact-email" placeholder="Enter email">
         <button id="save-contact">Save</button>
       </div>
+       <!-- New Forum form (hidden by default) -->
+  <div id="new-forum-form" style="display:none; margin-top:8px;">
+    <input type="text" id="forum-name" placeholder="Forum name…"/>
+    <button id="save-forum-btn">Create</button>
+  </div>
       <ul id="contact-list"></ul>
 
       <div id="start-chat-form" style="display: none;">
