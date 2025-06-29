@@ -164,37 +164,31 @@ async function loadContacts() {
   const ul  = document.getElementById('contact-list');
   const sel = document.getElementById('chat-select');
   ul.innerHTML = '';
-  sel?.querySelectorAll('option:not([value=""])').forEach(o => o.remove());
+  sel.querySelectorAll('option:not([value=""])').forEach(o => o.remove());
 
-  try {
-    const snap = await db
-      .collection('users').doc(leaderUid)
-      .collection('contacts')
-      .orderBy('createdAt','desc')
-      .get();
-    snap.forEach(doc => {
-      const { email } = doc.data();
+  const snap = await db
+    .collection('users').doc(leaderUid)
+    .collection('contacts').orderBy('createdAt','desc').get();
 
-      // add to UL
-      const li = document.createElement('li');
-      li.textContent = `👤 ${email}`;
-      li.onclick = () => {
-        // delegate to chat.js via dropdown
-        sel.value = email;
-        sel.dispatchEvent(new Event('change'));
-      };
-      ul.appendChild(li);
+  snap.forEach(doc => {
+    const { email } = doc.data();
+    // skip your own email
+    if (email === currentUser.email) return;
 
-      // add to SELECT for chat.js
-      if (sel) {
-        const opt = document.createElement('option');
-        opt.value       = email;
-        opt.textContent = email;
-        sel.appendChild(opt);
-      }
-    });
-    console.log(`📇 Contacts loaded: ${snap.size}`);
-  } catch (e) {
-    console.error('Failed to load contacts:', e);
-  }
+    // UL entry
+    const li = document.createElement('li');
+    li.textContent = `👤 ${email}`;
+    li.onclick = () => {
+      sel.value = email;
+      sel.dispatchEvent(new Event('change'));
+    };
+    ul.appendChild(li);
+
+    // SELECT option
+    const opt = document.createElement('option');
+    opt.value       = email;
+    opt.textContent = email;
+    sel.appendChild(opt);
+  });
 }
+
