@@ -167,15 +167,14 @@ export function initChat(db, auth, leaderUid) {
  * @returns {function()} unsubscribe function
  */
 export function startListeningToForumMessages(db, leaderUid, forumId, callback) {
-  return db.collection('users').doc(leaderUid)
+  return db
+    .collection('users').doc(leaderUid)
     .collection('forums').doc(forumId)
     .collection('messages')
-    .orderBy('ts')
+    .orderBy('timestamp') // ← align with sender
     .onSnapshot(snap => {
       const arr = [];
       snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
       callback(arr);
-    }, err => {
-      console.error('Forum listener error:', err);
-    });
+    }, err => console.error('Forum listener error:', err));
 }
