@@ -120,44 +120,41 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // 6) Fallback “Send” button
-  var sendBtn = document.getElementById('send-message-btn');
-  if (sendBtn) {
-    sendBtn.addEventListener('click', async function() {
-      var val = select.value;
-      var txt = document.getElementById('chat-input').value.trim();
-      if (!val || !txt) return;
+document.getElementById('send-message-btn')
+  ?.addEventListener('click', async () => {
+    const val = document.getElementById('chat-select').value;
+    const txt = document.getElementById('chat-input').value.trim();
+    if (!val || !txt) return;
 
-      // Base payload
-      var payload = {
-        text: txt,
-        fromEmail: currentUser.email,
-        ts: firebase.firestore.FieldValue.serverTimestamp(),
-        replyTo: replyTo || null
-      };
+    const payload = {
+      text: txt,
+      fromEmail: currentUser.email,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      replyTo: replyTo || null
+    };
 
-      if (val.indexOf('forum:') === 0) {
-        var fid = val.split(':')[1];
-        await db
-          .collection('users').doc(leaderUid)
-          .collection('forums').doc(fid)
-          .collection('messages')
-          .add(payload);
-      } else {
-        var chatId2 = await findOrCreateChat(
-          db, leaderUid, currentUser.email, val
-        );
-        await db
-          .collection('users').doc(leaderUid)
-          .collection('chats').doc(chatId2)
-          .collection('messages')
-          .add(Object.assign({}, payload, { toEmail: val }));
-      }
+    if (val.startsWith('forum:')) {
+      const fid = val.split(':')[1];
+      await db.collection('users').doc(leaderUid)
+        .collection('forums').doc(fid)
+        .collection('messages')
+        .add(payload);
+    } else {
+      const chatId = await findOrCreateChat(
+        db, leaderUid,
+        currentUser.email,
+        val
+      );
+      await db.collection('users').doc(leaderUid)
+        .collection('chats').doc(chatId)
+        .collection('messages')
+        .add({ ...payload, toEmail: val });
+    }
 
-      document.getElementById('chat-input').value = '';
-      replyTo = null;
-      clearReplyPreview();
-    });
-  }
+    document.getElementById('chat-input').value = '';
+    replyTo = null;
+    clearReplyPreview();
+  });
 
   // 7) Auth guard & initial data load
   auth.onAuthStateChanged(async function(u) {
