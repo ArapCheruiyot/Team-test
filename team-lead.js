@@ -19,13 +19,11 @@ const isAgent = (new URLSearchParams(window.location.search)).get('asAgent') ===
 // Hide agent‐only controls immediately
 if (isAgent) {
   [
-    'new-file',
-    'delete',
     'add-contact-btn',
     'add-contact-form',
     'announcement-panel'
   ].forEach(function(id) {
-    var el = document.getElementById(id);
+    const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
 }
