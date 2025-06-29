@@ -1,4 +1,4 @@
-// team-lead.js — Dashboard logic (notes, contacts, chat, announcements & forums)
+// team-lead.js — Dashboard logic (contacts, chat, announcements & forums)
 import {
   initChat,
   findOrCreateChat,
@@ -69,8 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
         alert('Enter a forum name');
         return;
       }
-      await db
-        .collection('users').doc(leaderUid)
+      await db.collection('users').doc(leaderUid)
         .collection('forums')
         .add({
           name: name,
@@ -82,7 +81,35 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // 4) Swap any X<h3 id="chat-header">X for our <select>
+  // 4) Contact adding logic
+  const addContactBtn = document.getElementById('add-contact-btn');
+  const addContactForm = document.getElementById('add-contact-form');
+  const saveContactBtn = document.getElementById('save-contact-btn');
+
+  if (addContactBtn && addContactForm && saveContactBtn) {
+    addContactBtn.addEventListener('click', () => {
+      addContactForm.style.display = 'block';
+    });
+
+    saveContactBtn.addEventListener('click', async () => {
+      const input = document.getElementById('new-contact-email');
+      const email = input.value.trim();
+      if (!email) return alert('Please enter a valid email');
+
+      await db.collection('users').doc(leaderUid)
+        .collection('contacts')
+        .add({
+          email,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+      input.value = '';
+      addContactForm.style.display = 'none';
+      await loadContactsAndForums();
+    });
+  }
+
+  // 5) Chat header dropdown
   var hdr = document.getElementById('chat-header');
   var select = document.createElement('select');
   select.id = 'chat-select';
@@ -92,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
     hdr.parentNode.replaceChild(select, hdr);
   }
 
-  // 5) Handle dropdown changes (1:1 vs forum)
+  // 6) Handle dropdown changes (1:1 vs forum)
   select.addEventListener('change', async function() {
     var val = select.value;
     var box = document.getElementById('chat-messages');
@@ -103,13 +130,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!val) return;
 
     if (val.indexOf('forum:') === 0) {
-      // forum path
       var forumId = val.split(':')[1];
       unsubscribe = startListeningToForumMessages(
         db, leaderUid, forumId, renderMessages
       );
     } else {
-      // one-to-one chat by email
       var chatId = await findOrCreateChat(
         db, leaderUid, currentUser.email, val
       );
@@ -119,44 +144,44 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // 6) Fallback “Send” button
-document.getElementById('send-message-btn')
-  ?.addEventListener('click', async () => {
-    const val = document.getElementById('chat-select').value;
-    const txt = document.getElementById('chat-input').value.trim();
-    if (!val || !txt) return;
+  // 7) Fallback “Send” button
+  document.getElementById('send-message-btn')
+    ?.addEventListener('click', async () => {
+      const val = document.getElementById('chat-select').value;
+      const txt = document.getElementById('chat-input').value.trim();
+      if (!val || !txt) return;
 
-    const payload = {
-      text: txt,
-      fromEmail: currentUser.email,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      replyTo: replyTo || null
-    };
+      const payload = {
+        text: txt,
+        fromEmail: currentUser.email,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        replyTo: replyTo || null
+      };
 
-    if (val.startsWith('forum:')) {
-      const fid = val.split(':')[1];
-      await db.collection('users').doc(leaderUid)
-        .collection('forums').doc(fid)
-        .collection('messages')
-        .add(payload);
-    } else {
-      const chatId = await findOrCreateChat(
-        db, leaderUid,
-        currentUser.email,
-        val
-      );
-      await db.collection('users').doc(leaderUid)
-        .collection('chats').doc(chatId)
-        .collection('messages')
-        .add({ ...payload, toEmail: val });
-    }
+      if (val.startsWith('forum:')) {
+        const fid = val.split(':')[1];
+        await db.collection('users').doc(leaderUid)
+          .collection('forums').doc(fid)
+          .collection('messages')
+          .add(payload);
+      } else {
+        const chatId = await findOrCreateChat(
+          db, leaderUid,
+          currentUser.email,
+          val
+        );
+        await db.collection('users').doc(leaderUid)
+          .collection('chats').doc(chatId)
+          .collection('messages')
+          .add({ ...payload, toEmail: val });
+      }
 
-    document.getElementById('chat-input').value = '';
-    replyTo = null;
-    clearReplyPreview();
-  });
+      document.getElementById('chat-input').value = '';
+      replyTo = null;
+      clearReplyPreview();
+    });
 
-  // 7) Auth guard & initial data load
+  // 8) Auth guard & initial data load
   auth.onAuthStateChanged(async function(u) {
     if (!u) {
       window.location.href = 'index.html';
@@ -170,7 +195,6 @@ document.getElementById('send-message-btn')
     document.getElementById('welcome').textContent =
       'Welcome, ' + (u.displayName || u.email) + (isAgent ? ' (Agent)' : '');
 
-    await loadNotes();
     await loadContactsAndForums();
     await loadAnnouncement();
     initChat(db, auth, leaderUid);
@@ -196,16 +220,13 @@ async function loadContactsAndForums() {
   var ul  = document.getElementById('contact-list');
   var sel = document.getElementById('chat-select');
   ul.innerHTML = '';
-  Array.prototype.slice.call(
-    sel.querySelectorAll('option:not([value=""])')
-  ).forEach(function(o) { sel.removeChild(o); });
+  Array.from(sel.querySelectorAll('option:not([value=""])'))
+    .forEach(o => sel.removeChild(o));
 
-  // 1) one-to-one contacts
-  var snap = await db
-    .collection('users').doc(leaderUid)
-    .collection('contacts').orderBy('createdAt','desc')
-    .get();
-  snap.forEach(function(doc) {
+  // 1) contacts
+  var snap = await db.collection('users').doc(leaderUid)
+    .collection('contacts').orderBy('createdAt', 'desc').get();
+  snap.forEach(doc => {
     var email = doc.data().email;
     if (email === currentUser.email) return;
     var li = document.createElement('li');
@@ -219,11 +240,9 @@ async function loadContactsAndForums() {
   });
 
   // 2) forums
-  snap = await db
-    .collection('users').doc(leaderUid)
-    .collection('forums').orderBy('createdAt','desc')
-    .get();
-  snap.forEach(function(doc) {
+  snap = await db.collection('users').doc(leaderUid)
+    .collection('forums').orderBy('createdAt', 'desc').get();
+  snap.forEach(doc => {
     var name = doc.data().name;
     var fid  = doc.id;
     var li = document.createElement('li');
@@ -237,8 +256,7 @@ async function loadContactsAndForums() {
   });
 }
 
-// — Announcement / Notes / Reply helpers (same as before) —
-async function loadAnnouncement() { /* … */ }
-async function loadNotes()        { /* … */ }
-function clearReplyPreview()      { /* … */ }
-function showReplyPreview(text)   { /* … */ }
+// — Announcement & reply preview —
+async function loadAnnouncement() { /* ... */ }
+function clearReplyPreview()      { /* ... */ }
+function showReplyPreview(text)   { /* ... */ }
