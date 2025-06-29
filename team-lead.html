@@ -102,15 +102,15 @@
       <button id="post-announcement">Post</button>
     </div>
 
-  <!-- ⚙️ Settings Panel -->
+<!-- ⚙️ Settings Panel -->
 <div id="settings-panel" class="controls-hidden">
   <div class="settings-menu" style="margin-bottom: 10px;">
     <button id="show-contact-settings">Manage Contacts & Forums</button>
     <button id="show-upload-section">Upload Offer Files</button>
   </div>
 
-  <!-- 👥 Contacts + Forums Section -->
-  <div id="contact-chat-controls" class="settings-section">
+  <!-- 👥 Contacts + Forums Section (HIDDEN INITIALLY) -->
+  <div id="contact-chat-controls" class="settings-section" style="display: none;">
     <div class="chat-actions">
       <button id="add-contact-btn">Add Contact</button>
       <button id="new-forum-btn">New Forum</button>
@@ -130,7 +130,6 @@
 
     <ul id="contact-list"></ul>
 
-    <!-- Optional legacy chat support -->
     <div id="start-chat-form" style="display: none;">
       <input type="text" id="chat-name" placeholder="Enter chat name">
       <button id="create-chat">Create</button>
@@ -138,13 +137,14 @@
     <ul id="chat-list"></ul>
   </div>
 
-  <!-- 📂 Excel Upload Section -->
+  <!-- 📂 Excel Upload Section (HIDDEN INITIALLY) -->
   <div id="upload-section" class="settings-section" style="display: none;">
     <p><strong>Upload Excel or CSV Files:</strong></p>
     <input type="file" id="file-uploader" multiple accept=".xlsx,.xls,.csv" />
     <div id="uploaded-files-list" style="margin-top: 10px;"></div>
   </div>
 </div>
+
 
 
       <p>Click a contact to start chatting</p>
