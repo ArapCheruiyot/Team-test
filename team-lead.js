@@ -283,28 +283,17 @@ async function loadAnnouncement() {
 function clearReplyPreview()      { /* ... */ }
 function showReplyPreview(text)   { /* ... */ }
 
-// Gear button toggles settings panel
+// Gear button toggles the entire settings panel
 document.getElementById('settings-btn')?.addEventListener('click', () => {
   const panel = document.getElementById('settings-panel');
-  panel?.classList.toggle('controls-hidden');
 
-  // Always hide inner sections when opening
+  // Toggle display instead of class toggle
+  if (panel.style.display === 'none' || panel.style.display === '') {
+    panel.style.display = 'block';
+  } else {
+    panel.style.display = 'none';
+  }
+
+  // Always hide internal sections when settings open
   showSettingsSection(null);
 });
-
-// Tab switchers
-document.getElementById('show-contact-settings')?.addEventListener('click', () => {
-  showSettingsSection('contact-chat-controls');
-});
-
-document.getElementById('show-upload-section')?.addEventListener('click', () => {
-  showSettingsSection('upload-section');
-});
-
-// Helper to show one section and hide others
-function showSettingsSection(idToShow) {
-  document.querySelectorAll('.settings-section').forEach(section => {
-    section.style.display = section.id === idToShow ? 'block' : 'none';
-  });
-}
-
