@@ -6,7 +6,6 @@
  */
 export async function findOrCreateChat(db, leaderUid, email1, email2) {
   const chatsRef = db.collection('users').doc(leaderUid).collection('chats');
-  // Look for either ordering of participants
   const snapshot = await chatsRef
     .where('participants', 'in', [
       [email1, email2],
@@ -18,7 +17,6 @@ export async function findOrCreateChat(db, leaderUid, email1, email2) {
   if (!snapshot.empty) {
     return snapshot.docs[0].id;
   }
-  // Not found → create new
   const docRef = await chatsRef.add({
     participants: [email1, email2],
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -43,13 +41,9 @@ export function startListeningToMessages(db, leaderUid, chatId, callback) {
 
   const unsubscribe = ref.onSnapshot(snapshot => {
     const msgs = [];
-    snapshot.forEach(doc => {
-      msgs.push({ id: doc.id, ...doc.data() });
-    });
+    snapshot.forEach(doc => msgs.push({ id: doc.id, ...doc.data() }));
     callback(msgs);
-  }, err => {
-    console.error('Chat listener error:', err);
-  });
+  }, err => console.error('Chat listener error:', err));
 
   return unsubscribe;
 }
@@ -72,42 +66,26 @@ export function initChat(db, auth, leaderUid) {
   let replyToMessage = null;
   let unsubscribe    = null;
 
-  // Keep currentUser in sync
-  auth.onAuthStateChanged(u => {
-    currentUser = u;
-  });
+  auth.onAuthStateChanged(u => { currentUser = u; });
 
-  // 1) When dropdown changes → swap chat
   selectEl.addEventListener('change', async () => {
     const email = selectEl.value;
     boxEl.innerHTML = '';
     clearReplyPreview();
-    if (unsubscribe) unsubscribe();
+    unsubscribe?.();
 
     if (!email) {
-      activeChatId = null;
-      activeContact = null;
+      activeChatId = activeContact = null;
       return;
     }
 
     activeContact = email;
-    // Ensure chat doc exists
-    activeChatId = await findOrCreateChat(
-      db, leaderUid,
-      currentUser.email,
-      activeContact
-    );
+    activeChatId  = await findOrCreateChat(db, leaderUid, currentUser.email, email);
 
-    // Real-time listen
-    unsubscribe = startListeningToMessages(
-      db, leaderUid, activeChatId,
-      renderMessages
-    );
+    unsubscribe = startListeningToMessages(db, leaderUid, activeChatId, renderMessages);
   });
 
-  // 2) Send-on-click
   sendBtn.addEventListener('click', sendMessage);
-  // 3) Send-on-Enter (no shift)
   inputEl.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -115,24 +93,19 @@ export function initChat(db, auth, leaderUid) {
     }
   });
 
-  // Render callback
   function renderMessages(messages) {
     boxEl.innerHTML = '';
     messages.forEach(m => {
       const b = document.createElement('div');
       b.className = `chat-bubble ${m.fromEmail === currentUser.email ? 'sent' : 'received'}`;
-
-      // reply preview segment
       let replyHTML = '';
       if (m.replyTo) {
         replyHTML = `
           <div class="reply-preview">
-            <em>Replying to:</em>
-            <div class="reply-text">${m.replyTo.text}</div>
+            <em>Replying to:</em><div class="reply-text">${m.replyTo.text}</div>
           </div>
         `;
       }
-
       b.innerHTML = `
         ${replyHTML}
         <strong>${m.fromEmail}:</strong> ${m.text}
@@ -142,27 +115,20 @@ export function initChat(db, auth, leaderUid) {
     });
     boxEl.scrollTop = boxEl.scrollHeight;
 
-    // attach reply handlers
     boxEl.querySelectorAll('.reply-btn').forEach(btn => {
       btn.onclick = () => {
-        replyToMessage = {
-          id: btn.dataset.id,
-          text: btn.dataset.text
-        };
+        replyToMessage = { id: btn.dataset.id, text: btn.dataset.text };
         showReplyPreview(replyToMessage.text);
       };
     });
   }
 
-  // Compose & send
   async function sendMessage() {
     const txt = inputEl.value.trim();
     if (!txt || !activeChatId || !activeContact) return;
 
     const msg = {
-      text:     txt,
-      fromEmail: currentUser.email,
-      toEmail:   activeContact,
+      text, fromEmail: currentUser.email, toEmail: activeContact,
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
     if (replyToMessage) {
@@ -180,7 +146,6 @@ export function initChat(db, auth, leaderUid) {
     clearReplyPreview();
   }
 
-  // UI for reply preview
   function clearReplyPreview() {
     document.getElementById('reply-preview')?.remove();
   }
@@ -198,4 +163,26 @@ export function initChat(db, auth, leaderUid) {
       clearReplyPreview();
     };
   }
+}
+
+/**
+ * Subscribes to real-time updates of a forum’s (group) messages.
+ * @param {object} db Firestore instance
+ * @param {string} leaderUid Firestore user doc ID
+ * @param {string} forumId   Forum document ID
+ * @param {(msgs:Array<Object>)=>void} callback receives array of messages
+ * @returns {function()} unsubscribe function
+ */
+export function startListeningToForumMessages(db, leaderUid, forumId, callback) {
+  return db.collection('users').doc(leaderUid)
+    .collection('forums').doc(forumId)
+    .collection('messages')
+    .orderBy('ts')
+    .onSnapshot(snap => {
+      const arr = [];
+      snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+      callback(arr);
+    }, err => {
+      console.error('Forum listener error:', err);
+    });
 }
