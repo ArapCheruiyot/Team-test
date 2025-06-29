@@ -1,4 +1,4 @@
-// notepad.js — Auto-create, auto-save, and edit notes
+// notepad.js — Auto-create, edit, delete, and list notes
 const db = window.db;
 const auth = window.auth;
 
@@ -7,11 +7,15 @@ let leaderUid = null;
 let selectedNoteId = null;
 let isNewNote = true;
 
-// DOM elements
-const fileList  = document.getElementById('file-names');
-const textInput = document.getElementById('text-input');
+// DOM
+const fileList    = document.getElementById('file-names');
+const textInput   = document.getElementById('text-input');
+const newFileBtn  = document.getElementById('new-file');
+const deleteBtn   = document.getElementById('delete');
+const searchBtn   = document.getElementById('search');
+const searchInput = document.getElementById('search-input');
 
-// Watch for auth and load existing notes
+// ✅ Auth and Load Notes
 auth.onAuthStateChanged(user => {
   if (!user) {
     window.location.href = 'index.html';
@@ -23,13 +27,11 @@ auth.onAuthStateChanged(user => {
   loadNotes();
 });
 
-// ✅ Load notes to sidebar
+// ✅ Load all notes
 async function loadNotes() {
   fileList.innerHTML = '';
   const snapshot = await db.collection('users').doc(leaderUid)
-    .collection('notes')
-    .orderBy('createdAt', 'desc')
-    .get();
+    .collection('notes').orderBy('createdAt', 'desc').get();
 
   snapshot.forEach(doc => {
     const data = doc.data();
@@ -37,11 +39,12 @@ async function loadNotes() {
     li.className = 'file-name';
     li.textContent = data.title || '(Untitled)';
     li.addEventListener('click', () => loadNote(doc.id));
+    li.dataset.id = doc.id;
     fileList.appendChild(li);
   });
 }
 
-// ✅ Load a single note for editing
+// ✅ Load one note to editor
 async function loadNote(noteId) {
   selectedNoteId = noteId;
   isNewNote = false;
@@ -51,16 +54,26 @@ async function loadNote(noteId) {
 
   const content = doc.data()?.content || '';
   textInput.value = content;
+  highlightSelected(noteId);
 }
 
-// ✅ Auto-save logic on typing
+// ✅ Highlight active note
+function highlightSelected(noteId) {
+  document.querySelectorAll('.file-name').forEach(el => {
+    el.classList.remove('active');
+    if (el.dataset.id === noteId) {
+      el.classList.add('active');
+    }
+  });
+}
+
+// ✅ Auto-save on input
 textInput.addEventListener('input', async () => {
   const fullText = textInput.value;
   const lines = fullText.split('\n');
   const title = lines[0] || '(Untitled)';
   const content = fullText;
 
-  // 🆕 If this is a brand new note, create it first
   if (isNewNote) {
     const docRef = await db.collection('users').doc(leaderUid)
       .collection('notes')
@@ -71,14 +84,43 @@ textInput.addEventListener('input', async () => {
       });
     selectedNoteId = docRef.id;
     isNewNote = false;
-    await loadNotes();  // Refresh the note list
-    return;
-  }
-
-  // 📝 Update existing note
-  if (selectedNoteId) {
+    await loadNotes();
+    highlightSelected(selectedNoteId);
+  } else if (selectedNoteId) {
     await db.collection('users').doc(leaderUid)
       .collection('notes').doc(selectedNoteId)
       .update({ title, content });
   }
+});
+
+// ✅ New Note Button
+newFileBtn.addEventListener('click', () => {
+  selectedNoteId = null;
+  isNewNote = true;
+  textInput.value = '';
+  document.querySelectorAll('.file-name').forEach(el => el.classList.remove('active'));
+});
+
+// ✅ Delete Button
+deleteBtn.addEventListener('click', async () => {
+  if (!selectedNoteId) {
+    alert('No note selected.');
+    return;
+  }
+
+  const confirmDelete = confirm('Are you sure you want to delete this note?');
+  if (!confirmDelete) return;
+
+  await db.collection('users').doc(leaderUid)
+    .collection('notes').doc(selectedNoteId).delete();
+
+  selectedNoteId = null;
+  textInput.value = '';
+  isNewNote = true;
+  await loadNotes();
+});
+
+// ✅ Optional: Toggle search input (can be enhanced later)
+searchBtn.addEventListener('click', () => {
+  searchInput.style.display = searchInput.style.display === 'none' ? 'block' : 'none';
 });
