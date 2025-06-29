@@ -6,7 +6,7 @@ import {
   startListeningToForumMessages
 } from './chat.js';
 
-// — State & Firebase handles —
+// — App state & Firebase handles —
 let currentUser = null;
 let leaderUid   = null;
 let unsubscribe = null;
@@ -14,25 +14,28 @@ let replyTo     = null;
 
 const db      = window.db;
 const auth    = window.auth;
-const isAgent = new URLSearchParams(location.search).get('asAgent') === 'true';
+const isAgent = new URLSearchParams(window.location.search).get('asAgent') === 'true';
 
-// Hide agent-only bits immediately
+// Hide agent-only controls immediately
 if (isAgent) {
-  ['new-file','delete','add-contact-btn','add-contact-form','announcement-panel']
-    .forEach(id => document.getElementById(id)?.style.display = 'none');
+  [
+    'new-file','delete',
+    'add-contact-btn','add-contact-form',
+    'announcement-panel'
+  ].forEach(id => document.getElementById(id)?.style.setProperty('display','none'));
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log("✅ team-lead.js initialized");
 
-  // — Gear toggle contacts pane
+  // 1) Settings-gear toggles contacts pane
   document.getElementById('settings-btn')
     ?.addEventListener('click', () =>
       document.getElementById('contact-chat-controls')
         .classList.toggle('controls-hidden')
     );
 
-  // — Offers finder
+  // 2) Offers Finder popup
   document.getElementById('open-offers-btn')
     ?.addEventListener('click', () =>
       window.open(
@@ -42,10 +45,10 @@ document.addEventListener('DOMContentLoaded', () => {
       )
     );
 
-  // — New Forum button
+  // 3) “New Forum” flow
   document.getElementById('new-forum-btn')
     ?.addEventListener('click', () =>
-      document.getElementById('new-forum-form').style.display = 'block'
+      document.getElementById('new-forum-form').style.setProperty('display','block')
     );
   document.getElementById('save-forum-btn')
     ?.addEventListener('click', async () => {
@@ -55,36 +58,36 @@ document.addEventListener('DOMContentLoaded', () => {
         .collection('forums')
         .add({ name, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
       document.getElementById('forum-name').value = '';
-      document.getElementById('new-forum-form').style.display = 'none';
+      document.getElementById('new-forum-form').style.setProperty('display','none');
       await loadContactsAndForums();
     });
 
-  // — Replace chat-header with dropdown
+  // 4) Swap out any static <h3 id="chat-header"> for our <select>
   const hdr = document.getElementById('chat-header');
   const select = document.createElement('select');
-  select.id = 'chat-select';
+  select.id    = 'chat-select';
   select.classList.add('chat-dropdown');
-  select.innerHTML = `<option value="" selected>No chat selected</option>`;
+  select.innerHTML = `<option value="" selected>No conversation selected</option>`;
   if (hdr) hdr.replaceWith(select);
 
-  // — On select change: either one-to-one or forum
+  // 5) When user picks from dropdown, either hook into a forum or a 1:1 chat
   select.addEventListener('change', async () => {
     const val = select.value;
     const box = document.getElementById('chat-messages');
     box.innerHTML = '';
     clearReplyPreview();
-    unsubscribe?.();
+    if (unsubscribe) unsubscribe();
 
     if (!val) return;
 
+    // Forum IDs are prefixed: "forum:<docId>"
     if (val.startsWith('forum:')) {
-      // forum path
       const forumId = val.split(':')[1];
       unsubscribe = startListeningToForumMessages(
         db, leaderUid, forumId, renderMessages
       );
     } else {
-      // 1:1 chat path
+      // 1:1 chat by email
       const chatId = await findOrCreateChat(
         db, leaderUid,
         currentUser.email,
@@ -96,27 +99,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // — Fallback send button
+  // 6) Fallback “Send” button (in case initChat wiring isn’t used)
   document.getElementById('send-message-btn')
     ?.addEventListener('click', async () => {
-      const sel  = document.getElementById('chat-select');
-      const val  = sel.value;
-      const txt  = document.getElementById('chat-input').value.trim();
+      const val = document.getElementById('chat-select').value;
+      const txt = document.getElementById('chat-input').value.trim();
       if (!val || !txt) return;
 
+      // Common payload
       const payload = {
-        text:   txt,
-        from:   currentUser.email,
-        ts:     firebase.firestore.FieldValue.serverTimestamp(),
+        text: txt,
+        fromEmail: currentUser.email,
+        ts: firebase.firestore.FieldValue.serverTimestamp(),
         replyTo
       };
 
       if (val.startsWith('forum:')) {
-        const forumId = val.split(':')[1];
+        // Post to forum
+        const fid = val.split(':')[1];
         await db.collection('users').doc(leaderUid)
-          .collection('forums').doc(forumId)
-          .collection('messages').add(payload);
+          .collection('forums').doc(fid)
+          .collection('messages')
+          .add(payload);
       } else {
+        // Post to 1:1 chat
         const chatId = await findOrCreateChat(
           db, leaderUid,
           currentUser.email,
@@ -124,10 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
         );
         await db.collection('users').doc(leaderUid)
           .collection('chats').doc(chatId)
-          .collection('messages').add({
-            ...payload,
-            to: val
-          });
+          .collection('messages')
+          .add({ ...payload, toEmail: val });
       }
 
       document.getElementById('chat-input').value = '';
@@ -135,9 +139,12 @@ document.addEventListener('DOMContentLoaded', () => {
       clearReplyPreview();
     });
 
-  // — Auth & initial load
+  // 7) Auth guard & initial data load
   auth.onAuthStateChanged(async u => {
-    if (!u) return location.href = 'index.html';
+    if (!u) {
+      window.location.href = 'index.html';
+      return;
+    }
     currentUser = u;
     leaderUid   = isAgent
       ? 'A3HIWA6XWvhFcGdsM3o5IV0Qx3B2'
@@ -153,27 +160,27 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// — Render callback for both chats & forums
+// — Render callback (shared by chats & forums) —
 function renderMessages(msgs) {
   const box = document.getElementById('chat-messages');
   box.innerHTML = '';
   msgs.forEach(m => {
     const b = document.createElement('div');
-    b.className = `chat-bubble ${m.from === currentUser.email ? 'sent' : 'received'}`;
+    b.className = `chat-bubble ${(m.fromEmail === currentUser.email) ? 'sent' : 'received'}`;
     b.textContent = m.text;
     box.appendChild(b);
   });
   box.scrollTop = box.scrollHeight;
 }
 
-// — Load contacts + forums into both UL & dropdown
+// — Load contacts & forums into the UL and dropdown —
 async function loadContactsAndForums() {
   const ul  = document.getElementById('contact-list');
   const sel = document.getElementById('chat-select');
   ul.innerHTML = '';
   sel.querySelectorAll('option:not([value=""])').forEach(o => o.remove());
 
-  // 1) personal contacts
+  // 1) One-to-one contacts
   let snap = await db.collection('users').doc(leaderUid)
     .collection('contacts').orderBy('createdAt','desc').get();
   snap.forEach(doc => {
@@ -182,32 +189,32 @@ async function loadContactsAndForums() {
     const li = document.createElement('li');
     li.textContent = `👤 ${email}`;
     li.onclick = () => {
-      sel.value = email; sel.dispatchEvent(new Event('change'));
+      sel.value = email;
+      sel.dispatchEvent(new Event('change'));
     };
     ul.appendChild(li);
-    const opt = new Option(email, email);
-    sel.appendChild(opt);
+    sel.appendChild(new Option(`👤 ${email}`, email));
   });
 
-  // 2) forums
+  // 2) Forums
   snap = await db.collection('users').doc(leaderUid)
     .collection('forums').orderBy('createdAt','desc').get();
   snap.forEach(doc => {
-    const name = doc.data().name;
-    const id   = doc.id;
+    const { name } = doc.data();
+    const fid = doc.id;
     const li = document.createElement('li');
     li.textContent = `📢 ${name}`;
     li.onclick = () => {
-      sel.value = `forum:${id}`; sel.dispatchEvent(new Event('change'));
+      sel.value = `forum:${fid}`;
+      sel.dispatchEvent(new Event('change'));
     };
     ul.appendChild(li);
-    const opt = new Option(`📢 ${name}`, `forum:${id}`);
-    sel.appendChild(opt);
+    sel.appendChild(new Option(`📢 ${name}`, `forum:${fid}`));
   });
 }
 
-// — The rest: announcements, notes, reply helpers…
-function clearReplyPreview() { /*…*/ }
-function showReplyPreview(text) { /*…*/ }
-async function loadAnnouncement() { /*…*/ }
-async function loadNotes() { /*…*/ }
+// — Announcements, notes & reply preview helpers (left as before) —
+async function loadAnnouncement() { /* … */ }
+async function loadNotes()        { /* … */ }
+function clearReplyPreview()      { /* … */ }
+function showReplyPreview(text)   { /* … */ }
