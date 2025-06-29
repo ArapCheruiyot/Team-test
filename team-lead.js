@@ -258,27 +258,43 @@ async function loadContactsAndForums() {
 
 // — Announcement & reply preview —
 async function loadAnnouncement() {
+  console.log("📣 loadAnnouncement() called");
+
   const doc = await db.collection('users').doc(leaderUid).get();
   const data = doc.data();
+  console.log("📣 Loaded doc data:", data);
+
   const text = data?.announcement || '📣 No announcements yet.';
   document.getElementById('announcement-text-scroll').textContent = text;
 
-  // Team lead can post new one
   const postBtn = document.getElementById('post-announcement');
   const inputEl = document.getElementById('announcement-input');
 
+  console.log("📣 postBtn:", postBtn, "inputEl:", inputEl, "isAgent:", isAgent);
+
   if (postBtn && inputEl && !isAgent) {
+    console.log("📣 Setting post announcement listener");
     postBtn.addEventListener('click', async () => {
       const msg = inputEl.value.trim();
+      console.log('[Post Clicked]', { msg });
       if (!msg) return alert('Announcement cannot be empty');
-      await db.collection('users').doc(leaderUid).update({
-        announcement: msg
-      });
-      inputEl.value = '';
-      document.getElementById('announcement-text-scroll').textContent = msg;
+
+      try {
+        await db.collection('users').doc(leaderUid).update({
+          announcement: msg
+        });
+        inputEl.value = '';
+        document.getElementById('announcement-text-scroll').textContent = msg;
+        console.log('✅ Announcement posted:', msg);
+      } catch (err) {
+        console.error('❌ Firestore update failed:', err);
+      }
     });
+  } else {
+    console.warn("❌ Could not attach post announcement listener");
   }
 }
+
 
 function clearReplyPreview()      { /* ... */ }
 function showReplyPreview(text)   { /* ... */ }
