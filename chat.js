@@ -26,10 +26,6 @@ export async function findOrCreateChat(db, leaderUid, email1, email2) {
 
 /**
  * Subscribes to real-time updates of a chat’s messages.
- * @param {object} db Firestore instance
- * @param {string} leaderUid Firestore user doc ID
- * @param {string} chatId Chat document ID
- * @param {(messages:Array<Object>)=>void} callback invoked with an array of message objects
  * @returns {function()} unsubscribe function
  */
 export function startListeningToMessages(db, leaderUid, chatId, callback) {
@@ -50,9 +46,6 @@ export function startListeningToMessages(db, leaderUid, chatId, callback) {
 
 /**
  * Initializes one-to-one chat UI.
- * - Hooks up <select id="chat-select"> change to swapping chats.
- * - Hooks up Send button & Enter key.
- * - Supports reply-to.
  */
 export function initChat(db, auth, leaderUid) {
   const selectEl = document.getElementById('chat-select');
@@ -124,13 +117,16 @@ export function initChat(db, auth, leaderUid) {
   }
 
   async function sendMessage() {
-    const txt = inputEl.value.trim();
-    if (!txt || !activeChatId || !activeContact) return;
+    const text = inputEl.value.trim(); // ✅ THIS WAS MISSING
+    if (!text || !activeChatId || !activeContact) return;
 
     const msg = {
-      text, fromEmail: currentUser.email, toEmail: activeContact,
+      text,
+      fromEmail: currentUser.email,
+      toEmail: activeContact,
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
+
     if (replyToMessage) {
       msg.replyTo = { messageId: replyToMessage.id, text: replyToMessage.text };
     }
@@ -149,6 +145,7 @@ export function initChat(db, auth, leaderUid) {
   function clearReplyPreview() {
     document.getElementById('reply-preview')?.remove();
   }
+
   function showReplyPreview(text) {
     clearReplyPreview();
     const preview = document.createElement('div');
@@ -167,10 +164,6 @@ export function initChat(db, auth, leaderUid) {
 
 /**
  * Subscribes to real-time updates of a forum’s (group) messages.
- * @param {object} db Firestore instance
- * @param {string} leaderUid Firestore user doc ID
- * @param {string} forumId   Forum document ID
- * @param {(msgs:Array<Object>)=>void} callback receives array of messages
  * @returns {function()} unsubscribe function
  */
 export function startListeningToForumMessages(db, leaderUid, forumId, callback) {
