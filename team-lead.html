@@ -102,12 +102,50 @@
       <button id="post-announcement">Post</button>
     </div>
 
-    <!-- Contacts Panel -->
-    <div id="contact-chat-controls" class="controls-hidden">
-      <div class="chat-actions">
-        <button id="add-contact-btn">Add Contact</button>
-        <button id="new-forum-btn">New Forum</button> <!-- ✅ CORRECTED ID -->
-      </div>
+  <!-- ⚙️ Settings Panel -->
+<div id="settings-panel" class="controls-hidden">
+  <div class="settings-menu" style="margin-bottom: 10px;">
+    <button id="show-contact-settings">Manage Contacts & Forums</button>
+    <button id="show-upload-section">Upload Offer Files</button>
+  </div>
+
+  <!-- 👥 Contacts + Forums Section -->
+  <div id="contact-chat-controls" class="settings-section">
+    <div class="chat-actions">
+      <button id="add-contact-btn">Add Contact</button>
+      <button id="new-forum-btn">New Forum</button>
+    </div>
+
+    <p>Click a contact to start chatting</p>
+
+    <div id="add-contact-form" style="display: none;">
+      <input type="email" id="new-contact-email" placeholder="Enter email">
+      <button id="save-contact-btn">Save</button>
+    </div>
+
+    <div id="new-forum-form" style="display:none; margin-top:8px;">
+      <input type="text" id="forum-name" placeholder="Forum name…"/>
+      <button id="save-forum-btn">Create</button>
+    </div>
+
+    <ul id="contact-list"></ul>
+
+    <!-- Optional legacy chat support -->
+    <div id="start-chat-form" style="display: none;">
+      <input type="text" id="chat-name" placeholder="Enter chat name">
+      <button id="create-chat">Create</button>
+    </div>
+    <ul id="chat-list"></ul>
+  </div>
+
+  <!-- 📂 Excel Upload Section -->
+  <div id="upload-section" class="settings-section" style="display: none;">
+    <p><strong>Upload Excel or CSV Files:</strong></p>
+    <input type="file" id="file-uploader" multiple accept=".xlsx,.xls,.csv" />
+    <div id="uploaded-files-list" style="margin-top: 10px;"></div>
+  </div>
+</div>
+
 
       <p>Click a contact to start chatting</p>
 
