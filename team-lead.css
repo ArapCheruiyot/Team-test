@@ -252,5 +252,12 @@
   padding: 0 8px;
   cursor: pointer;
 }
+.snap-item {
+  padding: 6px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
 
-
+.snap-item:hover {
+  background-color: #f2f2f2;
+}
