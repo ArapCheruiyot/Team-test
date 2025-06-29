@@ -6,21 +6,21 @@
   <title>TeamHub Dashboard</title>
   <link rel="stylesheet" href="team-lead.css"/>
 
-  <!-- ✅ Firebase SDKs -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-  <!-- ✅ Firebase Config -->
+  <!-- Firebase Config -->
   <script>
     const firebaseConfig = {
-      apiKey: "AIzaSyBQSl1HtlJBPRBcgt5culdCDj_cBVN40Io",
-      authDomain: "offer-upload.firebaseapp.com",
-      projectId: "offer-upload",
-      storageBucket: "offer-upload.firebasestorage.app",
-      messagingSenderId: "147934510488",
-      appId: "1:147934510488:web:cdf01aed4342a43475bfed",
-      measurementId: "G-ZPBL7DC3YG"
+      apiKey: "...",
+      authDomain: "...",
+      projectId: "...",
+      storageBucket: "...",
+      messagingSenderId: "...",
+      appId: "...",
+      measurementId: "..."
     };
     firebase.initializeApp(firebaseConfig);
     window.auth = firebase.auth();
@@ -33,15 +33,12 @@
     <div class="user-section">
       <h1 id="welcome">Loading…</h1>
       <button id="signout">Sign Out</button>
-      <!-- Gear icon to toggle contacts -->
       <button id="settings-btn" class="gear-btn" aria-label="Settings">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 8a4 4 0 100 8 4 4 0 000-8zm0-5a1 1 0 011 1v1.08a7.003 7.003 0 013.546 1.953l.764-.763a1 1 0 111.414 1.414l-.763.764A7.003 7.003 0 0121.92 11H23a1 1 0 110 2h-1.08a7.003 7.003 0 01-1.953 3.546l.763.764a1 1 0 11-1.414 1.414l-.764-.763A7.003 7.003 0 0113 21.92V23a1 1 0 11-2 0v-1.08a7.003 7.003 0 01-3.546-1.953l-.764.763a1 1 0 11-1.414-1.414l.763-.764A7.003 7.003 0 012.08 13H1a1 1 0 110-2h1.08a7.003 7.003 0 011.953-3.546l-.763-.764a1 1 0 111.414-1.414l.764.763A7.003 7.003 0 0111 4.08V3a1 1 0 011-1z"/>
-        </svg>
+        <!-- gear SVG -->
       </button>
     </div>
 
-    <!-- Right: Announcement Banner -->
+    <!-- Announcement Banner -->
     <div id="announcement-banner">
       <span id="announcement-text-scroll">📣 Announcement will scroll here…</span>
     </div>
@@ -51,81 +48,65 @@
     <!-- Notepad Left -->
     <div id="notepad-left">
       <div class="sidebar">
-        <img src="logo.png" alt="team-hub logo" style="width:200px; display:block; margin:20px auto;" />
+        <img src="logo.png" alt="team-hub logo" />
         <button id="new-file">New Note</button>
         <button id="delete">Delete</button>
         <button id="search">Search</button>
-        <input type="text" id="search-input" placeholder="Search notes..." style="display: none;" />
+        <input type="text" id="search-input" placeholder="Search notes…" />
         <div id="file-names" class="file-list"></div>
       </div>
       <div class="editor">
-        <textarea id="text-input" placeholder="Start typing your note..."></textarea>
+        <textarea id="text-input" placeholder="Start typing your note…"></textarea>
       </div>
     </div>
 
-    <!-- Announcement Panel (Team Lead only) -->
+    <!-- Announcement Panel (Lead only) -->
     <div id="announcement-panel">
       <h3>📣 Team Announcement</h3>
-      <textarea id="announcement-input" placeholder="Write your announcement..."></textarea>
+      <textarea id="announcement-input" placeholder="Write your announcement…"></textarea>
       <button id="post-announcement">Post</button>
     </div>
 
-    <!-- Contacts Panel (hidden by default) -->
+    <!-- Contacts & Forums Panel -->
     <div id="contact-chat-controls" class="controls-hidden">
       <div class="chat-actions">
         <button id="add-contact-btn">Add Contact</button>
-        <button id="start-chat-btn">Start Chat</button>
+        <button id="new-forum-btn">New Forum</button>
       </div>
 
-      <p>Click a contact to start chatting</p>
+      <!-- Add Contact Form -->
       <div id="add-contact-form" style="display: none;">
-        <input type="email" id="contact-email" placeholder="Enter email">
+        <input type="email" id="contact-email" placeholder="Enter email" />
         <button id="save-contact">Save</button>
       </div>
-      <ul id="contact-list"></ul>
 
-      <div id="start-chat-form" style="display: none;">
-        <input type="text" id="chat-name" placeholder="Enter chat name">
-        <button id="create-chat">Create</button>
+      <!-- New Forum Form -->
+      <div id="new-forum-form" style="display: none; margin-top: 8px;">
+        <input type="text" id="forum-name" placeholder="Forum name…" />
+        <button id="save-forum-btn">Create</button>
       </div>
-      <ul id="chat-list"></ul>
+
+      <ul id="contact-list"></ul>
     </div>
 
-    <!-- Chat Window -->
- <!-- 🔽 Chat Window -->
-<div id="chat-panel">
-  <button id="open-offers-btn">Offers Finder</button>
-  
-  <!-- Replace the <h3> with a <select> -->
-  <label for="chat-select" class="visually-hidden">Select a chat</label>
-  <select id="chat-select" class="chat-dropdown">
-    <option value="" selected>No chat selected</option>
-    <!-- JS will append <option value="chatId">Chat Name</option> here -->
-  </select>
-  
-  <div id="chat-messages" class="chat-box"></div>
-  <div id="chat-input-area">
-    <input type="text" id="chat-input" placeholder="Type a message..." />
-    <button id="send-message-btn">Send</button>
-  </div>
-</div>
+    <!-- Chat / Forum Window -->
+    <div id="chat-panel">
+      <button id="open-offers-btn">Offers Finder</button>
 
+      <label for="chat-select" class="visually-hidden">Select a conversation</label>
+      <select id="chat-select" class="chat-dropdown">
+        <option value="" selected>No chat selected</option>
+        <!-- JS will append contacts & forums here -->
+      </select>
+
+      <div id="chat-messages" class="chat-box"></div>
+
+      <div id="chat-input-area">
+        <input type="text" id="chat-input" placeholder="Type a message…" />
+        <button id="send-message-btn">Send</button>
+      </div>
+    </div>
   </section>
-
-  <!-- Auth Guard -->
-  <script>
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = 'index.html';
-      } else {
-        document.getElementById('welcome').textContent =
-          `Welcome, ${user.displayName || user.email}!`;
-      }
-    });
-    document.getElementById('signout').addEventListener('click', () =>
-      auth.signOut().then(() => window.location.href = 'index.html')
-    );
-  </script>
 
   <!-- Main JS -->
   <script type="module" src="team-lead.js"></script>
