@@ -39,19 +39,6 @@ document.addEventListener('DOMContentLoaded', function() {
       if (pane) pane.classList.toggle('controls-hidden');
     });
   }
-
-  // 2) Offers Finder popup
-  var offersBtn = document.getElementById('open-offers-btn');
-  if (offersBtn) {
-    offersBtn.addEventListener('click', function() {
-      window.open(
-        'https://arapcheruiyot.github.io/offer-search/',
-        'offerSearch',
-        'width=800,height=600'
-      );
-    });
-  }
-
   // 3) “New Forum” flow
   var newForumBtn = document.getElementById('new-forum-btn');
   var newForumForm = document.getElementById('new-forum-form');
