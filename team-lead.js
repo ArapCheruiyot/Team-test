@@ -281,5 +281,31 @@ async function loadAnnouncement() {
 }
 
 
+// Gear button toggles settings panel
+document.getElementById('settings-btn')?.addEventListener('click', () => {
+  const panel = document.getElementById('settings-panel');
+  panel?.classList.toggle('controls-hidden');
+
+  // Always hide inner sections when opening
+  showSettingsSection(null);
+});
+
+// Tab switchers
+document.getElementById('show-contact-settings')?.addEventListener('click', () => {
+  showSettingsSection('contact-chat-controls');
+});
+
+document.getElementById('show-upload-section')?.addEventListener('click', () => {
+  showSettingsSection('upload-section');
+});
+
+// Helper to show one section and hide others
+function showSettingsSection(idToShow) {
+  document.querySelectorAll('.settings-section').forEach(section => {
+    section.style.display = section.id === idToShow ? 'block' : 'none';
+  });
+}
+
+
 function clearReplyPreview()      { /* ... */ }
 function showReplyPreview(text)   { /* ... */ }
