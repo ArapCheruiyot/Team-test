@@ -14,84 +14,104 @@ let replyTo     = null;
 
 const db      = window.db;
 const auth    = window.auth;
-const isAgent = new URLSearchParams(window.location.search).get('asAgent') === 'true';
+const isAgent = (new URLSearchParams(window.location.search)).get('asAgent') === 'true';
 
-// Hide agent-only controls immediately
+// Hide agent‐only controls immediately
 if (isAgent) {
   [
-    'new-file','delete',
-    'add-contact-btn','add-contact-form',
+    'new-file',
+    'delete',
+    'add-contact-btn',
+    'add-contact-form',
     'announcement-panel'
-  ].forEach(id => document.getElementById(id)?.style.setProperty('display','none'));
+  ].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
   console.log("✅ team-lead.js initialized");
 
-  // 1) Settings-gear toggles contacts pane
-  document.getElementById('settings-btn')
-    ?.addEventListener('click', () =>
-      document.getElementById('contact-chat-controls')
-        .classList.toggle('controls-hidden')
-    );
+  // 1) Gear-button toggles contacts pane
+  var settingsBtn = document.getElementById('settings-btn');
+  if (settingsBtn) {
+    settingsBtn.addEventListener('click', function() {
+      var pane = document.getElementById('contact-chat-controls');
+      if (pane) pane.classList.toggle('controls-hidden');
+    });
+  }
 
   // 2) Offers Finder popup
-  document.getElementById('open-offers-btn')
-    ?.addEventListener('click', () =>
+  var offersBtn = document.getElementById('open-offers-btn');
+  if (offersBtn) {
+    offersBtn.addEventListener('click', function() {
       window.open(
         'https://arapcheruiyot.github.io/offer-search/',
         'offerSearch',
         'width=800,height=600'
-      )
-    );
+      );
+    });
+  }
 
   // 3) “New Forum” flow
-  document.getElementById('new-forum-btn')
-    ?.addEventListener('click', () =>
-      document.getElementById('new-forum-form').style.setProperty('display','block')
-    );
-  document.getElementById('save-forum-btn')
-    ?.addEventListener('click', async () => {
-      const name = document.getElementById('forum-name').value.trim();
-      if (!name) return alert('Enter a forum name');
-      await db.collection('users').doc(leaderUid)
+  var newForumBtn = document.getElementById('new-forum-btn');
+  var newForumForm = document.getElementById('new-forum-form');
+  var saveForumBtn = document.getElementById('save-forum-btn');
+  if (newForumBtn && newForumForm && saveForumBtn) {
+    newForumBtn.addEventListener('click', function() {
+      newForumForm.style.display = 'block';
+    });
+    saveForumBtn.addEventListener('click', async function() {
+      var nameEl = document.getElementById('forum-name');
+      var name = nameEl.value.trim();
+      if (!name) {
+        alert('Enter a forum name');
+        return;
+      }
+      await db
+        .collection('users').doc(leaderUid)
         .collection('forums')
-        .add({ name, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-      document.getElementById('forum-name').value = '';
-      document.getElementById('new-forum-form').style.setProperty('display','none');
+        .add({
+          name: name,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      nameEl.value = '';
+      newForumForm.style.display = 'none';
       await loadContactsAndForums();
     });
+  }
 
-  // 4) Swap out any static <h3 id="chat-header"> for our <select>
-  const hdr = document.getElementById('chat-header');
-  const select = document.createElement('select');
-  select.id    = 'chat-select';
-  select.classList.add('chat-dropdown');
-  select.innerHTML = `<option value="" selected>No conversation selected</option>`;
-  if (hdr) hdr.replaceWith(select);
+  // 4) Swap any X<h3 id="chat-header">X for our <select>
+  var hdr = document.getElementById('chat-header');
+  var select = document.createElement('select');
+  select.id = 'chat-select';
+  select.className = 'chat-dropdown';
+  select.innerHTML = '<option value="" selected>No conversation selected</option>';
+  if (hdr && hdr.parentNode) {
+    hdr.parentNode.replaceChild(select, hdr);
+  }
 
-  // 5) When user picks from dropdown, either hook into a forum or a 1:1 chat
-  select.addEventListener('change', async () => {
-    const val = select.value;
-    const box = document.getElementById('chat-messages');
+  // 5) Handle dropdown changes (1:1 vs forum)
+  select.addEventListener('change', async function() {
+    var val = select.value;
+    var box = document.getElementById('chat-messages');
     box.innerHTML = '';
     clearReplyPreview();
     if (unsubscribe) unsubscribe();
 
     if (!val) return;
 
-    // Forum IDs are prefixed: "forum:<docId>"
-    if (val.startsWith('forum:')) {
-      const forumId = val.split(':')[1];
+    if (val.indexOf('forum:') === 0) {
+      // forum path
+      var forumId = val.split(':')[1];
       unsubscribe = startListeningToForumMessages(
         db, leaderUid, forumId, renderMessages
       );
     } else {
-      // 1:1 chat by email
-      const chatId = await findOrCreateChat(
-        db, leaderUid,
-        currentUser.email,
-        val
+      // one-to-one chat by email
+      var chatId = await findOrCreateChat(
+        db, leaderUid, currentUser.email, val
       );
       unsubscribe = startListeningToMessages(
         db, leaderUid, chatId, renderMessages
@@ -99,48 +119,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 6) Fallback “Send” button (in case initChat wiring isn’t used)
-  document.getElementById('send-message-btn')
-    ?.addEventListener('click', async () => {
-      const val = document.getElementById('chat-select').value;
-      const txt = document.getElementById('chat-input').value.trim();
+  // 6) Fallback “Send” button
+  var sendBtn = document.getElementById('send-message-btn');
+  if (sendBtn) {
+    sendBtn.addEventListener('click', async function() {
+      var val = select.value;
+      var txt = document.getElementById('chat-input').value.trim();
       if (!val || !txt) return;
 
-      // Common payload
-      const payload = {
+      // Base payload
+      var payload = {
         text: txt,
         fromEmail: currentUser.email,
         ts: firebase.firestore.FieldValue.serverTimestamp(),
-        replyTo
+        replyTo: replyTo || null
       };
 
-      if (val.startsWith('forum:')) {
-        // Post to forum
-        const fid = val.split(':')[1];
-        await db.collection('users').doc(leaderUid)
+      if (val.indexOf('forum:') === 0) {
+        var fid = val.split(':')[1];
+        await db
+          .collection('users').doc(leaderUid)
           .collection('forums').doc(fid)
           .collection('messages')
           .add(payload);
       } else {
-        // Post to 1:1 chat
-        const chatId = await findOrCreateChat(
-          db, leaderUid,
-          currentUser.email,
-          val
+        var chatId2 = await findOrCreateChat(
+          db, leaderUid, currentUser.email, val
         );
-        await db.collection('users').doc(leaderUid)
-          .collection('chats').doc(chatId)
+        await db
+          .collection('users').doc(leaderUid)
+          .collection('chats').doc(chatId2)
           .collection('messages')
-          .add({ ...payload, toEmail: val });
+          .add(Object.assign({}, payload, { toEmail: val }));
       }
 
       document.getElementById('chat-input').value = '';
       replyTo = null;
       clearReplyPreview();
     });
+  }
 
   // 7) Auth guard & initial data load
-  auth.onAuthStateChanged(async u => {
+  auth.onAuthStateChanged(async function(u) {
     if (!u) {
       window.location.href = 'index.html';
       return;
@@ -151,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
       : u.uid;
 
     document.getElementById('welcome').textContent =
-      `Welcome, ${u.displayName || u.email}!` + (isAgent ? ' (Agent)' : '');
+      'Welcome, ' + (u.displayName || u.email) + (isAgent ? ' (Agent)' : '');
 
     await loadNotes();
     await loadContactsAndForums();
@@ -162,58 +182,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // — Render callback (shared by chats & forums) —
 function renderMessages(msgs) {
-  const box = document.getElementById('chat-messages');
+  var box = document.getElementById('chat-messages');
   box.innerHTML = '';
-  msgs.forEach(m => {
-    const b = document.createElement('div');
-    b.className = `chat-bubble ${(m.fromEmail === currentUser.email) ? 'sent' : 'received'}`;
+  msgs.forEach(function(m) {
+    var b = document.createElement('div');
+    b.className = 'chat-bubble ' +
+      ((m.fromEmail === currentUser.email) ? 'sent' : 'received');
     b.textContent = m.text;
     box.appendChild(b);
   });
   box.scrollTop = box.scrollHeight;
 }
 
-// — Load contacts & forums into the UL and dropdown —
+// — Load contacts & forums into UL + dropdown —
 async function loadContactsAndForums() {
-  const ul  = document.getElementById('contact-list');
-  const sel = document.getElementById('chat-select');
+  var ul  = document.getElementById('contact-list');
+  var sel = document.getElementById('chat-select');
   ul.innerHTML = '';
-  sel.querySelectorAll('option:not([value=""])').forEach(o => o.remove());
+  Array.prototype.slice.call(
+    sel.querySelectorAll('option:not([value=""])')
+  ).forEach(function(o) { sel.removeChild(o); });
 
-  // 1) One-to-one contacts
-  let snap = await db.collection('users').doc(leaderUid)
-    .collection('contacts').orderBy('createdAt','desc').get();
-  snap.forEach(doc => {
-    const { email } = doc.data();
+  // 1) one-to-one contacts
+  var snap = await db
+    .collection('users').doc(leaderUid)
+    .collection('contacts').orderBy('createdAt','desc')
+    .get();
+  snap.forEach(function(doc) {
+    var email = doc.data().email;
     if (email === currentUser.email) return;
-    const li = document.createElement('li');
-    li.textContent = `👤 ${email}`;
-    li.onclick = () => {
+    var li = document.createElement('li');
+    li.textContent = '👤 ' + email;
+    li.addEventListener('click', function() {
       sel.value = email;
       sel.dispatchEvent(new Event('change'));
-    };
+    });
     ul.appendChild(li);
-    sel.appendChild(new Option(`👤 ${email}`, email));
+    sel.appendChild(new Option('👤 ' + email, email));
   });
 
-  // 2) Forums
-  snap = await db.collection('users').doc(leaderUid)
-    .collection('forums').orderBy('createdAt','desc').get();
-  snap.forEach(doc => {
-    const { name } = doc.data();
-    const fid = doc.id;
-    const li = document.createElement('li');
-    li.textContent = `📢 ${name}`;
-    li.onclick = () => {
-      sel.value = `forum:${fid}`;
+  // 2) forums
+  snap = await db
+    .collection('users').doc(leaderUid)
+    .collection('forums').orderBy('createdAt','desc')
+    .get();
+  snap.forEach(function(doc) {
+    var name = doc.data().name;
+    var fid  = doc.id;
+    var li = document.createElement('li');
+    li.textContent = '📢 ' + name;
+    li.addEventListener('click', function() {
+      sel.value = 'forum:' + fid;
       sel.dispatchEvent(new Event('change'));
-    };
+    });
     ul.appendChild(li);
-    sel.appendChild(new Option(`📢 ${name}`, `forum:${fid}`));
+    sel.appendChild(new Option('📢 ' + name, 'forum:' + fid));
   });
 }
 
-// — Announcements, notes & reply preview helpers (left as before) —
+// — Announcement / Notes / Reply helpers (same as before) —
 async function loadAnnouncement() { /* … */ }
 async function loadNotes()        { /* … */ }
 function clearReplyPreview()      { /* … */ }
