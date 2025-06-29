@@ -280,6 +280,8 @@ async function loadAnnouncement() {
   }
 }
 
+function clearReplyPreview()      { /* ... */ }
+function showReplyPreview(text)   { /* ... */ }
 
 // Gear button toggles settings panel
 document.getElementById('settings-btn')?.addEventListener('click', () => {
@@ -306,6 +308,3 @@ function showSettingsSection(idToShow) {
   });
 }
 
-
-function clearReplyPreview()      { /* ... */ }
-function showReplyPreview(text)   { /* ... */ }
