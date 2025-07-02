@@ -29,25 +29,18 @@
 </head>
 <body>
   <div class="container">
-    <!-- Left: Welcome & Sign Out -->
     <div class="user-section">
       <h1 id="welcome">Loading…</h1>
       <button id="signout">Sign Out</button>
-      <!-- Gear icon to toggle contacts -->
-      <button id="settings-btn" class="gear-btn" aria-label="Settings">
-        <!-- SVG icon omitted for brevity -->
-        ⚙️
-      </button>
+      <button id="settings-btn" class="gear-btn" aria-label="Settings">⚙️</button>
     </div>
 
-    <!-- Right: Announcement Banner -->
     <div id="announcement-banner">
       <span id="announcement-text-scroll">📣 Announcement will scroll here…</span>
     </div>
   </div>
 
   <section id="notepad">
-    <!-- Notepad Left -->
     <div id="notepad-left">
       <div class="sidebar">
         <img src="logo.png" alt="team-hub logo" style="width:200px; display:block; margin:20px auto;" />
@@ -56,134 +49,75 @@
         <button id="search">Search</button>
         <input type="text" id="search-input" placeholder="Search notes..." style="display: none;" />
         <div id="file-names" class="file-list"></div>
+
+        <!-- ⚙️ Settings Panel now inside sidebar -->
+        <div id="settings-panel" class="controls-hidden" style="display: none;">
+          <div class="settings-menu" style="margin-bottom: 10px;">
+            <button id="show-contact-settings">Manage Contacts & Forums</button>
+            <button id="show-upload-section">Upload Offer Files</button>
+          </div>
+
+          <div id="contact-chat-controls" class="settings-section" style="display: none;">
+            <div class="chat-actions">
+              <button id="add-contact-btn">Add Contact</button>
+              <button id="new-forum-btn">New Forum</button>
+            </div>
+
+            <p>Click a contact to start chatting</p>
+
+            <div id="add-contact-form" style="display: none;">
+              <input type="email" id="new-contact-email" placeholder="Enter email">
+              <button id="save-contact-btn">Save</button>
+            </div>
+
+            <div id="new-forum-form" style="display:none; margin-top:8px;">
+              <input type="text" id="forum-name" placeholder="Forum name…"/>
+              <button id="save-forum-btn">Create</button>
+            </div>
+
+            <ul id="contact-list"></ul>
+
+            <div id="start-chat-form" style="display: none;">
+              <input type="text" id="chat-name" placeholder="Enter chat name">
+              <button id="create-chat">Create</button>
+            </div>
+            <ul id="chat-list"></ul>
+          </div>
+
+          <div id="upload-section" class="settings-section" style="display: none;">
+            <p><strong>Upload Excel or CSV Files:</strong></p>
+            <input type="file" id="file-uploader" multiple accept=".xlsx,.xls,.csv" />
+            <div id="uploaded-files-list" style="margin-top: 10px;"></div>
+          </div>
+        </div>
+        <!-- End settings panel -->
       </div>
+
       <div class="editor" style="position: relative;">
-  <!-- Textarea -->
-  <textarea id="text-input" placeholder="Start typing your note..."></textarea>
+        <textarea id="text-input" placeholder="Start typing your note..."></textarea>
 
-  <!-- 📸 Snapshot Button -->
-  <button id="snap-btn" title="Capture Snapshot"
-    style="
-      position: absolute;
-      bottom: 8px;
-      right: 8px;
-      background: none;
-      border: none;
-      font-size: 20px;
-      cursor: pointer;
-    ">
-    📸
-  </button>
+        <button id="snap-btn" title="Capture Snapshot" style="position: absolute; bottom: 8px; right: 8px; background: none; border: none; font-size: 20px; cursor: pointer;">📸</button>
 
-  <!-- 🔢 Snapshot Counter Bubble -->
-  <div id="snap-count"
-    style="
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      background-color: crimson;
-      color: white;
-      font-size: 12px;
-      padding: 2px 6px;
-      border-radius: 12px;
-      cursor: pointer;
-      display: none;
-    ">
-    0
-  </div>
-</div>
-
+        <div id="snap-count" style="position: absolute; top: 8px; right: 8px; background-color: crimson; color: white; font-size: 12px; padding: 2px 6px; border-radius: 12px; cursor: pointer; display: none;">
+          0
+        </div>
+      </div>
     </div>
 
-    <!-- Announcement Panel (Team Lead only) -->
     <div id="announcement-panel">
       <h3>📣 Team Announcement</h3>
       <textarea id="announcement-input" placeholder="Write your announcement..."></textarea>
       <button id="post-announcement">Post</button>
     </div>
 
-<!-- ⚙️ Settings Panel -->
-<div id="settings-panel" class="controls-hidden" style="display: none;">
-  <div class="settings-menu" style="margin-bottom: 10px;">
-    <button id="show-contact-settings">Manage Contacts & Forums</button>
-    <button id="show-upload-section">Upload Offer Files</button>
-  </div>
-
-  <!-- 👥 Contacts + Forums Section (HIDDEN INITIALLY) -->
-  <div id="contact-chat-controls" class="settings-section" style="display: none;">
-    <div class="chat-actions">
-      <button id="add-contact-btn">Add Contact</button>
-      <button id="new-forum-btn">New Forum</button>
-    </div>
-
-    <p>Click a contact to start chatting</p>
-
-    <div id="add-contact-form" style="display: none;">
-      <input type="email" id="new-contact-email" placeholder="Enter email">
-      <button id="save-contact-btn">Save</button>
-    </div>
-
-    <div id="new-forum-form" style="display:none; margin-top:8px;">
-      <input type="text" id="forum-name" placeholder="Forum name…"/>
-      <button id="save-forum-btn">Create</button>
-    </div>
-
-    <ul id="contact-list"></ul>
-
-    <div id="start-chat-form" style="display: none;">
-      <input type="text" id="chat-name" placeholder="Enter chat name">
-      <button id="create-chat">Create</button>
-    </div>
-    <ul id="chat-list"></ul>
-  </div>
-
-  <!-- 📂 Excel Upload Section (HIDDEN INITIALLY) -->
-  <div id="upload-section" class="settings-section" style="display: none;">
-    <p><strong>Upload Excel or CSV Files:</strong></p>
-    <input type="file" id="file-uploader" multiple accept=".xlsx,.xls,.csv" />
-    <div id="uploaded-files-list" style="margin-top: 10px;"></div>
-  </div>
-</div>
-
-
-
-      <p>Click a contact to start chatting</p>
-
-      <!-- Add Contact Form -->
-      <div id="add-contact-form" style="display: none;">
-        <input type="email" id="new-contact-email" placeholder="Enter email">
-        <button id="save-contact-btn">Save</button>
-      </div>
-
-      <!-- New Forum Form -->
-      <div id="new-forum-form" style="display:none; margin-top:8px;">
-        <input type="text" id="forum-name" placeholder="Forum name…"/>
-        <button id="save-forum-btn">Create</button>
-      </div>
-
-      <ul id="contact-list"></ul>
-
-      <!-- Unused legacy chat UI -->
-      <div id="start-chat-form" style="display: none;">
-        <input type="text" id="chat-name" placeholder="Enter chat name">
-        <button id="create-chat">Create</button>
-      </div>
-      <ul id="chat-list"></ul>
-    </div>
-
-    <!-- Chat Window -->
     <div id="chat-panel">
-
-      <!-- Chat Select Dropdown -->
       <label for="chat-select" class="visually-hidden">Select a chat</label>
       <select id="chat-select" class="chat-dropdown">
         <option value="" selected>No chat selected</option>
       </select>
 
-      <!-- Chat Messages -->
       <div id="chat-messages" class="chat-box"></div>
 
-      <!-- Input Field -->
       <div id="chat-input-area">
         <input type="text" id="chat-input" placeholder="Type a message..." />
         <button id="send-message-btn">Send</button>
@@ -191,7 +125,6 @@
     </div>
   </section>
 
-  <!-- Auth Guard -->
   <script>
     auth.onAuthStateChanged(user => {
       if (!user) {
@@ -211,7 +144,5 @@
   <script type="module" src="team-lead.js"></script>
   <script type="module" src="notepad.js"></script>
   <script type="module" src="snap.js"></script>
-
-
 </body>
 </html>
