@@ -313,22 +313,3 @@ function showSettingsSection(idToShow) {
     section.style.display = (section.id === idToShow) ? 'block' : 'none';
   });
 }
-<script>
-  const gearBtn = document.getElementById('settings-btn');
-  const defaultPanel = document.getElementById('notepad-default');
-  const settingsPanel = document.getElementById('settings-panel');
-
-  gearBtn.addEventListener('click', () => {
-    const showingSettings = !settingsPanel.classList.contains('controls-hidden');
-    
-    if (showingSettings) {
-      // Hide settings, show default
-      settingsPanel.classList.add('controls-hidden');
-      defaultPanel.style.display = 'block';
-    } else {
-      // Show settings, hide default
-      settingsPanel.classList.remove('controls-hidden');
-      defaultPanel.style.display = 'none';
-    }
-  });
-</script>
