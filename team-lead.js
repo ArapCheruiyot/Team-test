@@ -297,3 +297,19 @@ document.getElementById('settings-btn')?.addEventListener('click', () => {
   // Always hide internal sections when settings open
   showSettingsSection(null);
 });
+// 👥 Show Contacts & Forums section
+document.getElementById('show-contact-settings')?.addEventListener('click', () => {
+  showSettingsSection('contact-chat-controls');
+});
+
+// 📂 Show Upload Offer Files section
+document.getElementById('show-upload-section')?.addEventListener('click', () => {
+  showSettingsSection('upload-section');
+});
+
+// 🔁 Helper: Show one section, hide others
+function showSettingsSection(idToShow) {
+  document.querySelectorAll('.settings-section').forEach(section => {
+    section.style.display = (section.id === idToShow) ? 'block' : 'none';
+  });
+}
