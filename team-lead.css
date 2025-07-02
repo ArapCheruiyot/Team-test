@@ -33,20 +33,17 @@
   background: #105de0;
 }
 
-/* Announcement Banner */
 #announcement-banner {
   flex: 1;
-  height: 30px;            /* visible height */
-  overflow: hidden;        /* clip overflowing text */
-  display: flex;           /* let us center the text vertically */
+  height: 30px;
+  overflow: hidden;
+  display: flex;
   align-items: center;
   margin-left: 1rem;
 }
-
 #announcement-text-scroll {
   display: inline-block;
   white-space: nowrap;
-  /* start off the right edge */
   transform: translateX(100%);
   animation: scroll-left 20s linear infinite;
   font-weight: bold;
@@ -54,7 +51,6 @@
   font-size: 1rem;
   color: white;
 }
-
 @keyframes scroll-left {
   from { transform: translateX(100%); }
   to   { transform: translateX(-100%); }
@@ -133,14 +129,48 @@
 }
 
 /* ==============================
-   Contacts & Chat
+   Settings Panel (Updated)
+   ============================== */
+#settings-panel {
+  background: #f7f7f7;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+.settings-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+.settings-menu button {
+  background: #444;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+.settings-menu button:hover {
+  background: #222;
+}
+
+/* ==============================
+   Contacts & Chat (Expanded View)
    ============================== */
 #contact-chat-controls {
-  width: 25%;
+  display: none;
   padding: 1rem;
   background: #f0f0f0;
-  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 6px;
   box-sizing: border-box;
+  margin-top: 10px;
+  max-height: 450px;
+  overflow-y: auto;
+}
+#contact-chat-controls > * {
+  margin-bottom: 12px;
 }
 .chat-actions {
   display: flex;
@@ -159,6 +189,30 @@
 .chat-actions button:hover {
   background: #0056b3;
 }
+#add-contact-form input,
+#new-forum-form input,
+#start-chat-form input {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 100%;
+  margin-bottom: 8px;
+}
+#add-contact-form button,
+#new-forum-form button,
+#start-chat-form button {
+  padding: 0.5rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+#add-contact-form button:hover,
+#new-forum-form button:hover,
+#start-chat-form button:hover {
+  background: #218838;
+}
 #contact-list,
 #chat-list {
   list-style: none;
@@ -167,12 +221,17 @@
 }
 #contact-list li,
 #chat-list li {
-  padding: 0.5rem;
-  background: #fff;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 6px;
+  background-color: #fff;
   border: 1px solid #ddd;
   border-radius: 4px;
-  margin-bottom: 0.5rem;
   cursor: pointer;
+  transition: background 0.2s;
+}
+#contact-list li:hover,
+#chat-list li:hover {
+  background-color: #e6f0ff;
 }
 #contact-list li.active,
 #chat-list li.active {
@@ -180,6 +239,9 @@
   font-weight: bold;
 }
 
+/* ==============================
+   Chat Panel
+   ============================== */
 #chat-panel {
   flex: 1;
   display: flex;
@@ -241,11 +303,10 @@
 #send-message-btn:hover {
   background-color: #105de0;
 }
-/* hide contacts by default */
-#contact-chat-controls.controls-hidden { display: none; }
-#contact-chat-controls { /* when shown */ display: block; }
 
-/* style your gear button */
+/* ===============
+   UI Utility
+   =============== */
 .gear-btn {
   background: none;
   border: none;
@@ -257,7 +318,11 @@
   border-bottom: 1px solid #eee;
   cursor: pointer;
 }
-
 .snap-item:hover {
   background-color: #f2f2f2;
+}
+
+/* Hide contact panel by default */
+#contact-chat-controls.controls-hidden {
+  display: none;
 }
