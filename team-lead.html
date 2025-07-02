@@ -43,20 +43,24 @@
   <section id="notepad">
     <div id="notepad-left">
       <div class="sidebar">
-        <img src="logo.png" alt="team-hub logo" style="width:200px; display:block; margin:20px auto;" />
-        <button id="new-file">New Note</button>
-        <button id="delete">Delete</button>
-        <button id="search">Search</button>
-        <input type="text" id="search-input" placeholder="Search notes..." style="display: none;" />
-        <div id="file-names" class="file-list"></div>
+        <!-- 👇 Default Notepad UI -->
+        <div id="notepad-default">
+          <img src="logo.png" alt="team-hub logo" style="width:200px; display:block; margin:20px auto;" />
+          <button id="new-file">New Note</button>
+          <button id="delete">Delete</button>
+          <button id="search">Search</button>
+          <input type="text" id="search-input" placeholder="Search notes..." style="display: none;" />
+          <div id="file-names" class="file-list"></div>
+        </div>
 
-        <!-- ⚙️ Settings Panel now inside sidebar -->
-        <div id="settings-panel" class="controls-hidden" style="display: none;">
+        <!-- ⚙️ Settings Panel to toggle in -->
+        <div id="settings-panel" class="controls-hidden">
           <div class="settings-menu" style="margin-bottom: 10px;">
             <button id="show-contact-settings">Manage Contacts & Forums</button>
             <button id="show-upload-section">Upload Offer Files</button>
           </div>
 
+          <!-- Contact Controls -->
           <div id="contact-chat-controls" class="settings-section" style="display: none;">
             <div class="chat-actions">
               <button id="add-contact-btn">Add Contact</button>
@@ -84,32 +88,52 @@
             <ul id="chat-list"></ul>
           </div>
 
+          <!-- Upload Section -->
           <div id="upload-section" class="settings-section" style="display: none;">
             <p><strong>Upload Excel or CSV Files:</strong></p>
             <input type="file" id="file-uploader" multiple accept=".xlsx,.xls,.csv" />
             <div id="uploaded-files-list" style="margin-top: 10px;"></div>
           </div>
         </div>
-        <!-- End settings panel -->
       </div>
 
+      <!-- Editor Panel -->
       <div class="editor" style="position: relative;">
         <textarea id="text-input" placeholder="Start typing your note..."></textarea>
 
-        <button id="snap-btn" title="Capture Snapshot" style="position: absolute; bottom: 8px; right: 8px; background: none; border: none; font-size: 20px; cursor: pointer;">📸</button>
+        <!-- 📸 Snapshot Button -->
+        <button id="snap-btn" title="Capture Snapshot" style="
+          position: absolute;
+          bottom: 8px;
+          right: 8px;
+          background: none;
+          border: none;
+          font-size: 20px;
+          cursor: pointer;">📸</button>
 
-        <div id="snap-count" style="position: absolute; top: 8px; right: 8px; background-color: crimson; color: white; font-size: 12px; padding: 2px 6px; border-radius: 12px; cursor: pointer; display: none;">
-          0
-        </div>
+        <!-- 🔢 Snapshot Counter -->
+        <div id="snap-count" style="
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          background-color: crimson;
+          color: white;
+          font-size: 12px;
+          padding: 2px 6px;
+          border-radius: 12px;
+          cursor: pointer;
+          display: none;">0</div>
       </div>
     </div>
 
+    <!-- Team Announcements -->
     <div id="announcement-panel">
       <h3>📣 Team Announcement</h3>
       <textarea id="announcement-input" placeholder="Write your announcement..."></textarea>
       <button id="post-announcement">Post</button>
     </div>
 
+    <!-- Chat Panel -->
     <div id="chat-panel">
       <label for="chat-select" class="visually-hidden">Select a chat</label>
       <select id="chat-select" class="chat-dropdown">
@@ -125,6 +149,7 @@
     </div>
   </section>
 
+  <!-- Auth Guard -->
   <script>
     auth.onAuthStateChanged(user => {
       if (!user) {
@@ -144,5 +169,24 @@
   <script type="module" src="team-lead.js"></script>
   <script type="module" src="notepad.js"></script>
   <script type="module" src="snap.js"></script>
+
+  <!-- ✅ Add Sidebar Toggle Logic -->
+  <script>
+    const gearBtn = document.getElementById('settings-btn');
+    const defaultPanel = document.getElementById('notepad-default');
+    const settingsPanel = document.getElementById('settings-panel');
+
+    gearBtn.addEventListener('click', () => {
+      const showingSettings = !settingsPanel.classList.contains('controls-hidden');
+      
+      if (showingSettings) {
+        settingsPanel.classList.add('controls-hidden');
+        defaultPanel.style.display = 'block';
+      } else {
+        settingsPanel.classList.remove('controls-hidden');
+        defaultPanel.style.display = 'none';
+      }
+    });
+  </script>
 </body>
 </html>
