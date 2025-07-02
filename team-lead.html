@@ -26,6 +26,13 @@
     window.auth = firebase.auth();
     window.db   = firebase.firestore();
   </script>
+
+  <style>
+    /* ✅ Ensure settings panel is hidden by default */
+    #settings-panel.controls-hidden {
+      display: none;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -53,14 +60,14 @@
           <div id="file-names" class="file-list"></div>
         </div>
 
-        <!-- ⚙️ Settings Panel to toggle in -->
+        <!-- ⚙️ Settings Panel (hidden by default) -->
         <div id="settings-panel" class="controls-hidden">
           <div class="settings-menu" style="margin-bottom: 10px;">
             <button id="show-contact-settings">Manage Contacts & Forums</button>
             <button id="show-upload-section">Upload Offer Files</button>
           </div>
 
-          <!-- Contact Controls -->
+          <!-- Contact Section -->
           <div id="contact-chat-controls" class="settings-section" style="display: none;">
             <div class="chat-actions">
               <button id="add-contact-btn">Add Contact</button>
@@ -170,22 +177,26 @@
   <script type="module" src="notepad.js"></script>
   <script type="module" src="snap.js"></script>
 
-  <!-- ✅ Add Sidebar Toggle Logic -->
+  <!-- ✅ Gear Button Toggle Logic -->
   <script>
-    const gearBtn = document.getElementById('settings-btn');
-    const defaultPanel = document.getElementById('notepad-default');
-    const settingsPanel = document.getElementById('settings-panel');
+    document.addEventListener('DOMContentLoaded', () => {
+      const gearBtn = document.getElementById('settings-btn');
+      const defaultPanel = document.getElementById('notepad-default');
+      const settingsPanel = document.getElementById('settings-panel');
 
-    gearBtn.addEventListener('click', () => {
-      const showingSettings = !settingsPanel.classList.contains('controls-hidden');
-      
-      if (showingSettings) {
-        settingsPanel.classList.add('controls-hidden');
-        defaultPanel.style.display = 'block';
-      } else {
-        settingsPanel.classList.remove('controls-hidden');
-        defaultPanel.style.display = 'none';
-      }
+      // Ensure settings panel starts hidden
+      settingsPanel.classList.add('controls-hidden');
+
+      gearBtn.addEventListener('click', () => {
+        const showingSettings = !settingsPanel.classList.contains('controls-hidden');
+        if (showingSettings) {
+          settingsPanel.classList.add('controls-hidden');
+          defaultPanel.style.display = 'block';
+        } else {
+          settingsPanel.classList.remove('controls-hidden');
+          defaultPanel.style.display = 'none';
+        }
+      });
     });
   </script>
 </body>
