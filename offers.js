@@ -1,4 +1,4 @@
-// offers.js — Enhanced: Upload + Delete + Instant Search
+// offers.js — Enhanced: Upload + Delete + Instant Search (with numeric fix)
 let uploadedFiles = JSON.parse(localStorage.getItem('uploadedOffers') || '[]');
 const parsedFiles = {}; // store parsed data by filename
 
@@ -51,14 +51,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     for (const filename in parsedFiles) {
       parsedFiles[filename].forEach(row => {
-        const rowStr = Object.values(row).join(' ').toLowerCase();
+        const rowStr = Object.values(row)
+          .map(v => String(v))  // ✅ Convert everything to string
+          .join(' ')
+          .toLowerCase();
         if (rowStr.includes(query)) {
           matches.push({ ...row, __file: filename });
         }
       });
     }
 
-    showSearchResults(matches.slice(0, 50)); // only show top 50
+    showSearchResults(matches.slice(0, 50)); // show top 50 results
   });
 
   function saveAndRender() {
@@ -99,7 +102,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const li = document.createElement('li');
       li.style.borderBottom = '1px solid #ddd';
       li.style.padding = '4px';
-      li.textContent = `[${match.__file}] ` + Object.values(match).filter((_, i) => i !== '__file').join(' | ');
+      li.textContent = `[${match.__file}] ` + Object.entries(match)
+        .filter(([key]) => key !== '__file')
+        .map(([key, val]) => `${val}`)
+        .join(' | ');
       list.appendChild(li);
     });
 
