@@ -1,10 +1,9 @@
-// offers.js — Final Build: Upload + Array-Based Search Logic
+// offers.js — Final Fix: Accurate Excel Row Matching (Standalone Logic)
 let uploadedFiles = JSON.parse(localStorage.getItem('uploadedOffers') || '[]');
-let parsedFiles = {}; // { filename: [[], [], ...] }
+let parsedFiles = {}; // { filename: [ [row1], [row2] ] }
 
 try {
-  const restoredParsed = JSON.parse(localStorage.getItem('parsedFileContents') || '{}');
-  parsedFiles = restoredParsed;
+  parsedFiles = JSON.parse(localStorage.getItem('parsedFileContents') || '{}');
   console.log('✅ Restored parsed contents from localStorage.');
 } catch (err) {
   console.warn('⚠️ Could not restore parsed files:', err);
@@ -14,29 +13,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const fileInput = document.getElementById('file-uploader');
   const filesList = document.getElementById('uploaded-files-list');
   const searchInput = document.getElementById('offer-search-input');
-
   const searchResults = document.createElement('div');
   searchResults.id = 'search-results';
   document.querySelector('.offer-search')?.after(searchResults);
 
   renderFiles();
 
-  // Upload files
+  // File Upload Handler
   fileInput.addEventListener('change', async (e) => {
     const selectedFiles = Array.from(e.target.files).filter(file =>
       /\.(xlsx?|csv)$/i.test(file.name)
     );
 
-    if (!selectedFiles.length) {
-      console.warn('⚠️ No valid Excel/CSV files selected.');
-      return;
-    }
+    if (!selectedFiles.length) return;
 
     for (const file of selectedFiles) {
       uploadedFiles.push({ name: file.name, size: file.size });
-      const parsed = await parseFile(file);
+      const parsed = await parseFile(file); // [[row1], [row2]]
       parsedFiles[file.name] = parsed;
-      console.log(`📄 Parsed "${file.name}" with ${parsed.length} rows`);
+      console.log(`📄 Parsed "${file.name}" (${parsed.length} rows)`);
     }
 
     saveToStorage();
@@ -44,27 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fileInput.value = '';
   });
 
-  // Delete files
-  filesList.addEventListener('click', (e) => {
-    if (e.target.classList.contains('delete-btn')) {
-      const name = e.target.getAttribute('data-name');
-      uploadedFiles = uploadedFiles.filter(f => f.name !== name);
-      delete parsedFiles[name];
-      console.log(`🗑️ Deleted "${name}"`);
-      saveToStorage();
-      renderFiles();
-      showSearchResults([]);
-    }
-  });
-
-  // Clear storage on sign out
-  document.getElementById('signout')?.addEventListener('click', () => {
-    localStorage.removeItem('uploadedOffers');
-    localStorage.removeItem('parsedFileContents');
-    console.log('🚪 Signed out. LocalStorage cleared.');
-  });
-
-  // Search
+  // Search Handler
   searchInput?.addEventListener('input', () => {
     const query = searchInput.value.trim();
     const results = [];
@@ -78,18 +53,38 @@ document.addEventListener('DOMContentLoaded', () => {
       const rows = parsedFiles[filename];
       for (const row of rows) {
         if (Array.isArray(row)) {
-          if (row.some(cell => String(cell).trim() === query)) {
+          const match = row.some(cell => String(cell).trim() === query);
+          if (match) {
             results.push({ row, __file: filename });
           }
         }
       }
     }
 
-    console.log(`🔍 Search for "${query}" → ${results.length} matches`);
+    console.log(`🔍 Search: "${query}" → ${results.length} match(es)`);
     showSearchResults(results.slice(0, 50));
   });
 
-  // Save both arrays to localStorage
+  // File Delete Handler
+  filesList.addEventListener('click', (e) => {
+    if (e.target.classList.contains('delete-btn')) {
+      const name = e.target.getAttribute('data-name');
+      uploadedFiles = uploadedFiles.filter(f => f.name !== name);
+      delete parsedFiles[name];
+      saveToStorage();
+      renderFiles();
+      showSearchResults([]);
+      console.log(`🗑️ Deleted: ${name}`);
+    }
+  });
+
+  // Sign Out = Clear all
+  document.getElementById('signout')?.addEventListener('click', () => {
+    localStorage.removeItem('uploadedOffers');
+    localStorage.removeItem('parsedFileContents');
+    console.log('🚪 Signed out: Local storage cleared.');
+  });
+
   function saveToStorage() {
     localStorage.setItem('uploadedOffers', JSON.stringify(uploadedFiles));
     localStorage.setItem('parsedFileContents', JSON.stringify(parsedFiles));
