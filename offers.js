@@ -1,6 +1,6 @@
-// offers.js — Stable Build: Upload + Search + Logging + Restore
+// offers.js — Final Build: Upload + Array-Based Search Logic
 let uploadedFiles = JSON.parse(localStorage.getItem('uploadedOffers') || '[]');
-let parsedFiles = {};
+let parsedFiles = {}; // { filename: [[], [], ...] }
 
 try {
   const restoredParsed = JSON.parse(localStorage.getItem('parsedFileContents') || '{}');
@@ -64,9 +64,9 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('🚪 Signed out. LocalStorage cleared.');
   });
 
-  // Search offers
+  // Search
   searchInput?.addEventListener('input', () => {
-    const query = searchInput.value.trim().toLowerCase();
+    const query = searchInput.value.trim();
     const results = [];
 
     if (!query) {
@@ -75,24 +75,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     for (const filename in parsedFiles) {
-      parsedFiles[filename].forEach(row => {
-        const rowText = Object.values(row)
-          .map(v => String(v ?? '').toLowerCase())
-          .join(' ');
-
-        console.log('🔍 Checking row:', rowText);
-
-        if (rowText.includes(query)) {
-          console.log('✅ Match found:', row);
-          results.push({ ...row, __file: filename });
+      const rows = parsedFiles[filename];
+      for (const row of rows) {
+        if (Array.isArray(row)) {
+          if (row.some(cell => String(cell).trim() === query)) {
+            results.push({ row, __file: filename });
+          }
         }
-      });
+      }
     }
 
-    console.log(`🔎 Search: "${query}" → ${results.length} matches`);
+    console.log(`🔍 Search for "${query}" → ${results.length} matches`);
     showSearchResults(results.slice(0, 50));
   });
 
+  // Save both arrays to localStorage
   function saveToStorage() {
     localStorage.setItem('uploadedOffers', JSON.stringify(uploadedFiles));
     localStorage.setItem('parsedFileContents', JSON.stringify(parsedFiles));
@@ -131,10 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const li = document.createElement('li');
       li.style.borderBottom = '1px solid #ddd';
       li.style.padding = '4px';
-      li.textContent = `[${match.__file}] ` + Object.entries(match)
-        .filter(([k]) => k !== '__file')
-        .map(([_, v]) => `${v}`)
-        .join(' | ');
+      li.textContent = `[${match.__file}] ` + match.row.map(cell => `${cell}`).join(' | ');
       list.appendChild(li);
     });
 
@@ -148,11 +142,16 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           const data = new Uint8Array(e.target.result);
           const workbook = XLSX.read(data, { type: 'array' });
-          const sheet = workbook.Sheets[workbook.SheetNames[0]];
-          const json = XLSX.utils.sheet_to_json(sheet);
-          resolve(json);
+          let allRows = [];
+
+          workbook.SheetNames.forEach(sheetName => {
+            const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
+            allRows = allRows.concat(rows);
+          });
+
+          resolve(allRows);
         } catch (err) {
-          console.error(`❌ Failed to parse "${file.name}":`, err);
+          console.error(`❌ Failed to parse "${file.name}"`, err);
           resolve([]);
         }
       };
