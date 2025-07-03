@@ -16,11 +16,15 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  width: 100%;
+  justify-content: space-between;
 }
+
 .user-section h1 {
   margin: 0;
   font-size: 1.25rem;
 }
+
 .user-section button {
   padding: 6px 12px;
   background: #2b7cff;
@@ -29,10 +33,42 @@
   border-radius: 4px;
   cursor: pointer;
 }
+
 .user-section button:hover {
   background: #105de0;
 }
 
+/* Offer Search aligned right */
+.offer-search {
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid #ccc;
+  margin-left: auto;
+}
+
+.offer-search input {
+  border: none;
+  padding: 6px 10px;
+  outline: none;
+  font-size: 0.9rem;
+  width: 140px;
+  border-radius: 20px 0 0 20px;
+}
+
+.offer-search button {
+  background: transparent;
+  border: none;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* ==============================
+   Announcement Banner
+   ============================== */
 #announcement-banner {
   flex: 1;
   height: 30px;
@@ -321,8 +357,6 @@
 .snap-item:hover {
   background-color: #f2f2f2;
 }
-
-/* Hide contact panel by default */
 #contact-chat-controls.controls-hidden {
   display: none;
 }
@@ -348,30 +382,4 @@
 }
 .uploaded-file-row button:hover {
   background: #b02a37;
-}
-.offer-search {
-  display: flex;
-  align-items: center;
-  background: white;
-  border-radius: 20px;
-  overflow: hidden;
-  border: 1px solid #ccc;
-  margin-left: auto;
-}
-
-.offer-search input {
-  border: none;
-  padding: 6px 10px;
-  outline: none;
-  font-size: 0.9rem;
-  width: 140px;
-  border-radius: 20px 0 0 20px;
-}
-
-.offer-search button {
-  background: transparent;
-  border: none;
-  padding: 6px 10px;
-  cursor: pointer;
-  font-size: 1rem;
 }
