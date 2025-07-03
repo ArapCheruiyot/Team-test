@@ -36,18 +36,20 @@
 </head>
 <body>
   <div class="container">
+    <!-- 👇 Left: User Info + Search Bar -->
     <div class="user-section">
-  <h1 id="welcome">Loading…</h1>
-  <button id="signout">Sign Out</button>
-  <button id="settings-btn" class="gear-btn" aria-label="Settings">⚙️</button>
+      <div class="user-info-group">
+        <h1 id="welcome">Loading…</h1>
+        <button id="signout">Sign Out</button>
+        <button id="settings-btn" class="gear-btn" aria-label="Settings">⚙️</button>
+      </div>
+      <div class="offer-search">
+        <input type="text" id="offer-search-input" placeholder="Search offers…" />
+        <button id="offer-search-btn" title="Search">🔍</button>
+      </div>
+    </div>
 
-  <!-- 👇 NEW Search Bar -->
-  <div class="offer-search">
-    <input type="text" id="offer-search-input" placeholder="Search offers…" />
-    <button id="offer-search-btn" title="Search">🔍</button>
-  </div>
-</div>
-
+    <!-- 👇 Right: Announcement banner -->
     <div id="announcement-banner">
       <span id="announcement-text-scroll">📣 Announcement will scroll here…</span>
     </div>
@@ -56,7 +58,6 @@
   <section id="notepad">
     <div id="notepad-left">
       <div class="sidebar">
-        <!-- 👇 Default Notepad UI -->
         <div id="notepad-default">
           <img src="logo.png" alt="team-hub logo" style="width:200px; display:block; margin:20px auto;" />
           <button id="new-file">New Note</button>
@@ -66,7 +67,7 @@
           <div id="file-names" class="file-list"></div>
         </div>
 
-        <!-- ⚙️ Settings Panel (hidden by default) -->
+        <!-- ⚙️ Settings Panel -->
         <div id="settings-panel" class="controls-hidden">
           <div class="settings-menu" style="margin-bottom: 10px;">
             <button id="show-contact-settings">Manage Contacts & Forums</button>
@@ -110,36 +111,15 @@
         </div>
       </div>
 
-      <!-- Editor Panel -->
+      <!-- Editor -->
       <div class="editor" style="position: relative;">
         <textarea id="text-input" placeholder="Start typing your note..."></textarea>
-
-        <!-- 📸 Snapshot Button -->
-        <button id="snap-btn" title="Capture Snapshot" style="
-          position: absolute;
-          bottom: 8px;
-          right: 8px;
-          background: none;
-          border: none;
-          font-size: 20px;
-          cursor: pointer;">📸</button>
-
-        <!-- 🔢 Snapshot Counter -->
-        <div id="snap-count" style="
-          position: absolute;
-          top: 8px;
-          right: 8px;
-          background-color: crimson;
-          color: white;
-          font-size: 12px;
-          padding: 2px 6px;
-          border-radius: 12px;
-          cursor: pointer;
-          display: none;">0</div>
+        <button id="snap-btn" title="Capture Snapshot" style="position:absolute; bottom:8px; right:8px; background:none; border:none; font-size:20px; cursor:pointer;">📸</button>
+        <div id="snap-count" style="position:absolute; top:8px; right:8px; background-color:crimson; color:white; font-size:12px; padding:2px 6px; border-radius:12px; cursor:pointer; display:none;">0</div>
       </div>
     </div>
 
-    <!-- Team Announcements -->
+    <!-- Announcements -->
     <div id="announcement-panel">
       <h3>📣 Team Announcement</h3>
       <textarea id="announcement-input" placeholder="Write your announcement..."></textarea>
@@ -178,21 +158,19 @@
     );
   </script>
 
-  <!-- ✅ Load Main App Logic -->
+  <!-- Scripts -->
   <script type="module" src="team-lead.js"></script>
   <script type="module" src="notepad.js"></script>
   <script type="module" src="snap.js"></script>
   <script type="module" src="offers.js"></script>
 
-
-  <!-- ✅ Gear Button Toggle Logic -->
+  <!-- Gear Button Logic -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const gearBtn = document.getElementById('settings-btn');
       const defaultPanel = document.getElementById('notepad-default');
       const settingsPanel = document.getElementById('settings-panel');
 
-      // Ensure settings panel starts hidden
       settingsPanel.classList.add('controls-hidden');
 
       gearBtn.addEventListener('click', () => {
