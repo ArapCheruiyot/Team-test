@@ -1,4 +1,4 @@
-// offers.js — Working: Upload + Parse + Search + Logs + Persistence
+// offers.js — Stable Build: Upload + Search + Logging + Restore
 let uploadedFiles = JSON.parse(localStorage.getItem('uploadedOffers') || '[]');
 let parsedFiles = {};
 
@@ -21,14 +21,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   renderFiles();
 
-  // Upload Files
+  // Upload files
   fileInput.addEventListener('change', async (e) => {
     const selectedFiles = Array.from(e.target.files).filter(file =>
       /\.(xlsx?|csv)$/i.test(file.name)
     );
 
     if (!selectedFiles.length) {
-      console.warn('⚠️ No valid files selected.');
+      console.warn('⚠️ No valid Excel/CSV files selected.');
       return;
     }
 
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
       uploadedFiles.push({ name: file.name, size: file.size });
       const parsed = await parseFile(file);
       parsedFiles[file.name] = parsed;
-      console.log(`📄 Parsed "${file.name}" — ${parsed.length} rows`);
+      console.log(`📄 Parsed "${file.name}" with ${parsed.length} rows`);
     }
 
     saveToStorage();
@@ -44,13 +44,13 @@ document.addEventListener('DOMContentLoaded', () => {
     fileInput.value = '';
   });
 
-  // Delete Files
+  // Delete files
   filesList.addEventListener('click', (e) => {
     if (e.target.classList.contains('delete-btn')) {
       const name = e.target.getAttribute('data-name');
       uploadedFiles = uploadedFiles.filter(f => f.name !== name);
       delete parsedFiles[name];
-      console.log(`🗑️ Deleted: ${name}`);
+      console.log(`🗑️ Deleted "${name}"`);
       saveToStorage();
       renderFiles();
       showSearchResults([]);
@@ -61,10 +61,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('signout')?.addEventListener('click', () => {
     localStorage.removeItem('uploadedOffers');
     localStorage.removeItem('parsedFileContents');
-    console.log('🚪 Signed out: Local storage cleared.');
+    console.log('🚪 Signed out. LocalStorage cleared.');
   });
 
-  // Live Search
+  // Search offers
   searchInput?.addEventListener('input', () => {
     const query = searchInput.value.trim().toLowerCase();
     const results = [];
@@ -75,10 +75,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     for (const filename in parsedFiles) {
-      const rows = parsedFiles[filename];
-      rows.forEach(row => {
-        const rowText = Object.values(row).join(' ').toLowerCase();
+      parsedFiles[filename].forEach(row => {
+        const rowText = Object.values(row)
+          .map(v => String(v ?? '').toLowerCase())
+          .join(' ');
+
+        console.log('🔍 Checking row:', rowText);
+
         if (rowText.includes(query)) {
+          console.log('✅ Match found:', row);
           results.push({ ...row, __file: filename });
         }
       });
@@ -88,7 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
     showSearchResults(results.slice(0, 50));
   });
 
-  // Save both arrays to localStorage
   function saveToStorage() {
     localStorage.setItem('uploadedOffers', JSON.stringify(uploadedFiles));
     localStorage.setItem('parsedFileContents', JSON.stringify(parsedFiles));
@@ -148,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const json = XLSX.utils.sheet_to_json(sheet);
           resolve(json);
         } catch (err) {
-          console.error(`❌ Failed to parse "${file.name}"`, err);
+          console.error(`❌ Failed to parse "${file.name}":`, err);
           resolve([]);
         }
       };
