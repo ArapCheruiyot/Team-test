@@ -1,6 +1,14 @@
-// offers.js — Dev Edition: Upload + Search + Debug Logs
+// offers.js — Final Stable Version: Upload + Search + Logging + Restore
 let uploadedFiles = JSON.parse(localStorage.getItem('uploadedOffers') || '[]');
 const parsedFiles = {};
+
+try {
+  const restored = JSON.parse(localStorage.getItem('parsedFileContents') || '{}');
+  Object.assign(parsedFiles, restored);
+  console.log('✅ Restored parsed data from localStorage');
+} catch (e) {
+  console.warn('⚠️ Failed to restore parsed file data:', e);
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const fileInput = document.getElementById('file-uploader');
@@ -11,29 +19,17 @@ document.addEventListener('DOMContentLoaded', () => {
   searchResults.id = 'search-results';
   document.querySelector('.offer-search')?.after(searchResults);
 
-  // Log startup
-  console.log('📦 App Loaded. Files in memory:', uploadedFiles);
-
+  console.log('📦 App Ready. Files in memory:', uploadedFiles);
   renderFiles();
 
-  // Load previously parsed data (if any)
-  (async () => {
-    const stored = localStorage.getItem('parsedFileContents');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      Object.assign(parsedFiles, parsed);
-      console.log('🔁 Restored parsed file contents from localStorage.');
-    }
-  })();
-
-  // File Upload
+  // Upload Handler
   fileInput.addEventListener('change', async (e) => {
     const newFiles = Array.from(e.target.files).filter(file =>
       /\.(xlsx?|csv)$/i.test(file.name)
     );
 
     if (!newFiles.length) {
-      console.warn('⚠️ No valid Excel/CSV files selected.');
+      console.warn('⚠️ No valid files selected');
       return;
     }
 
@@ -46,62 +42,65 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log(`📄 Parsed "${file.name}" — ${parsed.length} rows`);
     }
 
-    localStorage.setItem('parsedFileContents', JSON.stringify(parsedFiles));
-    saveAndRender();
+    saveAll();
     fileInput.value = '';
   });
 
-  // File Deletion
+  // Delete Handler
   filesList.addEventListener('click', (e) => {
     if (e.target.classList.contains('delete-btn')) {
       const name = e.target.getAttribute('data-name');
       uploadedFiles = uploadedFiles.filter(f => f.name !== name);
       delete parsedFiles[name];
-      saveAndRender();
-      localStorage.setItem('parsedFileContents', JSON.stringify(parsedFiles));
-      console.log(`🗑️ Deleted file: ${name}`);
+      saveAll();
+      console.log(`🗑️ Deleted "${name}"`);
     }
   });
 
-  // Signout
+  // Sign Out
   document.getElementById('signout')?.addEventListener('click', () => {
     localStorage.removeItem('uploadedOffers');
     localStorage.removeItem('parsedFileContents');
-    console.log('🚪 User signed out. Local storage cleared.');
+    console.log('🚪 Cleared all local data on signout');
   });
 
-  // Search Input
+  // Live Search
   searchInput?.addEventListener('input', () => {
     const query = searchInput.value.trim().toLowerCase();
     const matches = [];
 
-    console.log(`🔎 Searching for: "${query}"`);
+    if (!query) {
+      searchResults.innerHTML = '';
+      return;
+    }
 
-    for (const filename in parsedFiles) {
-      parsedFiles[filename].forEach(row => {
-        const rowText = Object.values(row)
-          .map(val => String(val ?? '').toLowerCase())
+    console.log(`🔍 Searching for: "${query}"`);
+
+    for (const file in parsedFiles) {
+      parsedFiles[file].forEach(row => {
+        const combinedText = Object.values(row)
+          .map(v => String(v ?? '').toLowerCase())
           .join(' ');
-
-        if (rowText.includes(query)) {
-          matches.push({ ...row, __file: filename });
+        if (combinedText.includes(query)) {
+          matches.push({ ...row, __file: file });
         }
       });
     }
 
-    console.log(`✅ Found ${matches.length} matches for: "${query}"`);
+    console.log(`✅ Found ${matches.length} matches`);
     showSearchResults(matches.slice(0, 50));
   });
 
-  // Utility Functions
-  function saveAndRender() {
+  // Utilities
+  function saveAll() {
     localStorage.setItem('uploadedOffers', JSON.stringify(uploadedFiles));
+    localStorage.setItem('parsedFileContents', JSON.stringify(parsedFiles));
     renderFiles();
   }
 
   function renderFiles() {
     filesList.innerHTML = '';
-    if (uploadedFiles.length === 0) {
+    if (!uploadedFiles.length) {
       filesList.innerHTML = '<p>No files uploaded yet.</p>';
       return;
     }
@@ -132,10 +131,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const li = document.createElement('li');
       li.style.borderBottom = '1px solid #ddd';
       li.style.padding = '4px';
-      li.textContent = `[${match.__file}] ` + Object.entries(match)
-        .filter(([k]) => k !== '__file')
-        .map(([_, v]) => `${v}`)
-        .join(' | ');
+      li.textContent = `[${match.__file}] ` +
+        Object.entries(match)
+          .filter(([k]) => k !== '__file')
+          .map(([_, v]) => `${v}`)
+          .join(' | ');
       list.appendChild(li);
     });
 
@@ -146,11 +146,16 @@ document.addEventListener('DOMContentLoaded', () => {
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(sheet);
-        resolve(json);
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(sheet);
+          resolve(json);
+        } catch (err) {
+          console.error(`❌ Failed to parse ${file.name}`, err);
+          resolve([]);
+        }
       };
       reader.readAsArrayBuffer(file);
     });
