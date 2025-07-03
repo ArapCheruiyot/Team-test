@@ -1,43 +1,33 @@
-/* ==============================
-   Header & Announcement Banner
-   ============================== */
 .container {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 0 20px;
   background-color: #003366;
   color: white;
   height: 60px;
   box-sizing: border-box;
-  gap: 1rem;
+  position: relative;
 }
 
-/* Split layout: left = user, right = announcement */
 .user-section {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  flex: 1;
   gap: 1rem;
+  flex-shrink: 0;
 }
 
-/* Left group inside user-section */
-.user-info-group {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-/* Offer Search aligned to right of user-section */
+/* ✅ Make search bar hug far-right */
 .offer-search {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   background: white;
   border-radius: 20px;
   overflow: hidden;
   border: 1px solid #ccc;
-  margin-left: auto;
 }
 
 .offer-search input {
@@ -57,36 +47,15 @@
   font-size: 1rem;
 }
 
-/* Welcome + buttons */
-.user-section h1 {
-  margin: 0;
-  font-size: 1.25rem;
-}
-
-.user-section button {
-  padding: 6px 12px;
-  background: #2b7cff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.user-section button:hover {
-  background: #105de0;
-}
-
-/* ==============================
-   Announcement Banner
-   ============================== */
+/* ✅ Announcement now takes full space excluding search */
 #announcement-banner {
+  flex: 1;
   height: 30px;
-  min-width: 200px;
-  max-width: 400px;
   overflow: hidden;
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  margin-left: 1rem;
+  margin-right: 180px; /* reserve space for search bar */
 }
 #announcement-text-scroll {
   display: inline-block;
@@ -98,6 +67,7 @@
   font-size: 1rem;
   color: white;
 }
+
 @keyframes scroll-left {
   from { transform: translateX(100%); }
   to   { transform: translateX(-100%); }
