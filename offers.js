@@ -1,83 +1,68 @@
+// offers.js — Updated: Safe DOM access + Upload logic
+
 let uploadedFiles = [];
-let fileData = {}; // { filename: [data] }
+let fileData = {}; // Stores parsed data keyed by file name
 
 document.addEventListener('DOMContentLoaded', () => {
   const fileInput = document.getElementById('file-uploader');
-  const addButton = document.getElementById('upload-button');
+  const addBtn = document.getElementById('add-files-btn');
   const filesList = document.getElementById('uploaded-files-list');
 
-  addButton.addEventListener('click', () => {
+  if (!fileInput || !addBtn || !filesList) {
+    console.warn("❗ Required elements not found in DOM. Aborting offers.js.");
+    return;
+  }
+
+  // Attach event listener to Add Files button
+  addBtn.addEventListener('click', () => {
     const files = fileInput.files;
 
     if (!files.length) {
-      alert('Please select at least one file.');
+      alert('Please select one or more Excel/CSV files.');
       return;
     }
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const fileName = file.name;
-
-      if (!uploadedFiles.includes(fileName)) {
-        uploadedFiles.push(fileName);
-        readExcelFile(file); // Parse the file
+      if (!uploadedFiles.includes(file.name)) {
+        uploadedFiles.push(file.name);
+        readExcelFile(file); // Parse and store file
       } else {
-        alert(`File "${fileName}" is already uploaded.`);
+        alert(`File "${file.name}" is already uploaded.`);
       }
     }
 
     updateFileList();
-    fileInput.value = ''; // Clear input after adding
+    fileInput.value = ''; // Reset input
   });
 
-  // 🗑️ Handle delete clicks
-  filesList.addEventListener('click', (e) => {
-    if (e.target.classList.contains('delete-btn')) {
-      const name = e.target.getAttribute('data-name');
-      uploadedFiles = uploadedFiles.filter(f => f !== name);
-      delete fileData[name];
-      updateFileList();
-      console.log(`🗑️ Deleted file: ${name}`);
-    }
-  });
-
+  // Render list of uploaded files
   function updateFileList() {
-    filesList.innerHTML = '';
-    if (uploadedFiles.length === 0) {
-      filesList.innerHTML = '<p>No files uploaded yet.</p>';
-      return;
-    }
-
-    uploadedFiles.forEach((name, index) => {
-      const row = document.createElement('div');
-      row.classList.add('file-row');
-      row.innerHTML = `
-        <span>${index + 1}. ${name}</span>
-        <button class="delete-btn" data-name="${name}" style="margin-left: 10px;">🗑️ Delete</button>
-      `;
-      filesList.appendChild(row);
+    filesList.innerHTML = '<strong>Uploaded Files:</strong><br>';
+    uploadedFiles.forEach((fileName, index) => {
+      const div = document.createElement('div');
+      div.textContent = `${index + 1}. ${fileName}`;
+      filesList.appendChild(div);
     });
   }
 
+  // Read and parse Excel file using SheetJS
   function readExcelFile(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        let allData = [];
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      let allRows = [];
 
-        workbook.SheetNames.forEach(sheetName => {
-          const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
-          allData = allData.concat(rows);
-        });
+      workbook.SheetNames.forEach(sheet => {
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheet], { header: 1 });
+        allRows = allRows.concat(rows);
+      });
 
-        fileData[file.name] = allData;
-        console.log(`✅ Parsed "${file.name}" with ${allData.length} rows`);
-      } catch (err) {
-        console.error(`❌ Error reading "${file.name}"`, err);
-      }
+      fileData[file.name] = allRows;
+      console.log(`✅ Parsed "${file.name}" with ${allRows.length} rows.`);
     };
+
     reader.readAsArrayBuffer(file);
   }
 });
