@@ -1,12 +1,12 @@
-let uploadedFiles = [];       // List of file names
-let fileData = {};            // Actual parsed content
+let uploadedFiles = [];
+let fileData = {};
 
 document.addEventListener('DOMContentLoaded', () => {
   const fileInput = document.getElementById('file-uploader');
-  const filesList = document.getElementById('uploaded-files-list');
   const addBtn = document.getElementById('add-files-btn');
+  const filesList = document.getElementById('uploaded-files-list');
 
-  // 🟢 Update the list display
+  // ✅ Update file list UI
   function updateFileList() {
     filesList.innerHTML = '';
     uploadedFiles.forEach((fileName, index) => {
@@ -14,13 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
       row.className = 'uploaded-file-row';
       row.innerHTML = `
         <span>${index + 1}. ${fileName}</span>
-        <button class="delete-btn" data-index="${index}" style="margin-left: 10px;">🗑️ Delete</button>
+        <button class="delete-btn" data-index="${index}">🗑️ Delete</button>
       `;
       filesList.appendChild(row);
     });
   }
 
-  // 📥 Read & parse Excel or CSV file
+  // ✅ Parse Excel file
   function readExcelFile(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -34,16 +34,18 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       fileData[file.name] = allRows;
-      console.log(`✅ Parsed "${file.name}" with ${allRows.length} rows.`);
+      console.log(`✅ Parsed ${file.name} (${allRows.length} rows)`);
     };
     reader.readAsArrayBuffer(file);
   }
 
-  // ➕ Add selected files when button is clicked
-  addBtn?.addEventListener('click', () => {
+  // ✅ Handle Add Files Button
+  addBtn.addEventListener('click', () => {
+    console.log('➕ Add Files button clicked');
     const selectedFiles = fileInput.files;
-    if (selectedFiles.length === 0) {
-      alert('Please select at least one Excel or CSV file.');
+
+    if (!selectedFiles.length) {
+      alert('Please select at least one file.');
       return;
     }
 
@@ -55,15 +57,15 @@ document.addEventListener('DOMContentLoaded', () => {
         uploadedFiles.push(fileName);
         readExcelFile(file);
       } else {
-        alert(`⚠️ File "${fileName}" is already uploaded.`);
+        alert(`⚠️ File "${fileName}" already added.`);
       }
     }
 
     updateFileList();
-    fileInput.value = ''; // Reset input
+    fileInput.value = ''; // Clear input
   });
 
-  // 🗑️ Delete files
+  // ✅ Handle Delete Button
   filesList.addEventListener('click', (e) => {
     if (e.target.classList.contains('delete-btn')) {
       const index = parseInt(e.target.getAttribute('data-index'));
@@ -71,8 +73,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       uploadedFiles.splice(index, 1);
       delete fileData[fileName];
+      console.log(`🗑️ Deleted ${fileName}`);
 
-      console.log(`🗑️ Deleted "${fileName}"`);
       updateFileList();
     }
   });
