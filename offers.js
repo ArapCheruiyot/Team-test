@@ -89,22 +89,25 @@ document.getElementById('offer-search-btn').addEventListener('click', () => {
     const rows = fileData[fileName];
     console.log(`📂 Searching in file: ${fileName} (${rows.length} rows)`);
 
-    for (const row of rows) {
-      const match = Array.isArray(row) && row.some(cell => String(cell).trim() === query);
+    const headers = rows[0]; // First row as header
+
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!Array.isArray(row)) continue;
+
+      const match = row.some(cell => String(cell).trim() === query);
       if (match) {
         console.log("✅ Match found in row:", row);
 
-        const display = row.map(cell => {
-          if (typeof cell === 'number') {
-            const maybeDate = excelDateToJSDate(cell);
-            if (!isNaN(maybeDate) && maybeDate.getFullYear() > 2000 && maybeDate.getFullYear() < 2100) {
-              return maybeDate.toLocaleDateString();
-            }
-          }
-          return cell ?? '—';
-        }).join(' | ');
+        const outputLines = [`✅ Found in ${fileName}:`];
 
-        resultsContainer.textContent = `✅ ${fileName} ➤ ${display}`;
+        for (let j = 0; j < row.length; j++) {
+          const label = headers?.[j] ?? `Column ${j + 1}`;
+          const val = formatCell(row[j]);
+          outputLines.push(`${label}: ${val}`);
+        }
+
+        resultsContainer.innerHTML = outputLines.map(line => `<div>${line}</div>`).join('');
         found = true;
         break;
       }
@@ -122,6 +125,16 @@ document.getElementById('offer-search-btn').addEventListener('click', () => {
     announcementScroll.style.display = 'inline';
   }, 15000);
 });
+
+function formatCell(cell) {
+  if (typeof cell === 'number') {
+    const maybeDate = excelDateToJSDate(cell);
+    if (!isNaN(maybeDate) && maybeDate.getFullYear() > 2000 && maybeDate.getFullYear() < 2100) {
+      return maybeDate.toLocaleDateString();
+    }
+  }
+  return cell ?? '—';
+}
 
 function excelDateToJSDate(excelDate) {
   const msPerDay = 86400000;
