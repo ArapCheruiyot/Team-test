@@ -9,8 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const filesList = document.getElementById('uploaded-files-list');
   const resultsContainer = document.getElementById('search-results');
   const bannerText = document.getElementById('announcement-text-scroll');
+  const searchBtn = document.getElementById('offer-search-btn');
+  const searchInput = document.getElementById('offer-search-input');
 
-  if (!fileInput || !addBtn || !filesList || !resultsContainer || !bannerText) {
+  if (!fileInput || !addBtn || !filesList || !resultsContainer || !bannerText || !searchBtn || !searchInput) {
     console.warn("❗ Missing essential DOM elements.");
     return;
   }
@@ -63,14 +65,10 @@ document.addEventListener('DOMContentLoaded', () => {
     reader.readAsArrayBuffer(file);
   }
 
-  // 🔍 Search logic
-  const searchBtn = document.getElementById('offer-search-btn');
-  const searchInput = document.getElementById('offer-search-input');
-
+  // Search logic
   searchBtn.addEventListener('click', () => {
     const query = searchInput.value.trim();
     resultsContainer.innerHTML = '';
-
     console.log("🔍 User searched for:", query);
 
     if (!query) {
@@ -99,25 +97,30 @@ document.addEventListener('DOMContentLoaded', () => {
           console.log("✅ Match found in row:", row);
 
           const formatted = row.map((cell, idx) => {
-            const isPossibleDate = typeof cell === 'number' && cell > 40000 && cell < 80000;
-            if (isPossibleDate) {
+            const isDate = typeof cell === 'number' && cell > 40000 && cell < 80000;
+            let label = headers?.[idx] || `Column ${idx + 1}`;
+            let value = cell;
+
+            if (isDate) {
               try {
                 const date = excelDateToJSDate(cell);
-                return `${headers?.[idx] || 'Column ' + (idx + 1)}: ${date.toLocaleDateString()}`;
-              } catch {
-                return `${headers?.[idx] || 'Column ' + (idx + 1)}: ${cell}`;
-              }
+                value = date.toLocaleDateString();
+              } catch {}
             }
-            return `${headers?.[idx] || 'Column ' + (idx + 1)}: ${cell}`;
+
+            return `${label}: ${value}`;
           });
 
-          bannerText.style.display = 'none'; // hide announcement scroll
+          // Hide scrolling announcement and display result
+          bannerText.style.display = 'none';
+          resultsContainer.style.display = 'block';
           resultsContainer.innerHTML = `<pre>${formatted.join('\n')}</pre>`;
           found = true;
 
-          // Restore banner after 15 sec
+          // Auto-hide after 15s
           setTimeout(() => {
             resultsContainer.innerHTML = '';
+            resultsContainer.style.display = 'none';
             bannerText.style.display = 'inline';
           }, 15000);
 
@@ -134,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// Excel serial date to JS date
+// 📆 Excel date helper
 function excelDateToJSDate(excelDate) {
   const msPerDay = 86400000;
   const epoch = new Date(Date.UTC(1970, 0, 1));
