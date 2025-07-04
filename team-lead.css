@@ -364,3 +364,8 @@
 .uploaded-file-row button:hover {
   background: #b02a37;
 }
+#search-results pre {
+  background: none;
+  padding: 4px;
+  color: #111;
+}
