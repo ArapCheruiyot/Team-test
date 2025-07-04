@@ -1,4 +1,5 @@
 // offers.js — Full version: Upload + Search Logic Wrapped in DOMContentLoaded
+console.log("✅ offers.js loaded and DOM fully ready");
 
 let uploadedFiles = [];
 let fileData = {}; // Stores parsed data keyed by file name
