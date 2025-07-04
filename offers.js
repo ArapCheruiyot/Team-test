@@ -13,10 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  // Attach event listener to Add Files button
+  // 📁 Attach event listener to Add Files button
   addBtn.addEventListener('click', () => {
     const files = fileInput.files;
-
     if (!files.length) {
       alert('Please select one or more Excel/CSV files.');
       return;
@@ -26,17 +25,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const file = files[i];
       if (!uploadedFiles.includes(file.name)) {
         uploadedFiles.push(file.name);
-        readExcelFile(file); // Parse and store file
+        readExcelFile(file);
       } else {
         alert(`File "${file.name}" is already uploaded.`);
       }
     }
 
     updateFileList();
-    fileInput.value = ''; // Reset input
+    fileInput.value = ''; // reset
   });
 
-  // Render list of uploaded files
+  // 🧾 List uploaded files
   function updateFileList() {
     filesList.innerHTML = '<strong>Uploaded Files:</strong><br>';
     uploadedFiles.forEach((fileName, index) => {
@@ -46,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Read and parse Excel file using SheetJS
+  // 📖 Read Excel File using SheetJS
   function readExcelFile(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -67,88 +66,80 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// 📆 Excel Date Conversion
+// 🔍 Offer Search Handler
+document.getElementById('offer-search-btn').addEventListener('click', () => {
+  const query = document.getElementById('offer-search-input').value.trim();
+  const resultsContainer = document.getElementById('search-results');
+  const announcementScroll = document.getElementById('announcement-text-scroll');
+
+  resultsContainer.innerHTML = ''; // clear previous results
+
+  if (!query) {
+    resultsContainer.innerHTML = '<p style="color:red;">⚠️ Please enter a customer number.</p>';
+    return;
+  }
+
+  if (!uploadedFiles.length) {
+    resultsContainer.innerHTML = '<p style="color:red;">⚠️ No files uploaded yet.</p>';
+    return;
+  }
+
+  console.log(`🔍 User searched for: ${query}`);
+  announcementScroll.style.display = 'none'; // 🔕 Hide announcement scroll
+
+  let found = false;
+
+  for (const fileName of uploadedFiles) {
+    const rows = fileData[fileName];
+    console.log(`📂 Searching in file: ${fileName} (${rows.length} rows)`);
+
+    for (const row of rows) {
+      const match = Array.isArray(row) && row.some(cell => String(cell).trim() === query);
+      if (match) {
+        console.log("✅ Match found in row:", row);
+
+        const formattedRow = row.map(cell => {
+          if (typeof cell === 'number' && cell > 25568) {
+            const date = excelDateToJSDate(cell);
+            return date.toLocaleDateString();
+          }
+          return cell ?? '—';
+        });
+
+        const display = formattedRow.map(cell => `<span style="padding:2px 6px; display:inline-block;">${cell}</span>`).join(' <span style="color:#ccc;">|</span> ');
+
+        resultsContainer.innerHTML = `
+          <div style="background:#e7f4e4; border:2px solid #28a745; margin:12px 0; padding:10px; font-family:Arial; border-radius:4px;">
+            <strong>✅ Found in:</strong> <span style="color:#1e88e5;">${fileName}</span><br/>
+            <div style="margin-top:6px; font-size:14px;">${display}</div>
+          </div>
+        `;
+        found = true;
+        break;
+      }
+    }
+
+    if (found) break;
+  }
+
+  if (!found) {
+    resultsContainer.innerHTML = `
+      <div style="background:#f8d7da; border:1px solid #f5c6cb; padding:6px; border-radius:4px;">
+        ❌ Customer not found in any uploaded file.
+      </div>
+    `;
+  }
+
+  // ⏳ Auto-restore announcement after 15 seconds
+  setTimeout(() => {
+    resultsContainer.innerHTML = '';
+    announcementScroll.style.display = 'inline'; // 🔁 Restore scroll
+  }, 15000);
+});
+
+// 📆 Convert Excel date to JS date
 function excelDateToJSDate(excelDate) {
   const msPerDay = 86400000;
   const epoch = new Date(Date.UTC(1970, 0, 1));
   return new Date(epoch.getTime() + (excelDate - 25569) * msPerDay);
 }
-
-// 🔍 Handle Offer Search
-document.addEventListener('DOMContentLoaded', () => {
-  const searchBtn = document.getElementById('offer-search-btn');
-  const searchInput = document.getElementById('offer-search-input');
-  const resultsContainer = document.getElementById('search-results');
-
-  if (!searchBtn || !searchInput || !resultsContainer) {
-    console.warn("❗ Missing search elements in DOM.");
-    return;
-  }
-
-  searchBtn.addEventListener('click', () => {
-    const query = searchInput.value.trim().toLowerCase();
-    resultsContainer.innerHTML = ''; // Clear previous
-
-    console.log("🔍 User searched for:", query);
-
-    if (!query) {
-      resultsContainer.innerHTML = '<p style="color:red;">⚠️ Please enter a customer number.</p>';
-      return;
-    }
-
-    if (!uploadedFiles.length) {
-      resultsContainer.innerHTML = '<p style="color:red;">⚠️ No files uploaded yet.</p>';
-      return;
-    }
-
-    let found = false;
-
-    for (const fileName of uploadedFiles) {
-      const rows = fileData[fileName];
-      if (!Array.isArray(rows)) continue;
-
-      console.log(`📂 Searching in file: ${fileName} (${rows.length} rows)`);
-
-      for (const row of rows) {
-        if (!Array.isArray(row)) continue;
-
-        const match = row.find(cell =>
-          String(cell || '').toLowerCase().trim() === query
-        );
-
-        if (match) {
-          console.log("✅ Match found in row:", row);
-
-          const formattedRow = row.map(cell => {
-            if (typeof cell === 'number' && cell > 25568) {
-              const date = excelDateToJSDate(cell);
-              return date.toLocaleDateString();
-            }
-            return cell;
-          });
-
-          const display = formattedRow.map(cell => `<span>${cell}</span>`).join(' | ');
-
-          resultsContainer.innerHTML += `
-            <div style="background:#e7f4e4; border:1px solid #d6e9c6; margin-bottom:8px; padding:6px;">
-              ✅ Found in <strong>${fileName}</strong>: ${display}
-            </div>
-          `;
-
-          found = true;
-          break;
-        }
-      }
-
-      if (found) break;
-    }
-
-    if (!found) {
-      console.warn("❌ No matching customer found.");
-      resultsContainer.innerHTML = `
-        <div style="background:#f8d7da; border:1px solid #f5c6cb; padding:6px;">
-          ❌ Customer not found in any uploaded file.
-        </div>`;
-    }
-  });
-});
