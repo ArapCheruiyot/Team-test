@@ -1,7 +1,7 @@
 console.log("✅ offers.js loaded and DOM fully ready");
 
 let uploadedFiles = [];
-let fileData = {}; // Stores parsed data keyed by file name
+let fileData = {};
 
 document.addEventListener('DOMContentLoaded', () => {
   const fileInput = document.getElementById('file-uploader');
@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  // 📁 Attach event listener to Add Files button
   addBtn.addEventListener('click', () => {
     const files = fileInput.files;
     if (!files.length) {
@@ -32,10 +31,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     updateFileList();
-    fileInput.value = ''; // reset
+    fileInput.value = '';
   });
 
-  // 🧾 List uploaded files
   function updateFileList() {
     filesList.innerHTML = '<strong>Uploaded Files:</strong><br>';
     uploadedFiles.forEach((fileName, index) => {
@@ -45,7 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 📖 Read Excel File using SheetJS
   function readExcelFile(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -66,26 +63,25 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// 🔍 Offer Search Handler
+// 🔍 Offer Search Logic
 document.getElementById('offer-search-btn').addEventListener('click', () => {
   const query = document.getElementById('offer-search-input').value.trim();
   const resultsContainer = document.getElementById('search-results');
   const announcementScroll = document.getElementById('announcement-text-scroll');
 
-  resultsContainer.innerHTML = ''; // clear previous results
-
+  resultsContainer.innerHTML = '';
   if (!query) {
-    resultsContainer.innerHTML = '<p style="color:red;">⚠️ Please enter a customer number.</p>';
+    resultsContainer.textContent = '⚠️ Please enter a customer number.';
     return;
   }
 
   if (!uploadedFiles.length) {
-    resultsContainer.innerHTML = '<p style="color:red;">⚠️ No files uploaded yet.</p>';
+    resultsContainer.textContent = '⚠️ No files uploaded yet.';
     return;
   }
 
   console.log(`🔍 User searched for: ${query}`);
-  announcementScroll.style.display = 'none'; // 🔕 Hide announcement scroll
+  announcementScroll.style.display = 'none';
 
   let found = false;
 
@@ -98,22 +94,17 @@ document.getElementById('offer-search-btn').addEventListener('click', () => {
       if (match) {
         console.log("✅ Match found in row:", row);
 
-        const formattedRow = row.map(cell => {
-          if (typeof cell === 'number' && cell > 25568) {
-            const date = excelDateToJSDate(cell);
-            return date.toLocaleDateString();
+        const display = row.map(cell => {
+          if (typeof cell === 'number') {
+            const maybeDate = excelDateToJSDate(cell);
+            if (!isNaN(maybeDate) && maybeDate.getFullYear() > 2000 && maybeDate.getFullYear() < 2100) {
+              return maybeDate.toLocaleDateString();
+            }
           }
           return cell ?? '—';
-        });
+        }).join(' | ');
 
-        const display = formattedRow.map(cell => `<span style="padding:2px 6px; display:inline-block;">${cell}</span>`).join(' <span style="color:#ccc;">|</span> ');
-
-        resultsContainer.innerHTML = `
-          <div style="background:#e7f4e4; border:2px solid #28a745; margin:12px 0; padding:10px; font-family:Arial; border-radius:4px;">
-            <strong>✅ Found in:</strong> <span style="color:#1e88e5;">${fileName}</span><br/>
-            <div style="margin-top:6px; font-size:14px;">${display}</div>
-          </div>
-        `;
+        resultsContainer.textContent = `✅ ${fileName} ➤ ${display}`;
         found = true;
         break;
       }
@@ -123,21 +114,15 @@ document.getElementById('offer-search-btn').addEventListener('click', () => {
   }
 
   if (!found) {
-    resultsContainer.innerHTML = `
-      <div style="background:#f8d7da; border:1px solid #f5c6cb; padding:6px; border-radius:4px;">
-        ❌ Customer not found in any uploaded file.
-      </div>
-    `;
+    resultsContainer.textContent = '❌ Customer not found in any uploaded file.';
   }
 
-  // ⏳ Auto-restore announcement after 15 seconds
   setTimeout(() => {
-    resultsContainer.innerHTML = '';
-    announcementScroll.style.display = 'inline'; // 🔁 Restore scroll
+    resultsContainer.textContent = '';
+    announcementScroll.style.display = 'inline';
   }, 15000);
 });
 
-// 📆 Convert Excel date to JS date
 function excelDateToJSDate(excelDate) {
   const msPerDay = 86400000;
   const epoch = new Date(Date.UTC(1970, 0, 1));
