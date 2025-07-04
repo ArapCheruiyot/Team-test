@@ -66,3 +66,58 @@ document.addEventListener('DOMContentLoaded', () => {
     reader.readAsArrayBuffer(file);
   }
 });
+
+// 🔍 Handle Offer Search
+document.getElementById('offer-search-btn').addEventListener('click', () => {
+  const query = document.getElementById('offer-search-input').value.trim();
+  const resultsContainer = document.getElementById('search-results');
+  resultsContainer.innerHTML = ''; // clear old results
+
+  if (!query) {
+    resultsContainer.innerHTML = '<p style="color:red;">⚠️ Please enter a customer number.</p>';
+    return;
+  }
+
+  if (!uploadedFiles.length) {
+    resultsContainer.innerHTML = '<p style="color:red;">⚠️ No files uploaded yet.</p>';
+    return;
+  }
+
+  let found = false;
+
+  for (const fileName of uploadedFiles) {
+    const rows = fileData[fileName];
+    for (const row of rows) {
+      if (Array.isArray(row) && row.some(cell => String(cell).trim() === query)) {
+        const formattedRow = row.map(cell => {
+          if (typeof cell === 'number' && cell > 25568) {
+            const date = excelDateToJSDate(cell);
+            return date.toLocaleDateString();
+          }
+          return cell;
+        });
+
+        const display = formattedRow.map(cell => `<span>${cell}</span>`).join(' | ');
+        resultsContainer.innerHTML += `
+          <div style="background:#e7f4e4; border:1px solid #d6e9c6; margin-bottom:8px; padding:6px;">
+            ✅ Found in <strong>${fileName}</strong>: ${display}
+          </div>
+        `;
+        found = true;
+        break;
+      }
+    }
+    if (found) break;
+  }
+
+  if (!found) {
+    resultsContainer.innerHTML = '<div style="background:#f8d7da; border:1px solid #f5c6cb; padding:6px;">❌ Customer not found in any file.</div>';
+  }
+});
+
+// 📆 Excel Date Conversion
+function excelDateToJSDate(excelDate) {
+  const msPerDay = 86400000;
+  const epoch = new Date(Date.UTC(1970, 0, 1));
+  return new Date(epoch.getTime() + (excelDate - 25569) * msPerDay);
+}
