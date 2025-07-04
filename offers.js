@@ -1,25 +1,59 @@
-let uploadedFiles = [];
-let fileData = {}; // { filename: data[] }
+let uploadedFiles = [];       // List of file names
+let fileData = {};            // Actual parsed content
 
 document.addEventListener('DOMContentLoaded', () => {
   const fileInput = document.getElementById('file-uploader');
-  const uploadButton = document.getElementById('upload-button');
   const filesList = document.getElementById('uploaded-files-list');
+  const addBtn = document.getElementById('add-files-btn');
 
-  // Handle Add Files button
-  uploadButton.addEventListener('click', () => {
-    const files = fileInput.files;
+  // 🟢 Update the list display
+  function updateFileList() {
+    filesList.innerHTML = '';
+    uploadedFiles.forEach((fileName, index) => {
+      const row = document.createElement('div');
+      row.className = 'uploaded-file-row';
+      row.innerHTML = `
+        <span>${index + 1}. ${fileName}</span>
+        <button class="delete-btn" data-index="${index}" style="margin-left: 10px;">🗑️ Delete</button>
+      `;
+      filesList.appendChild(row);
+    });
+  }
 
-    if (!files.length) {
-      alert('Please select at least one file.');
+  // 📥 Read & parse Excel or CSV file
+  function readExcelFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      let allRows = [];
+
+      workbook.SheetNames.forEach(sheetName => {
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
+        allRows = allRows.concat(rows);
+      });
+
+      fileData[file.name] = allRows;
+      console.log(`✅ Parsed "${file.name}" with ${allRows.length} rows.`);
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  // ➕ Add selected files when button is clicked
+  addBtn?.addEventListener('click', () => {
+    const selectedFiles = fileInput.files;
+    if (selectedFiles.length === 0) {
+      alert('Please select at least one Excel or CSV file.');
       return;
     }
 
-    for (let i = 0; i < files.length; i++) {
-      const fileName = files[i].name;
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const file = selectedFiles[i];
+      const fileName = file.name;
+
       if (!uploadedFiles.includes(fileName)) {
         uploadedFiles.push(fileName);
-        readExcelFile(files[i]);
+        readExcelFile(file);
       } else {
         alert(`⚠️ File "${fileName}" is already uploaded.`);
       }
@@ -29,37 +63,17 @@ document.addEventListener('DOMContentLoaded', () => {
     fileInput.value = ''; // Reset input
   });
 
-  // Update file list UI
-  function updateFileList() {
-    filesList.innerHTML = '';
-    uploadedFiles.forEach((fileName, i) => {
-      const row = document.createElement('div');
-      row.className = 'uploaded-file-row';
-      row.innerText = `${i + 1}. ${fileName}`;
-      filesList.appendChild(row);
-    });
-  }
+  // 🗑️ Delete files
+  filesList.addEventListener('click', (e) => {
+    if (e.target.classList.contains('delete-btn')) {
+      const index = parseInt(e.target.getAttribute('data-index'));
+      const fileName = uploadedFiles[index];
 
-  // Parse Excel/CSV file
-  function readExcelFile(file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        let allRows = [];
+      uploadedFiles.splice(index, 1);
+      delete fileData[fileName];
 
-        workbook.SheetNames.forEach(sheetName => {
-          const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
-          allRows = allRows.concat(rows);
-        });
-
-        fileData[file.name] = allRows;
-        console.log(`✅ Parsed "${file.name}" with ${allRows.length} rows`);
-      } catch (err) {
-        console.error(`❌ Failed to parse "${file.name}"`, err);
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  }
+      console.log(`🗑️ Deleted "${fileName}"`);
+      updateFileList();
+    }
+  });
 });
