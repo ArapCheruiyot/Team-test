@@ -81,8 +81,3 @@ document.addEventListener('DOMContentLoaded', () => {
     reader.readAsArrayBuffer(file);
   }
 });
-
-
-
-
-
