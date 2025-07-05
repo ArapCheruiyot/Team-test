@@ -49,10 +49,10 @@ export function startListeningToForumMessages(db, _leaderUid, forumId, callback)
 // 🔹 Initializes chat
 export function initChat(db, auth, leaderUid) {
   const selectEl = document.getElementById('chat-select');
-  const boxEl    = document.getElementById('chat-messages');
-  const inputEl  = document.getElementById('chat-input');
+  const boxEl = document.getElementById('chat-messages');
+  const inputEl = document.getElementById('chat-input');
   const fileInput = document.getElementById('chat-file-input');
-  const sendBtn  = document.getElementById('send-message-btn');
+  const sendBtn = document.getElementById('send-message-btn');
 
   let currentUser = null;
   let activeChatId = null;
@@ -88,36 +88,78 @@ export function initChat(db, auth, leaderUid) {
     }
   });
 
-  // 🔄 Cloudinary file upload
+  // 🔄 File upload via Cloudinary
   fileInput.addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file || !selectEl.value) return;
+    const file = e.target.files[0];
+    if (!file || !selectEl.value) return;
 
-  const placeholder = document.createElement('div');
-  placeholder.textContent = `📤 Uploading ${file.name}...`;
-  boxEl.appendChild(placeholder);
+    const placeholder = document.createElement('div');
+    placeholder.textContent = `📤 Uploading ${file.name}...`;
+    boxEl.appendChild(placeholder);
 
-  try {
-    // 🔁 Cloudinary upload
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', 'unsigned_chat'); // ✅ Your unsigned preset
-    formData.append('folder', 'team-hub image chats');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', 'unsigned_chat');  // Must match your Cloudinary unsigned preset name
+      formData.append('folder', 'team-hub image chats');   // Optional: remove if not using folders
 
-    const res = await fetch('https://api.cloudinary.com/v1_1/decckqobb/image/upload', {
-      method: 'POST',
-      body: formData
-    });
+      const res = await fetch('https://api.cloudinary.com/v1_1/decckqobb/auto/upload', {
+        method: 'POST',
+        body: formData
+      });
 
-    const data = await res.json();
-    const fileURL = data.secure_url;
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error?.message || 'Cloudinary upload failed');
+
+      const fileURL = data.secure_url;
+
+      const payload = {
+        fileUrl: fileURL,
+        fileName: file.name,
+        fileType: file.type,
+        fromEmail: currentUser.email,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+
+      if (replyToMessage) {
+        payload.replyTo = {
+          messageId: replyToMessage.id,
+          text: replyToMessage.text
+        };
+      }
+
+      const val = selectEl.value;
+      if (val.startsWith('forum:')) {
+        await db.collection('forums').doc(val.split(':')[1])
+          .collection('messages').add(payload);
+      } else {
+        const chatId = activeChatId || await findOrCreateChat(db, leaderUid, currentUser.email, val);
+        await db.collection('users').doc(leaderUid)
+          .collection('chats').doc(chatId)
+          .collection('messages').add({ ...payload, toEmail: val });
+      }
+
+      replyToMessage = null;
+      clearReplyPreview();
+      fileInput.value = '';
+    } catch (error) {
+      alert("❌ Upload failed: " + error.message);
+      console.error('Upload error:', error);
+    } finally {
+      placeholder.remove();
+    }
+  });
+
+  async function sendTextMessage() {
+    const text = inputEl.value.trim();
+    const val = selectEl.value;
+    if (!text || !val) return;
 
     const payload = {
-      fileUrl: fileURL,
-      fileName: file.name,
-      fileType: file.type,
+      text,
       fromEmail: currentUser.email,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     if (replyToMessage) {
@@ -127,7 +169,6 @@ export function initChat(db, auth, leaderUid) {
       };
     }
 
-    const val = selectEl.value;
     if (val.startsWith('forum:')) {
       await db.collection('forums').doc(val.split(':')[1])
         .collection('messages').add(payload);
@@ -135,18 +176,16 @@ export function initChat(db, auth, leaderUid) {
       const chatId = activeChatId || await findOrCreateChat(db, leaderUid, currentUser.email, val);
       await db.collection('users').doc(leaderUid)
         .collection('chats').doc(chatId)
-        .collection('messages').add({ ...payload, toEmail: val });
+        .collection('messages').add({
+          ...payload,
+          toEmail: val
+        });
     }
 
+    inputEl.value = '';
     replyToMessage = null;
     clearReplyPreview();
-    fileInput.value = '';
-  } catch (error) {
-    alert("Upload failed: " + error.message);
-  } finally {
-    placeholder.remove();
   }
-});
 
   function renderMessages(messages) {
     boxEl.innerHTML = '';
@@ -164,7 +203,6 @@ export function initChat(db, auth, leaderUid) {
       }
 
       let content = '';
-
       if (m.text) {
         content = `<strong>${m.fromEmail}:</strong> ${m.text}`;
       } else if (m.fileUrl) {
@@ -189,43 +227,6 @@ export function initChat(db, auth, leaderUid) {
         showReplyPreview(replyToMessage.text);
       };
     });
-  }
-
-  async function sendTextMessage() {
-    const text = inputEl.value.trim();
-    const val = selectEl.value;
-    if (!text || !val) return;
-
-    const payload = {
-      text,
-      fromEmail: currentUser.email,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    };
-
-    if (replyToMessage) {
-      payload.replyTo = {
-        messageId: replyToMessage.id,
-        text: replyToMessage.text
-      };
-    }
-
-    if (val.startsWith('forum:')) {
-      const forumId = val.split(':')[1];
-      await db.collection('forums').doc(forumId)
-        .collection('messages').add(payload);
-    } else {
-      const chatId = activeChatId || await findOrCreateChat(db, leaderUid, currentUser.email, val);
-      await db.collection('users').doc(leaderUid)
-        .collection('chats').doc(chatId)
-        .collection('messages').add({
-          ...payload,
-          toEmail: val
-        });
-    }
-
-    inputEl.value = '';
-    replyToMessage = null;
-    clearReplyPreview();
   }
 
   function clearReplyPreview() {
