@@ -178,47 +178,53 @@ export function initChat(db, auth, leaderUid) {
 }
 
 
-  function renderMessages(messages) {
-    boxEl.innerHTML = '';
-    messages.forEach(m => {
-      const bubble = document.createElement('div');
-      bubble.className = `chat-bubble ${m.fromEmail === currentUser.email ? 'sent' : 'received'}`;
-      let replyHTML = '';
-      if (m.replyTo) {
-        replyHTML = `
-          <div class="reply-preview">
-            <em>Replying to:</em>
-            <div class="reply-text">${m.replyTo.text}</div>
-          </div>
-        `;
-      }
+function renderMessages(messages) {
+  boxEl.innerHTML = '';
+  messages.forEach(m => {
+    const bubble = document.createElement('div');
+    bubble.className = `chat-bubble ${m.fromEmail === currentUser.email ? 'sent' : 'received'}`;
 
-      let content = '';
-      if (m.text) {
-        content = `<strong>${m.fromEmail}:</strong> ${m.text}`;
-      } else if (m.fileUrl) {
-        const isImage = m.fileType?.startsWith('image/');
-        content = isImage
-          ? `<strong>${m.fromEmail}:</strong><br><img src="${m.fileUrl}" alt="Image" style="max-width: 200px; border-radius: 4px;" />`
-          : `<strong>${m.fromEmail}:</strong><br><a href="${m.fileUrl}" target="_blank">${m.fileName || 'Download File'}</a>`;
-      }
-
-      bubble.innerHTML = `
-        ${replyHTML}
-        ${content}
-        <button class="reply-btn" data-id="${m.id}" data-text="${m.text || m.fileName || 'File'}">↩️</button>
+    let replyHTML = '';
+    if (m.replyTo) {
+      replyHTML = `
+        <div class="reply-preview">
+          <em>Replying to:</em>
+          <div class="reply-text">${m.replyTo.text}</div>
+        </div>
       `;
-      boxEl.appendChild(bubble);
-    });
-    boxEl.scrollTop = boxEl.scrollHeight;
+    }
 
-    boxEl.querySelectorAll('.reply-btn').forEach(btn => {
-      btn.onclick = () => {
-        replyToMessage = { id: btn.dataset.id, text: btn.dataset.text };
-        showReplyPreview(replyToMessage.text);
-      };
-    });
-  }
+    let content = `<strong>${m.fromEmail}:</strong><br>`;
+
+    if (m.fileUrl) {
+      const isImage = m.fileType?.startsWith('image/');
+      content += isImage
+        ? `<img src="${m.fileUrl}" alt="Image" style="max-width: 200px; border-radius: 4px;" /><br>`
+        : `<a href="${m.fileUrl}" target="_blank">${m.fileName || 'Download File'}</a><br>`;
+    }
+
+    if (m.text) {
+      content += `<div>${m.text}</div>`;
+    }
+
+    bubble.innerHTML = `
+      ${replyHTML}
+      ${content}
+      <button class="reply-btn" data-id="${m.id}" data-text="${m.text || m.fileName || 'File'}">↩️</button>
+    `;
+    boxEl.appendChild(bubble);
+  });
+
+  boxEl.scrollTop = boxEl.scrollHeight;
+
+  boxEl.querySelectorAll('.reply-btn').forEach(btn => {
+    btn.onclick = () => {
+      replyToMessage = { id: btn.dataset.id, text: btn.dataset.text };
+      showReplyPreview(replyToMessage.text);
+    };
+  });
+}
+
 
   function clearReplyPreview() {
     document.getElementById('reply-preview')?.remove();
