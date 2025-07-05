@@ -1,4 +1,7 @@
-// chat.js — Modular one-to-one and forum messaging logic
+// chat.js — Messaging logic with file upload support
+
+// 🔹 Add Firebase Storage support
+const storage = firebase.storage();
 
 // 🔹 Finds or creates a one-to-one chat
 export async function findOrCreateChat(db, leaderUid, email1, email2) {
@@ -11,9 +14,7 @@ export async function findOrCreateChat(db, leaderUid, email1, email2) {
     .limit(1)
     .get();
 
-  if (!snapshot.empty) {
-    return snapshot.docs[0].id;
-  }
+  if (!snapshot.empty) return snapshot.docs[0].id;
 
   const docRef = await chatsRef.add({
     participants: [email1, email2],
@@ -33,10 +34,10 @@ export function startListeningToMessages(db, leaderUid, chatId, callback) {
       const msgs = [];
       snapshot.forEach(doc => msgs.push({ id: doc.id, ...doc.data() }));
       callback(msgs);
-    }, err => console.error('Chat listener error:', err));
+    });
 }
 
-// 🔹 Listens to shared forum messages (🔥 NEW PATH: /forums/)
+// 🔹 Listens to forum messages
 export function startListeningToForumMessages(db, _leaderUid, forumId, callback) {
   return db.collection('forums').doc(forumId)
     .collection('messages')
@@ -45,21 +46,22 @@ export function startListeningToForumMessages(db, _leaderUid, forumId, callback)
       const msgs = [];
       snapshot.forEach(doc => msgs.push({ id: doc.id, ...doc.data() }));
       callback(msgs);
-    }, err => console.error('Forum listener error:', err));
+    });
 }
 
-// 🔹 Initializes chat UI
+// 🔹 Initializes chat
 export function initChat(db, auth, leaderUid) {
   const selectEl = document.getElementById('chat-select');
   const boxEl    = document.getElementById('chat-messages');
   const inputEl  = document.getElementById('chat-input');
+  const fileInput = document.getElementById('chat-file-input');
   const sendBtn  = document.getElementById('send-message-btn');
 
-  let currentUser    = null;
-  let activeChatId   = null;
-  let activeContact  = null;
+  let currentUser = null;
+  let activeChatId = null;
+  let activeContact = null;
   let replyToMessage = null;
-  let unsubscribe    = null;
+  let unsubscribe = null;
 
   auth.onAuthStateChanged(u => { currentUser = u; });
 
@@ -81,12 +83,55 @@ export function initChat(db, auth, leaderUid) {
     }
   });
 
-  sendBtn.addEventListener('click', sendMessage);
+  sendBtn.addEventListener('click', sendTextMessage);
   inputEl.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      sendMessage();
+      sendTextMessage();
     }
+  });
+
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file || !selectEl.value) return;
+
+    const fileRef = storage.ref().child(`chat_uploads/${Date.now()}_${file.name}`);
+    await fileRef.put(file);
+    const fileURL = await fileRef.getDownloadURL();
+
+    const payload = {
+      fileUrl: fileURL,
+      fileName: file.name,
+      fileType: file.type,
+      fromEmail: currentUser.email,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+
+    if (replyToMessage) {
+      payload.replyTo = {
+        messageId: replyToMessage.id,
+        text: replyToMessage.text
+      };
+    }
+
+    const val = selectEl.value;
+    if (val.startsWith('forum:')) {
+      const forumId = val.split(':')[1];
+      await db.collection('forums').doc(forumId)
+        .collection('messages').add(payload);
+    } else {
+      const chatId = activeChatId || await findOrCreateChat(db, leaderUid, currentUser.email, val);
+      await db.collection('users').doc(leaderUid)
+        .collection('chats').doc(chatId)
+        .collection('messages').add({
+          ...payload,
+          toEmail: val
+        });
+    }
+
+    fileInput.value = '';
+    replyToMessage = null;
+    clearReplyPreview();
   });
 
   function renderMessages(messages) {
@@ -103,10 +148,22 @@ export function initChat(db, auth, leaderUid) {
           </div>
         `;
       }
+
+      let content = '';
+
+      if (m.text) {
+        content = `<strong>${m.fromEmail}:</strong> ${m.text}`;
+      } else if (m.fileUrl) {
+        const isImage = m.fileType?.startsWith('image/');
+        content = isImage
+          ? `<strong>${m.fromEmail}:</strong><br><img src="${m.fileUrl}" alt="Image" style="max-width: 200px; border-radius: 4px;" />`
+          : `<strong>${m.fromEmail}:</strong><br><a href="${m.fileUrl}" target="_blank">${m.fileName || 'Download File'}</a>`;
+      }
+
       bubble.innerHTML = `
         ${replyHTML}
-        <strong>${m.fromEmail}:</strong> ${m.text}
-        <button class="reply-btn" data-id="${m.id}" data-text="${m.text}">↩️</button>
+        ${content}
+        <button class="reply-btn" data-id="${m.id}" data-text="${m.text || m.fileName || 'File'}">↩️</button>
       `;
       boxEl.appendChild(bubble);
     });
@@ -120,15 +177,15 @@ export function initChat(db, auth, leaderUid) {
     });
   }
 
-  async function sendMessage() {
+  async function sendTextMessage() {
     const text = inputEl.value.trim();
-    const val  = selectEl.value;
+    const val = selectEl.value;
     if (!text || !val) return;
 
     const payload = {
       text,
       fromEmail: currentUser.email,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     if (replyToMessage) {
