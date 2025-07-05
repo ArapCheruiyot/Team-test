@@ -156,19 +156,22 @@
     </div>
 
     <!-- Chat Panel -->
-    <div id="chat-panel">
-      <label for="chat-select" class="visually-hidden">Select a chat</label>
-      <select id="chat-select" class="chat-dropdown">
-        <option value="" selected>No chat selected</option>
-      </select>
+    <!-- Chat Panel -->
+<div id="chat-panel">
+  <label for="chat-select" class="visually-hidden">Select a chat</label>
+  <select id="chat-select" class="chat-dropdown">
+    <option value="" selected>No chat selected</option>
+  </select>
 
-      <div id="chat-messages" class="chat-box"></div>
+  <div id="chat-messages" class="chat-box"></div>
 
-      <div id="chat-input-area">
-        <input type="text" id="chat-input" placeholder="Type a message..." />
-        <button id="send-message-btn">Send</button>
-      </div>
-    </div>
+  <div id="chat-input-area">
+    <input type="text" id="chat-input" placeholder="Type a message..." />
+    <input type="file" id="chat-file-input" style="margin-top: 4px;" />
+    <button id="send-message-btn">Send</button>
+  </div>
+</div>
+
   </section>
 
   <!-- Auth Guard -->
