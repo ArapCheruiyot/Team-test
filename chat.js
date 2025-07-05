@@ -1,6 +1,5 @@
 // chat.js — Messaging logic with Cloudinary file upload support
 
-// 🔹 Finds or creates a one-to-one chat
 export async function findOrCreateChat(db, leaderUid, email1, email2) {
   const chatsRef = db.collection('users').doc(leaderUid).collection('chats');
   const snapshot = await chatsRef
@@ -21,7 +20,6 @@ export async function findOrCreateChat(db, leaderUid, email1, email2) {
   return docRef.id;
 }
 
-// 🔹 Listens for 1-on-1 messages
 export function startListeningToMessages(db, leaderUid, chatId, callback) {
   return db.collection('users').doc(leaderUid)
     .collection('chats').doc(chatId)
@@ -34,7 +32,6 @@ export function startListeningToMessages(db, leaderUid, chatId, callback) {
     });
 }
 
-// 🔹 Listens to forum messages
 export function startListeningToForumMessages(db, _leaderUid, forumId, callback) {
   return db.collection('forums').doc(forumId)
     .collection('messages')
@@ -46,7 +43,6 @@ export function startListeningToForumMessages(db, _leaderUid, forumId, callback)
     });
 }
 
-// 🔹 Initializes chat
 export function initChat(db, auth, leaderUid) {
   const selectEl = document.getElementById('chat-select');
   const boxEl = document.getElementById('chat-messages');
@@ -59,6 +55,7 @@ export function initChat(db, auth, leaderUid) {
   let activeContact = null;
   let replyToMessage = null;
   let unsubscribe = null;
+  let selectedFile = null;
 
   auth.onAuthStateChanged(u => { currentUser = u; });
 
@@ -88,79 +85,72 @@ export function initChat(db, auth, leaderUid) {
     }
   });
 
-  // 🔄 File upload via Cloudinary
-  fileInput.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file || !selectEl.value) return;
+  // Delay Cloudinary upload until Send is clicked
+  fileInput.addEventListener('change', (e) => {
+    selectedFile = e.target.files[0];
+    if (!selectedFile) return;
+
+    const preview = document.getElementById('selected-file-preview');
+    if (preview) preview.remove();
 
     const placeholder = document.createElement('div');
-    placeholder.textContent = `📤 Uploading ${file.name}...`;
-    boxEl.appendChild(placeholder);
+    placeholder.id = 'selected-file-preview';
+    placeholder.innerHTML = `
+      📎 Selected: ${selectedFile.name} <button id="clear-selected-file">❌</button>
+    `;
+    inputEl.parentElement.insertBefore(placeholder, inputEl);
 
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', 'unsigned_chat');  // Must match your Cloudinary unsigned preset name
-      formData.append('folder', 'team-hub image chats');   // Optional: remove if not using folders
-
-      const res = await fetch('https://api.cloudinary.com/v1_1/decckqobb/auto/upload', {
-        method: 'POST',
-        body: formData
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error?.message || 'Cloudinary upload failed');
-
-      const fileURL = data.secure_url;
-
-      const payload = {
-        fileUrl: fileURL,
-        fileName: file.name,
-        fileType: file.type,
-        fromEmail: currentUser.email,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      };
-
-      if (replyToMessage) {
-        payload.replyTo = {
-          messageId: replyToMessage.id,
-          text: replyToMessage.text
-        };
-      }
-
-      const val = selectEl.value;
-      if (val.startsWith('forum:')) {
-        await db.collection('forums').doc(val.split(':')[1])
-          .collection('messages').add(payload);
-      } else {
-        const chatId = activeChatId || await findOrCreateChat(db, leaderUid, currentUser.email, val);
-        await db.collection('users').doc(leaderUid)
-          .collection('chats').doc(chatId)
-          .collection('messages').add({ ...payload, toEmail: val });
-      }
-
-      replyToMessage = null;
-      clearReplyPreview();
-      fileInput.value = '';
-    } catch (error) {
-      alert("❌ Upload failed: " + error.message);
-      console.error('Upload error:', error);
-    } finally {
+    document.getElementById('clear-selected-file').onclick = () => {
+      selectedFile = null;
       placeholder.remove();
-    }
+      fileInput.value = '';
+    };
   });
 
   async function sendTextMessage() {
     const text = inputEl.value.trim();
     const val = selectEl.value;
-    if (!text || !val) return;
+    if (!text && !selectedFile) return;
+
+    let fileURL = null;
+    let fileName = null;
+    let fileType = null;
+
+    if (selectedFile) {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('upload_preset', 'unsigned_chat');
+      formData.append('folder', 'team-hub image chats');
+
+      try {
+        const res = await fetch('https://api.cloudinary.com/v1_1/decckqobb/image/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error?.message || 'Upload failed');
+
+        fileURL = data.secure_url;
+        fileName = selectedFile.name;
+        fileType = selectedFile.type;
+      } catch (err) {
+        alert("Image upload failed: " + err.message);
+        return;
+      }
+    }
 
     const payload = {
-      text,
       fromEmail: currentUser.email,
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
+
+    if (text) payload.text = text;
+    if (fileURL) {
+      payload.fileUrl = fileURL;
+      payload.fileName = fileName;
+      payload.fileType = fileType;
+    }
 
     if (replyToMessage) {
       payload.replyTo = {
@@ -176,13 +166,13 @@ export function initChat(db, auth, leaderUid) {
       const chatId = activeChatId || await findOrCreateChat(db, leaderUid, currentUser.email, val);
       await db.collection('users').doc(leaderUid)
         .collection('chats').doc(chatId)
-        .collection('messages').add({
-          ...payload,
-          toEmail: val
-        });
+        .collection('messages').add({ ...payload, toEmail: val });
     }
 
     inputEl.value = '';
+    selectedFile = null;
+    fileInput.value = '';
+    document.getElementById('selected-file-preview')?.remove();
     replyToMessage = null;
     clearReplyPreview();
   }
