@@ -165,11 +165,81 @@
 
   <div id="chat-messages" class="chat-box"></div>
 
+  <!-- Chat Panel -->
+<style>
+  .chat-input-wrapper {
+    position: relative;
+    width: 100%;
+  }
+
+  #chat-input {
+    padding-left: 32px;
+    padding-right: 8px;
+    height: 32px;
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 14px;
+  }
+
+  #attach-icon {
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 18px;
+    background: none;
+    border: none;
+    color: #555;
+  }
+
+  #chat-file-input {
+    display: none;
+  }
+
+  #chat-input-area {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  #send-message-btn {
+    height: 34px;
+  }
+</style>
+
+<div id="chat-panel">
+  <label for="chat-select" class="visually-hidden">Select a chat</label>
+  <select id="chat-select" class="chat-dropdown">
+    <option value="" selected>No chat selected</option>
+  </select>
+
+  <div id="chat-messages" class="chat-box"></div>
+
   <div id="chat-input-area">
-    <input type="text" id="chat-input" placeholder="Type a message..." />
-    <input type="file" id="chat-file-input" style="margin-top: 4px;" />
+    <div class="chat-input-wrapper">
+      <button id="attach-icon" title="Attach File">📎</button>
+      <input type="text" id="chat-input" placeholder="Type a message..." />
+      <input type="file" id="chat-file-input" />
+    </div>
     <button id="send-message-btn">Send</button>
   </div>
+</div>
+
+<script>
+  // 📎 Clicking the clip icon triggers file selection
+  document.addEventListener('DOMContentLoaded', () => {
+    const attachBtn = document.getElementById('attach-icon');
+    const fileInput = document.getElementById('chat-file-input');
+
+    if (attachBtn && fileInput) {
+      attachBtn.addEventListener('click', () => {
+        fileInput.click();
+      });
+    }
+  });
+</script>
+
 </div>
 
   </section>
