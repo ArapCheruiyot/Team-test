@@ -117,13 +117,18 @@ export function initChat(db, auth, leaderUid) {
   let fileType = null;
 
   if (selectedFile) {
+    const isImage = selectedFile.type.startsWith('image/');
+    const uploadEndpoint = isImage
+      ? 'https://api.cloudinary.com/v1_1/decckqobb/image/upload'
+      : 'https://api.cloudinary.com/v1_1/decckqobb/raw/upload';
+
     const formData = new FormData();
     formData.append('file', selectedFile);
     formData.append('upload_preset', 'unsigned_chat');
-    formData.append('folder', 'team-hub image chats');
+    formData.append('folder', 'team-hub uploads');
 
     try {
-      const res = await fetch('https://api.cloudinary.com/v1_1/decckqobb/image/upload', {
+      const res = await fetch(uploadEndpoint, {
         method: 'POST',
         body: formData
       });
@@ -135,7 +140,7 @@ export function initChat(db, auth, leaderUid) {
       fileName = selectedFile.name;
       fileType = selectedFile.type;
     } catch (err) {
-      alert("Image upload failed: " + err.message);
+      alert("File upload failed: " + err.message);
       return;
     }
   }
