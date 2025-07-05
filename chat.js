@@ -92,9 +92,14 @@ export function initChat(db, auth, leaderUid) {
   });
 
   fileInput.addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file || !selectEl.value) return;
+  const file = e.target.files[0];
+  if (!file || !selectEl.value) return;
 
+  const placeholder = document.createElement('div');
+  placeholder.textContent = `📤 Uploading ${file.name}...`;
+  boxEl.appendChild(placeholder);
+
+  try {
     const fileRef = storage.ref().child(`chat_uploads/${Date.now()}_${file.name}`);
     await fileRef.put(file);
     const fileURL = await fileRef.getDownloadURL();
@@ -116,23 +121,25 @@ export function initChat(db, auth, leaderUid) {
 
     const val = selectEl.value;
     if (val.startsWith('forum:')) {
-      const forumId = val.split(':')[1];
-      await db.collection('forums').doc(forumId)
+      await db.collection('forums').doc(val.split(':')[1])
         .collection('messages').add(payload);
     } else {
       const chatId = activeChatId || await findOrCreateChat(db, leaderUid, currentUser.email, val);
       await db.collection('users').doc(leaderUid)
         .collection('chats').doc(chatId)
-        .collection('messages').add({
-          ...payload,
-          toEmail: val
-        });
+        .collection('messages').add({ ...payload, toEmail: val });
     }
 
-    fileInput.value = '';
     replyToMessage = null;
     clearReplyPreview();
-  });
+    fileInput.value = '';
+  } catch (error) {
+    alert("Upload failed: " + error.message);
+  } finally {
+    placeholder.remove();
+  }
+});
+
 
   function renderMessages(messages) {
     boxEl.innerHTML = '';
