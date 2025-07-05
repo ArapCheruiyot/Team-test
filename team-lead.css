@@ -364,3 +364,41 @@
 .uploaded-file-row button:hover {
   background: #b02a37;
 }
+.chat-bubble img {
+  max-width: 220px;
+  border-radius: 8px;
+  margin-top: 6px;
+  display: block;
+}
+
+.chat-bubble a {
+  display: inline-block;
+  margin-top: 6px;
+  color: #1a73e8;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.chat-bubble a:hover {
+  text-decoration: underline;
+}
+
+.chat-bubble .reply-preview {
+  font-size: 12px;
+  background: #f0f0f0;
+  border-left: 4px solid #ccc;
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  border-radius: 4px;
+}
+
+#chat-file-input {
+  display: none;
+}
+
+#file-attach-label {
+  font-size: 20px;
+  cursor: pointer;
+  margin-right: 8px;
+  user-select: none;
+}
