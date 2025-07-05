@@ -108,74 +108,75 @@ export function initChat(db, auth, leaderUid) {
   });
 
   async function sendTextMessage() {
-    const text = inputEl.value.trim();
-    const val = selectEl.value;
-    if (!text && !selectedFile) return;
+  const text = inputEl.value.trim();
+  const val = selectEl.value;
+  if (!text && !selectedFile) return;
 
-    let fileURL = null;
-    let fileName = null;
-    let fileType = null;
+  let fileURL = null;
+  let fileName = null;
+  let fileType = null;
 
-    if (selectedFile) {
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('upload_preset', 'unsigned_chat');
-      formData.append('folder', 'team-hub image chats');
+  if (selectedFile) {
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('upload_preset', 'unsigned_chat');
+    formData.append('folder', 'team-hub image chats');
 
-      try {
-        const res = await fetch('https://api.cloudinary.com/v1_1/decckqobb/image/upload', {
-          method: 'POST',
-          body: formData
-        });
+    try {
+      const res = await fetch('https://api.cloudinary.com/v1_1/decckqobb/image/upload', {
+        method: 'POST',
+        body: formData
+      });
 
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error?.message || 'Upload failed');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || 'Upload failed');
 
-        fileURL = data.secure_url;
-        fileName = selectedFile.name;
-        fileType = selectedFile.type;
-      } catch (err) {
-        alert("Image upload failed: " + err.message);
-        return;
-      }
+      fileURL = data.secure_url;
+      fileName = selectedFile.name;
+      fileType = selectedFile.type;
+    } catch (err) {
+      alert("Image upload failed: " + err.message);
+      return;
     }
-
-    const payload = {
-      fromEmail: currentUser.email,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    };
-
-    if (text) payload.text = text;
-    if (fileURL) {
-      payload.fileUrl = fileURL;
-      payload.fileName = fileName;
-      payload.fileType = fileType;
-    }
-
-    if (replyToMessage) {
-      payload.replyTo = {
-        messageId: replyToMessage.id,
-        text: replyToMessage.text
-      };
-    }
-
-    if (val.startsWith('forum:')) {
-      await db.collection('forums').doc(val.split(':')[1])
-        .collection('messages').add(payload);
-    } else {
-      const chatId = activeChatId || await findOrCreateChat(db, leaderUid, currentUser.email, val);
-      await db.collection('users').doc(leaderUid)
-        .collection('chats').doc(chatId)
-        .collection('messages').add({ ...payload, toEmail: val });
-    }
-
-    inputEl.value = '';
-    selectedFile = null;
-    fileInput.value = '';
-    document.getElementById('selected-file-preview')?.remove();
-    replyToMessage = null;
-    clearReplyPreview();
   }
+
+  const payload = {
+    fromEmail: currentUser.email,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  if (text) payload.text = text;
+  if (fileURL) {
+    payload.fileUrl = fileURL;
+    payload.fileName = fileName;
+    payload.fileType = fileType;
+  }
+
+  if (replyToMessage) {
+    payload.replyTo = {
+      messageId: replyToMessage.id,
+      text: replyToMessage.text
+    };
+  }
+
+  if (val.startsWith('forum:')) {
+    await db.collection('forums').doc(val.split(':')[1])
+      .collection('messages').add(payload);
+  } else {
+    const chatId = activeChatId || await findOrCreateChat(db, leaderUid, currentUser.email, val);
+    await db.collection('users').doc(leaderUid)
+      .collection('chats').doc(chatId)
+      .collection('messages').add({ ...payload, toEmail: val });
+  }
+
+  inputEl.value = '';
+  selectedFile = null;
+  fileInput.value = '';
+  document.getElementById('selected-file-preview')?.remove();
+  replyToMessage = null;
+  clearReplyPreview();
+}
+
 
   function renderMessages(messages) {
     boxEl.innerHTML = '';
