@@ -12,7 +12,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-
   <!-- ✅ Firebase Config -->
   <script>
     const firebaseConfig = {
@@ -30,51 +29,83 @@
   </script>
 
   <style>
-    /* ✅ Ensure settings panel is hidden by default */
-    #settings-panel.controls-hidden {
-      display: none;
+    #settings-panel.controls-hidden { display: none; }
+
+    /* 📎 Attachment Styles */
+    .chat-input-wrapper {
+      position: relative;
+      flex-grow: 1;
+    }
+
+    #chat-input {
+      padding-left: 30px;
+      height: 32px;
+      width: 100%;
+      font-size: 14px;
+    }
+
+    #attach-icon {
+      position: absolute;
+      left: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      font-size: 18px;
+      background: none;
+      border: none;
+      color: #555;
+    }
+
+    #chat-file-input { display: none; }
+
+    #chat-input-area {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    #send-message-btn {
+      height: 34px;
+    }
+
+    #search-results {
+      width: 100%;
+      max-height: 300px;
+      overflow: auto;
+      font-family: monospace;
+      font-size: 14px;
+      white-space: pre;
+      padding: 10px;
+      background: none;
+      color: #000;
     }
   </style>
 </head>
+
 <body>
   <div class="container">
-    <!-- 👇 Left: User Info + Search Bar -->
+    <!-- 👤 User + Search -->
     <div class="user-section">
       <div class="user-info-group">
         <h1 id="welcome">Loading…</h1>
         <button id="signout">Sign Out</button>
-        <button id="settings-btn" class="gear-btn" aria-label="Settings">⚙️</button>
+        <button id="settings-btn" class="gear-btn">⚙️</button>
       </div>
       <div class="offer-search">
         <input type="text" id="offer-search-input" placeholder="Search offers…" />
-        <button id="offer-search-btn" title="Search">🔍</button>
+        <button id="offer-search-btn">🔍</button>
       </div>
     </div>
 
-    <!-- 👇 Right: Announcement banner -->
+    <!-- 📣 Announcement Banner -->
     <div id="announcement-banner">
       <span id="announcement-text-scroll">📣 Announcement will scroll here…</span>
-      <!-- Search Results -->
-<!-- Search Results -->
-<div id="search-results" style="
-  width: 100%;
-  max-height: 300px;
-  overflow-x: auto;
-  overflow-y: auto;
-  font-family: monospace;
-  font-size: 14px;
-  white-space: pre;
-  padding: 10px;
-  line-height: 1.4;
-  background: none;
-  border: none;
-  color: #000;
-"></div>
-
-
+      <div id="search-results"></div>
     </div>
   </div>
 
+  <!-- ✏️ Notepad + Chat + Uploads -->
   <section id="notepad">
     <div id="notepad-left">
       <div class="sidebar">
@@ -87,205 +118,110 @@
           <div id="file-names" class="file-list"></div>
         </div>
 
-        <!-- ⚙️ Settings Panel -->
         <div id="settings-panel" class="controls-hidden">
           <div class="settings-menu" style="margin-bottom: 10px;">
             <button id="show-contact-settings">Manage Contacts & Forums</button>
             <button id="show-upload-section">Upload Offer Files</button>
           </div>
 
-          <!-- Contact Section -->
+          <!-- 👥 Contact Section -->
           <div id="contact-chat-controls" class="settings-section" style="display: none;">
             <div class="chat-actions">
               <button id="add-contact-btn">Add Contact</button>
               <button id="new-forum-btn">New Forum</button>
             </div>
-
-            <p>Click a contact to start chatting</p>
-
             <div id="add-contact-form" style="display: none;">
               <input type="email" id="new-contact-email" placeholder="Enter email">
               <button id="save-contact-btn">Save</button>
             </div>
-
             <div id="new-forum-form" style="display:none; margin-top:8px;">
               <input type="text" id="forum-name" placeholder="Forum name…"/>
               <button id="save-forum-btn">Create</button>
             </div>
-
             <ul id="contact-list"></ul>
-
-            <div id="start-chat-form" style="display: none;">
-              <input type="text" id="chat-name" placeholder="Enter chat name">
-              <button id="create-chat">Create</button>
-            </div>
             <ul id="chat-list"></ul>
           </div>
 
-          <!-- Upload Section -->
-          <!-- Upload Section -->
-<div id="upload-section" class="settings-section" style="display: none;">
-  <p><strong>Upload Excel or CSV Files:</strong></p>
-
-  <!-- File input -->
-  <input type="file" id="file-uploader" multiple accept=".xlsx,.xls,.csv" />
-
-  <!-- Add Files button -->
-  <button id="add-files-btn" style="margin-top: 8px;">Add Files</button>
-
-  <!-- Uploaded files list -->
-  <div id="uploaded-files-list" style="margin-top: 10px;"></div>
-</div>
-
+          <!-- 📁 Upload Section -->
+          <div id="upload-section" class="settings-section" style="display: none;">
+            <p><strong>Upload Excel or CSV Files:</strong></p>
+            <input type="file" id="file-uploader" multiple accept=".xlsx,.xls,.csv" />
+            <button id="add-files-btn" style="margin-top: 8px;">Add Files</button>
+            <div id="uploaded-files-list" style="margin-top: 10px;"></div>
+          </div>
         </div>
       </div>
 
-      <!-- Editor -->
+      <!-- 📝 Editor -->
       <div class="editor" style="position: relative;">
         <textarea id="text-input" placeholder="Start typing your note..."></textarea>
-        <button id="snap-btn" title="Capture Snapshot" style="position:absolute; bottom:8px; right:8px; background:none; border:none; font-size:20px; cursor:pointer;">📸</button>
-        <div id="snap-count" style="position:absolute; top:8px; right:8px; background-color:crimson; color:white; font-size:12px; padding:2px 6px; border-radius:12px; cursor:pointer; display:none;">0</div>
+        <button id="snap-btn" title="Capture Snapshot" style="position:absolute; bottom:8px; right:8px;">📸</button>
+        <div id="snap-count" style="position:absolute; top:8px; right:8px; background-color:crimson; color:white; font-size:12px; padding:2px 6px; border-radius:12px; display:none;">0</div>
       </div>
     </div>
 
-    <!-- Announcements -->
+    <!-- 📣 Announcements -->
     <div id="announcement-panel">
       <h3>📣 Team Announcement</h3>
       <textarea id="announcement-input" placeholder="Write your announcement..."></textarea>
       <button id="post-announcement">Post</button>
     </div>
 
-    <!-- Chat Panel -->
-    <!-- Chat Panel -->
-<div id="chat-panel">
-  <label for="chat-select" class="visually-hidden">Select a chat</label>
-  <select id="chat-select" class="chat-dropdown">
-    <option value="" selected>No chat selected</option>
-  </select>
+    <!-- 💬 Chat Panel -->
+    <div id="chat-panel">
+      <select id="chat-select" class="chat-dropdown">
+        <option value="" selected>No chat selected</option>
+      </select>
 
-  <div id="chat-messages" class="chat-box"></div>
+      <div id="chat-messages" class="chat-box"></div>
 
-  <!-- Chat Panel -->
-<style>
-  .chat-input-wrapper {
-    position: relative;
-    width: 100%;
-  }
-
-  #chat-input {
-    padding-left: 32px;
-    padding-right: 8px;
-    height: 32px;
-    width: 100%;
-    box-sizing: border-box;
-    font-size: 14px;
-  }
-
-  #attach-icon {
-    position: absolute;
-    left: 6px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    font-size: 18px;
-    background: none;
-    border: none;
-    color: #555;
-  }
-
-  #chat-file-input {
-    display: none;
-  }
-
-  #chat-input-area {
-    display: flex;
-    gap: 8px;
-    margin-top: 8px;
-  }
-
-  #send-message-btn {
-    height: 34px;
-  }
-</style>
-
-<div id="chat-panel">
-  <label for="chat-select" class="visually-hidden">Select a chat</label>
-  <select id="chat-select" class="chat-dropdown">
-    <option value="" selected>No chat selected</option>
-  </select>
-
-  <div id="chat-messages" class="chat-box"></div>
-
-  <div id="chat-input-area">
-    <div class="chat-input-wrapper">
-      <button id="attach-icon" title="Attach File">📎</button>
-      <input type="text" id="chat-input" placeholder="Type a message..." />
-      <input type="file" id="chat-file-input" />
+      <div id="chat-input-area">
+        <div class="chat-input-wrapper">
+          <button id="attach-icon" title="Attach File">📎</button>
+          <input type="text" id="chat-input" placeholder="Type a message..." />
+          <input type="file" id="chat-file-input" />
+        </div>
+        <button id="send-message-btn">Send</button>
+      </div>
     </div>
-    <button id="send-message-btn">Send</button>
-  </div>
-</div>
-
-<script>
-  // 📎 Clicking the clip icon triggers file selection
-  document.addEventListener('DOMContentLoaded', () => {
-    const attachBtn = document.getElementById('attach-icon');
-    const fileInput = document.getElementById('chat-file-input');
-
-    if (attachBtn && fileInput) {
-      attachBtn.addEventListener('click', () => {
-        fileInput.click();
-      });
-    }
-  });
-</script>
-
-</div>
-
   </section>
 
-  <!-- Auth Guard -->
+  <!-- 🔐 Auth Guard -->
   <script>
     auth.onAuthStateChanged(user => {
       if (!user) {
         window.location.href = 'index.html';
       } else {
-        document.getElementById('welcome').textContent =
-          `Welcome, ${user.displayName || user.email}!`;
+        document.getElementById('welcome').textContent = `Welcome, ${user.displayName || user.email}!`;
       }
     });
 
     document.getElementById('signout').addEventListener('click', () =>
       auth.signOut().then(() => window.location.href = 'index.html')
     );
-  </script>
 
-  <!-- Scripts -->
-  <script type="module" src="team-lead.js"></script>
-  <script type="module" src="notepad.js"></script>
-  <script type="module" src="snap.js"></script>
-  <script type="module" src="offers.js"></script>
-
-  <!-- Gear Button Logic -->
-  <script>
     document.addEventListener('DOMContentLoaded', () => {
+      const attachBtn = document.getElementById('attach-icon');
+      const fileInput = document.getElementById('chat-file-input');
+      attachBtn?.addEventListener('click', () => fileInput?.click());
+
       const gearBtn = document.getElementById('settings-btn');
       const defaultPanel = document.getElementById('notepad-default');
       const settingsPanel = document.getElementById('settings-panel');
 
       settingsPanel.classList.add('controls-hidden');
-
       gearBtn.addEventListener('click', () => {
-        const showingSettings = !settingsPanel.classList.contains('controls-hidden');
-        if (showingSettings) {
-          settingsPanel.classList.add('controls-hidden');
-          defaultPanel.style.display = 'block';
-        } else {
-          settingsPanel.classList.remove('controls-hidden');
-          defaultPanel.style.display = 'none';
-        }
+        const isHidden = settingsPanel.classList.contains('controls-hidden');
+        settingsPanel.classList.toggle('controls-hidden', !isHidden);
+        defaultPanel.style.display = isHidden ? 'none' : 'block';
       });
     });
   </script>
+
+  <!-- 📜 Modules -->
+  <script type="module" src="team-lead.js"></script>
+  <script type="module" src="notepad.js"></script>
+  <script type="module" src="snap.js"></script>
+  <script type="module" src="offers.js"></script>
 </body>
 </html>
