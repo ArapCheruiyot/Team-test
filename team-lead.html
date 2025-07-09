@@ -4,7 +4,1183 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>TeamHub Dashboard</title>
-  <link rel="stylesheet" href="team-lead.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* ===== GLOBAL STYLES ===== */
+    :root {
+      --primary: #3498DB;
+      --primary-dark: #2980B9;
+      --secondary: #2C3E50;
+      --accent: #9B59B6;
+      --success: #27AE60;
+      --warning: #F39C12;
+      --danger: #E74C3C;
+      --light: #ECF0F1;
+      --dark: #2C3E50;
+      --gray: #95A5A6;
+      --light-gray: #F5F7FA;
+      --border: #D6DBDF;
+      --shadow: 0 4px 12px rgba(0,0,0,0.08);
+      --transition: all 0.3s ease;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      height: 100vh;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      grid-template-rows: 70px 1fr;
+      grid-template-areas:
+        "header header"
+        "sidebar main";
+    }
+    
+    /* ===== HEADER ===== */
+    header {
+      grid-area: header;
+      background: var(--secondary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      box-shadow: var(--shadow);
+      z-index: 100;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+    
+    .logo i {
+      color: var(--primary);
+    }
+    
+    .user-actions {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    
+    .search-bar {
+      position: relative;
+      width: 300px;
+    }
+    
+    .search-bar input {
+      width: 100%;
+      padding: 10px 15px 10px 40px;
+      border-radius: 30px;
+      border: none;
+      background: rgba(255,255,255,0.15);
+      color: white;
+      transition: var(--transition);
+    }
+    
+    .search-bar input:focus {
+      background: rgba(255,255,255,0.25);
+      outline: none;
+    }
+    
+    .search-bar i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255,255,255,0.7);
+    }
+    
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .header-btn {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+    
+    .header-btn:hover {
+      background: rgba(255,255,255,0.2);
+    }
+    
+    .notification-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: var(--danger);
+      color: white;
+      font-size: 10px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* ===== SIDEBAR ===== */
+    aside {
+      grid-area: sidebar;
+      background: white;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      z-index: 50;
+    }
+    
+    .sidebar-content {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    
+    .sidebar-section {
+      margin-bottom: 30px;
+      background: var(--light-gray);
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    
+    .sidebar-section h3 {
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--secondary);
+    }
+    
+    .sidebar-section h3 i {
+      color: var(--primary);
+    }
+    
+    .contacts-list {
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 15px;
+    }
+    
+    .contact-item {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-bottom: 8px;
+    }
+    
+    .contact-item:hover {
+      background: rgba(52, 152, 219, 0.1);
+    }
+    
+    .contact-item.active {
+      background: rgba(52, 152, 219, 0.2);
+      border-left: 3px solid var(--primary);
+    }
+    
+    .contact-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+      margin-right: 12px;
+    }
+    
+    .contact-info {
+      flex: 1;
+    }
+    
+    .contact-name {
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+    
+    .contact-status {
+      font-size: 12px;
+      color: var(--gray);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+    
+    .status-indicator.offline {
+      background: var(--gray);
+    }
+    
+    .chat-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .btn {
+      padding: 8px 15px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: var(--transition);
+    }
+    
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      flex: 1;
+    }
+    
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+    
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background: #c0392b;
+    }
+    
+    .file-uploader {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 15px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .file-uploader:hover {
+      border-color: var(--primary);
+      background: rgba(52, 152, 219, 0.05);
+    }
+    
+    .file-uploader i {
+      font-size: 24px;
+      color: var(--primary);
+      margin-bottom: 10px;
+    }
+    
+    .uploaded-files-list {
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    
+    .file-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 10px;
+      background: white;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border: 1px solid var(--border);
+    }
+    
+    .file-icon {
+      width: 36px;
+      height: 36px;
+      background: rgba(52, 152, 219, 0.1);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      margin-right: 10px;
+    }
+    
+    .file-info {
+      flex: 1;
+    }
+    
+    .file-name {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+    
+    .file-size {
+      font-size: 12px;
+      color: var(--gray);
+    }
+    
+    /* ===== MAIN CONTENT ===== */
+    main {
+      grid-area: main;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      gap: 24px;
+    }
+    
+    .announcement-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+    
+    .announcement-card h3 {
+      margin-bottom: 15px;
+      color: var(--secondary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .announcement-input {
+      width: 100%;
+      padding: 15px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      resize: vertical;
+      min-height: 80px;
+      font-family: inherit;
+      margin-bottom: 15px;
+    }
+    
+    .announcement-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    .post-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition);
+    }
+    
+    .post-btn:hover {
+      background: var(--primary-dark);
+    }
+    
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: white;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    
+    .chat-header {
+      padding: 16px 24px;
+      background: var(--light-gray);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .chat-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .chat-title {
+      font-weight: 600;
+      font-size: 18px;
+    }
+    
+    .chat-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--gray);
+    }
+    
+    .chat-actions-right {
+      display: flex;
+      gap: 15px;
+    }
+    
+    .chat-action-btn {
+      background: none;
+      border: none;
+      color: var(--gray);
+      cursor: pointer;
+      font-size: 16px;
+      transition: var(--transition);
+    }
+    
+    .chat-action-btn:hover {
+      color: var(--primary);
+    }
+    
+    .chat-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .message {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      position: relative;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .incoming {
+      align-self: flex-start;
+      background: white;
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
+    
+    .outgoing {
+      align-self: flex-end;
+      background: var(--primary);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    
+    .message-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+    
+    .sender-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    .message-time {
+      font-size: 12px;
+      color: var(--gray);
+      margin-left: 10px;
+    }
+    
+    .outgoing .message-time {
+      color: rgba(255,255,255,0.8);
+    }
+    
+    .message-content {
+      font-size: 15px;
+      line-height: 1.4;
+    }
+    
+    .file-message {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background: rgba(255,255,255,0.7);
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    
+    .file-message i {
+      margin-right: 10px;
+      color: var(--primary);
+    }
+    
+    .file-message-info {
+      flex: 1;
+    }
+    
+    .file-message-name {
+      font-weight: 500;
+      font-size: 14px;
+      margin-bottom: 3px;
+    }
+    
+    .file-message-size {
+      font-size: 12px;
+      color: var(--gray);
+    }
+    
+    .preview-area {
+      padding: 12px 20px;
+      background: #FFFBCC;
+      border-top: 1px solid #F1C40F;
+    }
+    
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .preview-title {
+      font-weight: 600;
+      font-size: 14px;
+      color: #8E6C00;
+    }
+    
+    .preview-content {
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .preview-content i {
+      color: #8E6C00;
+    }
+    
+    .chat-input-area {
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+    }
+    
+    .input-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .input-action-btn {
+      background: none;
+      border: none;
+      color: var(--gray);
+      cursor: pointer;
+      font-size: 18px;
+      transition: var(--transition);
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+    
+    .input-action-btn:hover {
+      background: var(--light);
+      color: var(--primary);
+    }
+    
+    .chat-input-wrapper {
+      flex: 1;
+      position: relative;
+    }
+    
+    .chat-input {
+      width: 100%;
+      padding: 14px 50px 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      resize: none;
+      font-family: inherit;
+      max-height: 150px;
+    }
+    
+    .chat-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    .send-btn {
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+    
+    .send-btn:hover {
+      background: var(--primary-dark);
+    }
+    
+    /* ===== MODALS ===== */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: var(--transition);
+    }
+    
+    .modal.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .modal-content {
+      background: white;
+      width: 90%;
+      max-width: 500px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      transform: translateY(20px);
+      transition: var(--transition);
+    }
+    
+    .modal.active .modal-content {
+      transform: translateY(0);
+    }
+    
+    .modal-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .modal-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--secondary);
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--gray);
+      font-size: 24px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .modal-close:hover {
+      color: var(--danger);
+    }
+    
+    .modal-body {
+      padding: 20px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    .modal-footer {
+      padding: 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    
+    .btn-secondary {
+      background: var(--light);
+      color: var(--dark);
+    }
+    
+    .btn-secondary:hover {
+      background: #d5dbdb;
+    }
+    
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 992px) {
+      body {
+        grid-template-columns: 70px 1fr;
+      }
+      
+      .sidebar-section h3 span,
+      .contact-name,
+      .contact-status,
+      .btn span,
+      .file-info,
+      .logo span,
+      .search-bar {
+        display: none;
+      }
+      
+      .sidebar-section {
+        padding: 12px;
+      }
+      
+      .sidebar-section h3 {
+        justify-content: center;
+        padding-bottom: 0;
+        border: none;
+      }
+      
+      .chat-actions {
+        flex-direction: column;
+      }
+      
+      .contacts-list {
+        display: none;
+      }
+      
+      .logo {
+        font-size: 1.8rem;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      main {
+        padding: 15px;
+      }
+      
+      .chat-messages {
+        padding: 15px;
+      }
+      
+      .message {
+        max-width: 90%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- TOP BAR -->
+  <header>
+    <div class="logo">
+      <i class="fas fa-users"></i>
+      <span>TeamHub</span>
+    </div>
+    
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input type="text" id="offer-search-input" placeholder="Search offers, messages, contacts...">
+    </div>
+    
+    <div class="header-actions">
+      <div class="notification-btn">
+        <button class="header-btn">
+          <i class="fas fa-bell"></i>
+          <span class="notification-badge">3</span>
+        </button>
+      </div>
+      
+      <div class="user-actions">
+        <div class="user-info">
+          <div class="user-avatar">JD</div>
+          <div>
+            <div class="user-name">John Doe</div>
+            <div class="user-role">Team Lead</div>
+          </div>
+        </div>
+        
+        <button class="header-btn" id="edit-name-btn" title="Edit Profile">
+          <i class="fas fa-user-edit"></i>
+        </button>
+        
+        <button class="header-btn" id="signout" title="Sign Out">
+          <i class="fas fa-sign-out-alt"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside>
+    <div class="sidebar-content">
+      <!-- Notifications Section -->
+      <div class="sidebar-section">
+        <h3><i class="fas fa-bell"></i> <span>Notifications</span></h3>
+        <div class="notifications-list">
+          <div class="notification-item">
+            <div class="notification-content">You have 3 new messages</div>
+            <div class="notification-time">10 min ago</div>
+          </div>
+          <div class="notification-item">
+            <div class="notification-content">New file uploaded</div>
+            <div class="notification-time">45 min ago</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Contacts & Chats Section -->
+      <div class="sidebar-section">
+        <h3><i class="fas fa-comments"></i> <span>Chats & Contacts</span></h3>
+        
+        <div class="contacts-list">
+          <div class="contact-item active">
+            <div class="contact-avatar">MD</div>
+            <div class="contact-info">
+              <div class="contact-name">Marketing Dept</div>
+              <div class="contact-status">
+                <span class="status-indicator"></span>
+                <span>Online - 5 members</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="contact-item">
+            <div class="contact-avatar">SD</div>
+            <div class="contact-info">
+              <div class="contact-name">Sales Dept</div>
+              <div class="contact-status">
+                <span class="status-indicator"></span>
+                <span>Online - 8 members</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="contact-item">
+            <div class="contact-avatar">JD</div>
+            <div class="contact-info">
+              <div class="contact-name">Jane Doe</div>
+              <div class="contact-status">
+                <span class="status-indicator offline"></span>
+                <span>Offline</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="contact-item">
+            <div class="contact-avatar">BS</div>
+            <div class="contact-info">
+              <div class="contact-name">Bob Smith</div>
+              <div class="contact-status">
+                <span class="status-indicator"></span>
+                <span>Online</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="chat-actions">
+          <button class="btn btn-primary" id="manage-contacts-btn">
+            <i class="fas fa-user-plus"></i>
+            <span>Add Contact</span>
+          </button>
+          <button class="btn btn-danger" id="delete-chat-btn">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Upload Offers Section -->
+      <div class="sidebar-section">
+        <h3><i class="fas fa-file-upload"></i> <span>Upload Offers</span></h3>
+        
+        <div class="file-uploader" id="file-uploader">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <p>Drag & drop files here or click to browse</p>
+          <input type="file" id="file-input" multiple accept=".xlsx,.xls,.csv" style="display: none;">
+        </div>
+        
+        <button class="btn btn-primary" id="add-files-btn">
+          <i class="fas fa-plus"></i>
+          <span>Add Files</span>
+        </button>
+        
+        <div class="uploaded-files-list" id="uploaded-files-list" style="margin-top: 15px;">
+          <div class="file-item">
+            <div class="file-icon">
+              <i class="fas fa-file-excel"></i>
+            </div>
+            <div class="file-info">
+              <div class="file-name">Q3_Sales_Report.xlsx</div>
+              <div class="file-size">2.4 MB</div>
+            </div>
+          </div>
+          <div class="file-item">
+            <div class="file-icon">
+              <i class="fas fa-file-excel"></i>
+            </div>
+            <div class="file-info">
+              <div class="file-name">Marketing_Plan.xlsx</div>
+              <div class="file-size">1.7 MB</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Notepad Section -->
+      <div class="sidebar-section">
+        <h3><i class="fas fa-sticky-note"></i> <span>Notepad</span></h3>
+        
+        <div class="notepad-actions">
+          <button class="btn btn-primary" id="new-file">
+            <i class="fas fa-plus"></i>
+            <span>New Note</span>
+          </button>
+          <div class="notepad-actions-row">
+            <button class="btn btn-secondary" id="delete">
+              <i class="fas fa-trash"></i>
+            </button>
+            <button class="btn btn-secondary" id="search">
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main>
+    <!-- Announcement Panel -->
+    <section class="announcement-card">
+      <h3><i class="fas fa-bullhorn"></i> Team Announcement</h3>
+      <textarea class="announcement-input" id="announcement-input" placeholder="Write your announcement to the entire team..."></textarea>
+      <button class="post-btn" id="post-announcement">
+        <i class="fas fa-paper-plane"></i>
+        Post Announcement
+      </button>
+    </section>
+
+    <!-- Chat Panel -->
+    <section class="chat-container">
+      <div class="chat-header">
+        <div class="chat-info">
+          <div class="chat-title">Marketing Dept</div>
+          <div class="chat-status">
+            <i class="fas fa-circle" style="color: #27AE60; font-size: 10px;"></i>
+            <span>5 members online</span>
+          </div>
+        </div>
+        
+        <div class="chat-actions-right">
+          <button class="chat-action-btn" title="Call">
+            <i class="fas fa-phone"></i>
+          </button>
+          <button class="chat-action-btn" title="Video Call">
+            <i class="fas fa-video"></i>
+          </button>
+          <button class="chat-action-btn" title="More options">
+            <i class="fas fa-ellipsis-v"></i>
+          </button>
+        </div>
+      </div>
+      
+      <div class="chat-messages" id="chat-messages">
+        <div class="message incoming">
+          <div class="message-header">
+            <div class="sender-name">Jane Doe</div>
+            <div class="message-time">10:24 AM</div>
+          </div>
+          <div class="message-content">
+            Hi team! I've finished the draft for the Q3 marketing plan. Please review when you have time.
+          </div>
+        </div>
+        
+        <div class="message outgoing">
+          <div class="message-header">
+            <div class="sender-name">You</div>
+            <div class="message-time">10:26 AM</div>
+          </div>
+          <div class="message-content">
+            Great work Jane! I'll take a look this afternoon. Can you share the file with everyone?
+          </div>
+        </div>
+        
+        <div class="message incoming">
+          <div class="message-header">
+            <div class="sender-name">Jane Doe</div>
+            <div class="message-time">10:28 AM</div>
+          </div>
+          <div class="message-content">
+            Sure! I've just uploaded it to the team folder.
+          </div>
+          <div class="file-message">
+            <i class="fas fa-file-excel"></i>
+            <div class="file-message-info">
+              <div class="file-message-name">Q3_Marketing_Plan.xlsx</div>
+              <div class="file-message-size">1.8 MB</div>
+            </div>
+            <i class="fas fa-download"></i>
+          </div>
+        </div>
+        
+        <div class="message incoming">
+          <div class="message-header">
+            <div class="sender-name">Bob Smith</div>
+            <div class="message-time">10:31 AM</div>
+          </div>
+          <div class="message-content">
+            Thanks Jane! I'll review the budget section today.
+          </div>
+        </div>
+      </div>
+      
+      <!-- Reply Preview -->
+      <div class="preview-area hidden" id="reply-preview">
+        <div class="preview-header">
+          <div class="preview-title">Replying to Jane Doe</div>
+          <button class="preview-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="preview-content">
+          <i class="fas fa-reply"></i>
+          <span>Hi team! I've finished the draft for the Q3 marketing plan...</span>
+        </div>
+      </div>
+      
+      <!-- File Preview -->
+      <div class="preview-area hidden" id="selected-file-preview">
+        <div class="preview-header">
+          <div class="preview-title">File attached</div>
+          <button class="preview-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="preview-content">
+          <i class="fas fa-file-excel"></i>
+          <span>Q3_Marketing_Plan.xlsx (1.8 MB)</span>
+        </div>
+      </div>
+      
+      <!-- Input Area -->
+      <div class="chat-input-area">
+        <div class="input-actions">
+          <button class="input-action-btn" title="Add emoji">
+            <i class="far fa-smile"></i>
+          </button>
+          <button class="input-action-btn" title="Attach file">
+            <label for="chat-file-input">
+              <i class="fas fa-paperclip"></i>
+            </label>
+            <input type="file" id="chat-file-input" style="display: none;">
+          </button>
+        </div>
+        
+        <div class="chat-input-wrapper">
+          <textarea class="chat-input" id="chat-input" placeholder="Type your message..." rows="1"></textarea>
+          <button class="send-btn" id="send-message-btn">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Edit Profile Modal -->
+  <div class="modal" id="edit-profile-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Profile</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Display Name</label>
+          <input type="text" class="form-input" id="display-name" value="John Doe">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Avatar</label>
+          <div style="display: flex; align-items: center; gap: 15px;">
+            <div class="user-avatar" style="width: 60px; height: 60px;">JD</div>
+            <button class="btn btn-secondary">Change Avatar</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary">Cancel</button>
+        <button class="btn btn-primary">Save Changes</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -13,11 +1189,12 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
   <script>
+    // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyBQSl1HtlJBPRBcgt5culdCDj_cBVN40Io",
       authDomain: "offer-upload.firebaseapp.com",
       projectId: "offer-upload",
-      storageBucket: "offer-upload.firebasestorage.app",
+      storageBucket: "offer-upload.appspot.com",
       messagingSenderId: "147934510488",
       appId: "1:147934510488:web:cdf01aed4342a43475bfed",
       measurementId: "G-ZPBL7DC3YG"
@@ -26,130 +1203,88 @@
     window.auth = firebase.auth();
     window.db   = firebase.firestore();
     window.storage = firebase.storage();
+    
+    // DOM manipulation for UI interactions
+    document.addEventListener('DOMContentLoaded', function() {
+      // Edit profile modal
+      const editProfileBtn = document.getElementById('edit-name-btn');
+      const editProfileModal = document.getElementById('edit-profile-modal');
+      const modalClose = document.querySelector('.modal-close');
+      
+      editProfileBtn.addEventListener('click', () => {
+        editProfileModal.classList.add('active');
+      });
+      
+      modalClose.addEventListener('click', () => {
+        editProfileModal.classList.remove('active');
+      });
+      
+      // Close modal when clicking outside
+      window.addEventListener('click', (e) => {
+        if (e.target === editProfileModal) {
+          editProfileModal.classList.remove('active');
+        }
+      });
+      
+      // Chat interactions
+      const chatInput = document.getElementById('chat-input');
+      chatInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+      });
+      
+      // File upload interaction
+      const fileUploader = document.querySelector('.file-uploader');
+      fileUploader.addEventListener('click', () => {
+        document.getElementById('file-input').click();
+      });
+      
+      // Contact selection
+      const contactItems = document.querySelectorAll('.contact-item');
+      contactItems.forEach(item => {
+        item.addEventListener('click', () => {
+          document.querySelector('.contact-item.active')?.classList.remove('active');
+          item.classList.add('active');
+          
+          // Update chat header
+          const contactName = item.querySelector('.contact-name').textContent;
+          document.querySelector('.chat-title').textContent = contactName;
+        });
+      });
+      
+      // Send message
+      document.getElementById('send-message-btn').addEventListener('click', sendMessage);
+      document.getElementById('chat-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+      
+      function sendMessage() {
+        const message = chatInput.value.trim();
+        if (message) {
+          const chatMessages = document.getElementById('chat-messages');
+          const now = new Date();
+          const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+          
+          const messageElement = document.createElement('div');
+          messageElement.classList.add('message', 'outgoing');
+          messageElement.innerHTML = `
+            <div class="message-header">
+              <div class="sender-name">You</div>
+              <div class="message-time">${timeString}</div>
+            </div>
+            <div class="message-content">${message}</div>
+          `;
+          
+          chatMessages.appendChild(messageElement);
+          chatInput.value = '';
+          chatInput.style.height = 'auto';
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+      }
+    });
   </script>
-
-  <style>
-    /* Hide settings panel by default */
-    #settings-panel.controls-hidden { display: none; }
-
-    /* Basic grid layout */
-    body { margin:0; font-family: Arial,sans-serif; display: grid; grid-template-columns: 250px 1fr; grid-template-rows: auto 1fr; height:100vh; }
-    header { grid-column:1/3; background:#2C3E50; color:#FFF; display:flex; align-items:center; justify-content:space-between; padding:0 16px; }
-    aside { grid-row:2; background:#ECF0F1; overflow-y:auto; padding:16px; }
-    main { grid-row:2; padding:16px; display:flex; flex-direction:column; }
-
-    header .user-info { display:flex; align-items:center; gap:8px; }
-    header .user-info button { background:none;border:none;color:#FFF;cursor:pointer; }
-    header .search-bar { display:flex; align-items:center; gap:4px; }
-    header .search-bar input { padding:4px 8px; }
-
-    /* Notifications */
-    #notification-area { margin-top:16px; font-size:14px; }
-
-    /* Chat/Contact controls */
-    .sidebar-section { margin-bottom:24px; }
-    .sidebar-section h4 { margin-bottom:8px; }
-
-    .sidebar-section .actions button { display:block; width:100%; margin-bottom:4px; }
-
-    /* Chat panel */
-    #chat-panel { flex:1; display:flex; flex-direction:column; border:1px solid #CCC; border-radius:4px; overflow:hidden; }
-    #chat-header { background:#f5f5f5; padding:8px; display:flex; justify-content:space-between; align-items:center; }
-    #chat-messages { flex:1; padding:8px; overflow-y:auto; background:#FAFAFA; }
-    .chat-input-area { padding:8px; display:flex; gap:8px; border-top:1px solid #DDD; }
-    .chat-input-area textarea { flex:1; padding:6px; resize:none; }
-    .chat-input-area button, .chat-input-area label { background:#3498DB; color:#FFF; border:none; padding:6px 12px; cursor:pointer; border-radius:4px; }
-
-    /* File preview & reply preview */
-    .file-preview, .reply-preview { background:#FFFBCC; padding:8px; margin:8px 0; border:1px solid #F1C40F; border-radius:4px; display:flex; justify-content:space-between; align-items:center; }
-    .file-preview button, .reply-preview button { background:none;border:none;cursor:pointer;font-size:16px; }
-  </style>
-</head>
-
-<body>
-  <!-- TOP BAR -->
-  <header>
-    <div class="user-info">
-      <span id="welcome">Loading…</span>
-      <button id="edit-name-btn" title="Change display name">✏️</button>
-      <button id="signout" title="Sign Out">🔒</button>
-    </div>
-    <div class="search-bar">
-      <input type="text" id="offer-search-input" placeholder="Search offers…" />
-      <button id="offer-search-btn">🔍</button>
-    </div>
-  </header>
-
-  <!-- SIDEBAR -->
-  <aside>
-    <!-- Notifications -->
-    <div id="notification-area"></div>
-
-    <!-- Contacts & Forums -->
-    <div class="sidebar-section">
-      <h4>Chats & Forums</h4>
-      <select id="chat-select" style="width:100%;">
-        <option value="" selected>No chat selected</option>
-      </select>
-      <div class="actions">
-        <button id="delete-chat-btn">Delete Chat</button>
-        <button id="manage-contacts-btn">Manage Contacts</button>
-      </div>
-    </div>
-
-    <!-- Upload Offers -->
-    <div class="sidebar-section">
-      <h4>Upload Offers</h4>
-      <input type="file" id="file-uploader" multiple accept=".xlsx,.xls,.csv" />
-      <button id="add-files-btn" style="margin-top:8px;">Add Files</button>
-      <div id="uploaded-files-list" style="margin-top:12px;"></div>
-    </div>
-
-    <!-- Notepad controls -->
-    <div class="sidebar-section">
-      <h4>Notepad</h4>
-      <button id="new-file">New Note</button>
-      <button id="delete">Delete Note</button>
-      <button id="search">Search Notes</button>
-    </div>
-  </aside>
-
-  <!-- MAIN CONTENT -->
-  <main>
-    <!-- Announcement Panel -->
-    <section id="announcement-panel" style="margin-bottom:16px;">
-      <h3>Team Announcement</h3>
-      <textarea id="announcement-input" placeholder="Write your announcement…" rows="2" style="width:100%;"></textarea>
-      <button id="post-announcement" style="margin-top:8px;">Post</button>
-    </section>
-
-    <!-- Chat Panel -->
-    <section id="chat-panel">
-      <div id="chat-header">
-        <span id="chat-title">Select a chat</span>
-        <span id="chat-timestamp">—</span>
-      </div>
-      <div id="chat-messages"></div>
-
-      <!-- Previews -->
-      <div id="selected-file-preview" class="file-preview hidden"></div>
-      <div id="reply-preview" class="reply-preview hidden"></div>
-
-      <!-- Input Area -->
-      <div class="chat-input-area">
-        <label for="chat-file-input">📎</label>
-        <input type="file" id="chat-file-input" style="display:none;" />
-        <textarea id="chat-input" placeholder="Type your message…" rows="2"></textarea>
-        <button id="send-message-btn">Send</button>
-      </div>
-    </section>
-  </main>
-
-  <!-- JS Modules -->
-  <script type="module" src="team-lead.js"></script>
-  <script type="module" src="notepad.js"></script>
-  <script type="module" src="snap.js"></script>
-  <script type="module" src="offers.js"></script>
-  <script type="module" src="chat.js"></script>
 </body>
 </html>
