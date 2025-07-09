@@ -6,14 +6,12 @@
   <title>TeamHub Dashboard</title>
   <link rel="stylesheet" href="team-lead.css"/>
 
-  <!-- ✅ Firebase SDKs -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-
-  <!-- ✅ Firebase Config -->
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyBQSl1HtlJBPRBcgt5culdCDj_cBVN40Io",
@@ -27,202 +25,131 @@
     firebase.initializeApp(firebaseConfig);
     window.auth = firebase.auth();
     window.db   = firebase.firestore();
+    window.storage = firebase.storage();
   </script>
 
   <style>
+    /* Hide settings panel by default */
     #settings-panel.controls-hidden { display: none; }
 
-    /* 📎 Attachment Styles */
-    .chat-input-wrapper {
-      position: relative;
-      flex-grow: 1;
-    }
+    /* Basic grid layout */
+    body { margin:0; font-family: Arial,sans-serif; display: grid; grid-template-columns: 250px 1fr; grid-template-rows: auto 1fr; height:100vh; }
+    header { grid-column:1/3; background:#2C3E50; color:#FFF; display:flex; align-items:center; justify-content:space-between; padding:0 16px; }
+    aside { grid-row:2; background:#ECF0F1; overflow-y:auto; padding:16px; }
+    main { grid-row:2; padding:16px; display:flex; flex-direction:column; }
 
-    #chat-input {
-      padding-left: 30px;
-      height: 32px;
-      width: 100%;
-      font-size: 14px;
-    }
+    header .user-info { display:flex; align-items:center; gap:8px; }
+    header .user-info button { background:none;border:none;color:#FFF;cursor:pointer; }
+    header .search-bar { display:flex; align-items:center; gap:4px; }
+    header .search-bar input { padding:4px 8px; }
 
-    #attach-icon {
-      position: absolute;
-      left: 6px;
-      top: 50%;
-      transform: translateY(-50%);
-      cursor: pointer;
-      font-size: 18px;
-      background: none;
-      border: none;
-      color: #555;
-    }
+    /* Notifications */
+    #notification-area { margin-top:16px; font-size:14px; }
 
-    #chat-file-input { display: none; }
+    /* Chat/Contact controls */
+    .sidebar-section { margin-bottom:24px; }
+    .sidebar-section h4 { margin-bottom:8px; }
 
-    #chat-input-area {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 8px;
-    }
+    .sidebar-section .actions button { display:block; width:100%; margin-bottom:4px; }
 
-    #send-message-btn {
-      height: 34px;
-    }
+    /* Chat panel */
+    #chat-panel { flex:1; display:flex; flex-direction:column; border:1px solid #CCC; border-radius:4px; overflow:hidden; }
+    #chat-header { background:#f5f5f5; padding:8px; display:flex; justify-content:space-between; align-items:center; }
+    #chat-messages { flex:1; padding:8px; overflow-y:auto; background:#FAFAFA; }
+    .chat-input-area { padding:8px; display:flex; gap:8px; border-top:1px solid #DDD; }
+    .chat-input-area textarea { flex:1; padding:6px; resize:none; }
+    .chat-input-area button, .chat-input-area label { background:#3498DB; color:#FFF; border:none; padding:6px 12px; cursor:pointer; border-radius:4px; }
 
-    #search-results {
-      width: 100%;
-      max-height: 300px;
-      overflow: auto;
-      font-family: monospace;
-      font-size: 14px;
-      white-space: pre;
-      padding: 10px;
-      background: none;
-      color: #000;
-    }
+    /* File preview & reply preview */
+    .file-preview, .reply-preview { background:#FFFBCC; padding:8px; margin:8px 0; border:1px solid #F1C40F; border-radius:4px; display:flex; justify-content:space-between; align-items:center; }
+    .file-preview button, .reply-preview button { background:none;border:none;cursor:pointer;font-size:16px; }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <!-- 👤 User + Search -->
-    <div class="user-section">
-      <div class="user-info-group">
-        <h1 id="welcome">Loading…</h1>
-        <button id="signout">Sign Out</button>
-        <button id="settings-btn" class="gear-btn">⚙️</button>
-      </div>
-      <div class="offer-search">
-        <input type="text" id="offer-search-input" placeholder="Search offers…" />
-        <button id="offer-search-btn">🔍</button>
-      </div>
+  <!-- TOP BAR -->
+  <header>
+    <div class="user-info">
+      <span id="welcome">Loading…</span>
+      <button id="edit-name-btn" title="Change display name">✏️</button>
+      <button id="signout" title="Sign Out">🔒</button>
     </div>
-
-    <!-- 📣 Announcement Banner -->
-    <div id="announcement-banner">
-      <span id="announcement-text-scroll">📣 Announcement will scroll here…</span>
-      <div id="search-results"></div>
+    <div class="search-bar">
+      <input type="text" id="offer-search-input" placeholder="Search offers…" />
+      <button id="offer-search-btn">🔍</button>
     </div>
-  </div>
+  </header>
 
-  <!-- ✏️ Notepad + Chat + Uploads -->
-  <section id="notepad">
-    <div id="notepad-left">
-      <div class="sidebar">
-        <div id="notepad-default">
-          <img src="logo.png" alt="team-hub logo" style="width:200px; display:block; margin:20px auto;" />
-          <button id="new-file">New Note</button>
-          <button id="delete">Delete</button>
-          <button id="search">Search</button>
-          <input type="text" id="search-input" placeholder="Search notes..." style="display: none;" />
-          <div id="file-names" class="file-list"></div>
-        </div>
+  <!-- SIDEBAR -->
+  <aside>
+    <!-- Notifications -->
+    <div id="notification-area"></div>
 
-        <div id="settings-panel" class="controls-hidden">
-          <div class="settings-menu" style="margin-bottom: 10px;">
-            <button id="show-contact-settings">Manage Contacts & Forums</button>
-            <button id="show-upload-section">Upload Offer Files</button>
-          </div>
-
-          <!-- 👥 Contact Section -->
-          <div id="contact-chat-controls" class="settings-section" style="display: none;">
-            <div class="chat-actions">
-              <button id="add-contact-btn">Add Contact</button>
-              <button id="new-forum-btn">New Forum</button>
-            </div>
-            <div id="add-contact-form" style="display: none;">
-              <input type="email" id="new-contact-email" placeholder="Enter email">
-              <button id="save-contact-btn">Save</button>
-            </div>
-            <div id="new-forum-form" style="display:none; margin-top:8px;">
-              <input type="text" id="forum-name" placeholder="Forum name…"/>
-              <button id="save-forum-btn">Create</button>
-            </div>
-            <ul id="contact-list"></ul>
-            <ul id="chat-list"></ul>
-          </div>
-
-          <!-- 📁 Upload Section -->
-          <div id="upload-section" class="settings-section" style="display: none;">
-            <p><strong>Upload Excel or CSV Files:</strong></p>
-            <input type="file" id="file-uploader" multiple accept=".xlsx,.xls,.csv" />
-            <button id="add-files-btn" style="margin-top: 8px;">Add Files</button>
-            <div id="uploaded-files-list" style="margin-top: 10px;"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 📝 Editor -->
-      <div class="editor" style="position: relative;">
-        <textarea id="text-input" placeholder="Start typing your note..."></textarea>
-        <button id="snap-btn" title="Capture Snapshot" style="position:absolute; bottom:8px; right:8px;">📸</button>
-        <div id="snap-count" style="position:absolute; top:8px; right:8px; background-color:crimson; color:white; font-size:12px; padding:2px 6px; border-radius:12px; display:none;">0</div>
-      </div>
-    </div>
-
-    <!-- 📣 Announcements -->
-    <div id="announcement-panel">
-      <h3>📣 Team Announcement</h3>
-      <textarea id="announcement-input" placeholder="Write your announcement..."></textarea>
-      <button id="post-announcement">Post</button>
-    </div>
-
-    <!-- 💬 Chat Panel -->
-    <div id="chat-panel">
-      <select id="chat-select" class="chat-dropdown">
+    <!-- Contacts & Forums -->
+    <div class="sidebar-section">
+      <h4>Chats & Forums</h4>
+      <select id="chat-select" style="width:100%;">
         <option value="" selected>No chat selected</option>
       </select>
-
-      <div id="chat-messages" class="chat-box"></div>
-
-      <div id="chat-input-area">
-        <div class="chat-input-wrapper">
-          <button id="attach-icon" title="Attach File">📎</button>
-          <input type="text" id="chat-input" placeholder="Type a message..." />
-          <input type="file" id="chat-file-input" />
-        </div>
-        <button id="send-message-btn">Send</button>
+      <div class="actions">
+        <button id="delete-chat-btn">Delete Chat</button>
+        <button id="manage-contacts-btn">Manage Contacts</button>
       </div>
     </div>
-  </section>
 
-  <!-- 🔐 Auth Guard -->
-  <script>
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = 'index.html';
-      } else {
-        document.getElementById('welcome').textContent = `Welcome, ${user.displayName || user.email}!`;
-      }
-    });
+    <!-- Upload Offers -->
+    <div class="sidebar-section">
+      <h4>Upload Offers</h4>
+      <input type="file" id="file-uploader" multiple accept=".xlsx,.xls,.csv" />
+      <button id="add-files-btn" style="margin-top:8px;">Add Files</button>
+      <div id="uploaded-files-list" style="margin-top:12px;"></div>
+    </div>
 
-    document.getElementById('signout').addEventListener('click', () =>
-      auth.signOut().then(() => window.location.href = 'index.html')
-    );
+    <!-- Notepad controls -->
+    <div class="sidebar-section">
+      <h4>Notepad</h4>
+      <button id="new-file">New Note</button>
+      <button id="delete">Delete Note</button>
+      <button id="search">Search Notes</button>
+    </div>
+  </aside>
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const attachBtn = document.getElementById('attach-icon');
-      const fileInput = document.getElementById('chat-file-input');
-      attachBtn?.addEventListener('click', () => fileInput?.click());
+  <!-- MAIN CONTENT -->
+  <main>
+    <!-- Announcement Panel -->
+    <section id="announcement-panel" style="margin-bottom:16px;">
+      <h3>Team Announcement</h3>
+      <textarea id="announcement-input" placeholder="Write your announcement…" rows="2" style="width:100%;"></textarea>
+      <button id="post-announcement" style="margin-top:8px;">Post</button>
+    </section>
 
-      const gearBtn = document.getElementById('settings-btn');
-      const defaultPanel = document.getElementById('notepad-default');
-      const settingsPanel = document.getElementById('settings-panel');
+    <!-- Chat Panel -->
+    <section id="chat-panel">
+      <div id="chat-header">
+        <span id="chat-title">Select a chat</span>
+        <span id="chat-timestamp">—</span>
+      </div>
+      <div id="chat-messages"></div>
 
-      settingsPanel.classList.add('controls-hidden');
-      gearBtn.addEventListener('click', () => {
-        const isHidden = settingsPanel.classList.contains('controls-hidden');
-        settingsPanel.classList.toggle('controls-hidden', !isHidden);
-        defaultPanel.style.display = isHidden ? 'none' : 'block';
-      });
-    });
-  </script>
+      <!-- Previews -->
+      <div id="selected-file-preview" class="file-preview hidden"></div>
+      <div id="reply-preview" class="reply-preview hidden"></div>
 
-  <!-- 📜 Modules -->
+      <!-- Input Area -->
+      <div class="chat-input-area">
+        <label for="chat-file-input">📎</label>
+        <input type="file" id="chat-file-input" style="display:none;" />
+        <textarea id="chat-input" placeholder="Type your message…" rows="2"></textarea>
+        <button id="send-message-btn">Send</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- JS Modules -->
   <script type="module" src="team-lead.js"></script>
   <script type="module" src="notepad.js"></script>
   <script type="module" src="snap.js"></script>
   <script type="module" src="offers.js"></script>
+  <script type="module" src="chat.js"></script>
 </body>
 </html>
