@@ -119,30 +119,29 @@
           <div id="file-names" class="file-list"></div>
         </div>
 
-        <!-- inside <div id="settings-panel" class="controls-hidden"> -->
-<div class="settings-menu" style="margin-bottom: 10px;">
-  <button id="show-contact-settings">Manage Contacts & Forums</button>
-  <button id="show-upload-section">Upload Offer Files</button>
-  <button id="show-announcement-section">Team Announcements</button> <!-- ✅ NEW -->
-</div>
+        <div id="settings-panel" class="controls-hidden">
+          <div class="settings-menu" style="margin-bottom: 10px;">
+            <button id="show-contact-settings">Manage Contacts & Forums</button>
+            <button id="show-upload-section">Upload Offer Files</button>
+          </div>
 
-<!-- 👥 Contact Section -->
-<div id="contact-chat-controls" class="settings-section" style="display: none;">
-  ...
-</div>
-
-<!-- 📁 Upload Section -->
-<div id="upload-section" class="settings-section" style="display: none;">
-  ...
-</div>
-
-<!-- 📣 Announcements Section Moved Here -->
-<div id="announcement-panel" class="settings-section" style="display: none;">
-  <h3>📣 Team Announcement</h3>
-  <textarea id="announcement-input" placeholder="Write your announcement..."></textarea>
-  <button id="post-announcement">Post</button>
-</div>
-
+          <!-- 👥 Contact Section -->
+          <div id="contact-chat-controls" class="settings-section" style="display: none;">
+            <div class="chat-actions">
+              <button id="add-contact-btn">Add Contact</button>
+              <button id="new-forum-btn">New Forum</button>
+            </div>
+            <div id="add-contact-form" style="display: none;">
+              <input type="email" id="new-contact-email" placeholder="Enter email">
+              <button id="save-contact-btn">Save</button>
+            </div>
+            <div id="new-forum-form" style="display:none; margin-top:8px;">
+              <input type="text" id="forum-name" placeholder="Forum name…"/>
+              <button id="save-forum-btn">Create</button>
+            </div>
+            <ul id="contact-list"></ul>
+            <ul id="chat-list"></ul>
+          </div>
 
           <!-- 📁 Upload Section -->
           <div id="upload-section" class="settings-section" style="display: none;">
